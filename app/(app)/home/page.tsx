@@ -18,6 +18,7 @@ import {
   Vote,
   Check,
   Lock,
+  UserPlus,
 } from "lucide-react";
 
 // iOS-style Homescreen — Greeting, heutige Mission als Hero, Pfad-Vorschau,
@@ -38,6 +39,7 @@ export default function HomePage() {
   if (!hydrated || !state) return <HomeSkeleton />;
 
   const name = session?.displayName?.split(" ")[0] || "du";
+  const isGuest = !session?.isRegistered;
   const stops = buildPfadStops();
   const todayStop = stops.find((s) => s.status === "today") ?? stops[3];
   const nextStops = stops.slice(0, 5);
@@ -158,6 +160,27 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      {/* Gast → Konto-CTA */}
+      {isGuest && (
+        <Link
+          href="/onboarding"
+          className="glass-card rounded-2xl p-4 flex items-center gap-4 hover:bg-foreground/5 transition-all border-foreground/15"
+        >
+          <span className="inline-flex items-center justify-center size-11 rounded-xl bg-foreground text-background shrink-0">
+            <UserPlus className="size-5" />
+          </span>
+          <div className="flex flex-col flex-1 min-w-0">
+            <span className="font-serif font-semibold leading-tight">
+              Spielstand sichern
+            </span>
+            <span className="text-xs text-muted-foreground">
+              Du spielst als Gast. Erstelle ein Konto, um auf allen Geräten weiterzuspielen.
+            </span>
+          </div>
+          <ArrowRight className="size-4 text-muted-foreground shrink-0" />
+        </Link>
+      )}
 
       {/* Werte-Check CTA */}
       {werteCheckOpen && (

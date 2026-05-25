@@ -19,19 +19,24 @@ import {
   Lock,
   PartyPopper,
   Sparkles,
+  ShieldCheck,
+  UserPlus,
 } from "lucide-react";
 import Link from "next/link";
 
-// Klassisches 3-Step-Onboarding (iOS-Stil, ohne Magic Link):
-//   0: Konto erstellen — Email + Passwort + Name
-//   1: Partei wählen
-//   2: Bereit → /heute
+// 4-Step Onboarding:
+//   0: Wahl — Konto erstellen ODER Als Gast spielen
+//   1: Konto-Form ODER Name-Form (je nach Wahl)
+//   2: Partei wählen
+//   3: Bereit → /home
 
-type Step = 0 | 1 | 2;
+type Step = 0 | 1 | 2 | 3;
+type Mode = null | "account" | "guest";
 
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState<Step>(0);
+  const [mode, setMode] = useState<Mode>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -44,16 +49,18 @@ export default function OnboardingPage() {
       router.push("/");
       return;
     }
+    if (step === 1) {
+      setMode(null);
+      setStep(0);
+      return;
+    }
     setStep((s) => Math.max(0, s - 1) as Step);
   }
 
-  async function handleSignUp(event: React.FormEvent) {
+  async function handleAccountSignUp(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
     setSubmitting(true);
-
-    // 1) Supabase signUp (wenn nicht configured oder fails: lokal weiter)
-    let supabaseOk = false;
     try {
       const supabase = createClient();
       const { error: signUpError } = await supabase.auth.signUp({
@@ -66,25 +73,25 @@ export default function OnboardingPage() {
         setSubmitting(false);
         return;
       }
-      supabaseOk = true;
     } catch {
-      // Backend nicht erreichbar — wir machen lokal weiter
+      // Backend nicht erreichbar — lokal weiter
     }
-
-    // 2) Lokale Session immer anlegen (auch wenn Supabase signed in)
     ensureLocalSession();
     registerLocally(name, email);
-
     setSubmitting(false);
-    setStep(1);
-    void supabaseOk; // unused-Marker
+    setStep(2);
+  }
+
+  function handleGuestSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    ensureLocalSession();
+    registerLocally(name, "");
+    setStep(2);
   }
 
   async function finish() {
     setSubmitting(true);
-    if (partyId) {
-      updateLocalState({ party_id: partyId });
-    }
+    if (partyId) updateLocalState({ party_id: partyId });
     router.push("/home");
   }
 
@@ -98,7 +105,7 @@ export default function OnboardingPage() {
         >
           <ArrowLeft className="size-5" />
         </button>
-        <ProgressDots current={step} total={2} />
+        <ProgressDots current={step} total={3} />
         <div className="w-11" />
       </header>
 
@@ -106,109 +113,188 @@ export default function OnboardingPage() {
         <AnimatePresence mode="wait">
           {step === 0 && (
             <StepShell key="0">
-              <div className="inline-flex items-center justify-center size-14 rounded-2xl bg-foreground/5 backdrop-blur-md border border-foreground/8">
+              <div className="glass-card inline-flex items-center justify-center size-14 rounded-2xl">
                 <PolitpulsMark className="size-9 text-foreground" />
               </div>
               <Hero
                 kicker="Willkommen"
-                title="Konto erstellen"
-                blurb="E-Mail, Passwort, Name. Mehr brauchst du nicht."
+                title="Wie möchtest du starten?"
+                blurb="Mit Konto läuft dein Spielstand auf allen Geräten. Als Gast bleibt er auf diesem Browser."
               />
 
+              <div className="flex flex-col gap-3 w-full max-w-sm mt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("account");
+                    setStep(1);
+                  }}
+                  className="glass-card group rounded-2xl p-5 flex items-center gap-4 hover:bg-foreground/5 transition-all text-left"
+                >
+                  <span className="inline-flex items-center justify-center size-11 rounded-xl bg-foreground text-background shrink-0">
+                    <UserPlus className="size-5" />
+                  </span>
+                  <span className="flex flex-col flex-1 min-w-0">
+                    <span className="font-serif font-semibold text-lg leading-tight">
+                      Konto erstellen
+                    </span>
+                    <span className="text-xs leading-snug text-muted-foreground">
+                      E-Mail + Passwort + Name. Spielstand syncs.
+                    </span>
+                  </span>
+                  <ArrowRight className="size-5 group-hover:translate-x-0.5 transition-transform text-muted-foreground" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("guest");
+                    setStep(1);
+                  }}
+                  className="glass-card group rounded-2xl p-5 flex items-center gap-4 hover:bg-foreground/5 transition-all text-left"
+                >
+                  <span className="inline-flex items-center justify-center size-11 rounded-xl bg-foreground/5 border border-foreground/10 text-foreground shrink-0">
+                    <ShieldCheck className="size-5" />
+                  </span>
+                  <span className="flex flex-col flex-1 min-w-0">
+                    <span className="font-serif font-semibold text-lg leading-tight">
+                      Als Gast spielen
+                    </span>
+                    <span className="text-xs leading-snug text-muted-foreground">
+                      Sofort loslegen, läuft auf diesem Gerät.
+                    </span>
+                  </span>
+                  <ArrowRight className="size-5 group-hover:translate-x-0.5 transition-transform text-muted-foreground" />
+                </button>
+              </div>
+
+              <Link
+                href="/login"
+                className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4 mt-4"
+              >
+                Schon ein Konto? Hier einloggen
+              </Link>
+            </StepShell>
+          )}
+
+          {step === 1 && mode === "account" && (
+            <StepShell key="1-account">
+              <Hero
+                kicker="Schritt 1 von 3"
+                title="Konto erstellen"
+                blurb="Du kannst dich später auf jedem Gerät einloggen."
+              />
               <form
                 className="flex flex-col gap-3 w-full max-w-sm mt-2"
-                onSubmit={handleSignUp}
+                onSubmit={handleAccountSignUp}
               >
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="email" className="sr-only">E-Mail</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" aria-hidden />
-                    <Input
-                      id="email"
-                      type="email"
-                      required
-                      autoFocus
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="E-Mail"
-                      className="pl-9 h-12 text-base"
-                      autoComplete="email"
-                      disabled={submitting}
-                    />
-                  </div>
+                <Label htmlFor="email" className="sr-only">E-Mail</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" aria-hidden />
+                  <Input
+                    id="email"
+                    type="email"
+                    required
+                    autoFocus
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="E-Mail"
+                    className="pl-9 h-12 text-base"
+                    autoComplete="email"
+                    disabled={submitting}
+                  />
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="password" className="sr-only">Passwort</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" aria-hidden />
-                    <Input
-                      id="password"
-                      type="password"
-                      required
-                      minLength={6}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Passwort (min. 6 Zeichen)"
-                      className="pl-9 h-12 text-base"
-                      autoComplete="new-password"
-                      disabled={submitting}
-                    />
-                  </div>
+                <Label htmlFor="password" className="sr-only">Passwort</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" aria-hidden />
+                  <Input
+                    id="password"
+                    type="password"
+                    required
+                    minLength={6}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Passwort (min. 6 Zeichen)"
+                    className="pl-9 h-12 text-base"
+                    autoComplete="new-password"
+                    disabled={submitting}
+                  />
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="name" className="sr-only">Name</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" aria-hidden />
-                    <Input
-                      id="name"
-                      type="text"
-                      required
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Wie sollen wir dich nennen?"
-                      className="pl-9 h-12 text-base"
-                      autoComplete="given-name"
-                      disabled={submitting}
-                    />
-                  </div>
+                <Label htmlFor="name" className="sr-only">Name</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" aria-hidden />
+                  <Input
+                    id="name"
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Wie sollen wir dich nennen?"
+                    className="pl-9 h-12 text-base"
+                    autoComplete="given-name"
+                    disabled={submitting}
+                  />
                 </div>
 
                 <Button
                   type="submit"
                   size="lg"
                   className="h-12 mt-1 group"
-                  disabled={
-                    submitting || !email || !password || !name.trim()
-                  }
+                  disabled={submitting || !email || !password || !name.trim()}
                 >
                   {submitting ? "Konto erstellen …" : "Konto erstellen"}
                   <ArrowRight className="size-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
                 </Button>
 
                 {error && (
-                  <p className="text-xs text-destructive text-center mt-1">
-                    {error}
-                  </p>
+                  <p className="text-xs text-destructive text-center mt-1">{error}</p>
                 )}
-
-                <Link
-                  href="/login"
-                  className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4 mt-2 text-center"
-                >
-                  Schon ein Konto? Hier einloggen
-                </Link>
               </form>
             </StepShell>
           )}
 
-          {step === 1 && (
-            <StepShell key="1">
+          {step === 1 && mode === "guest" && (
+            <StepShell key="1-guest">
               <Hero
-                kicker={`Hallo, ${name.trim() || "du"}`}
+                kicker="Schritt 1 von 3"
+                title="Wie sollen wir dich nennen?"
+                blurb="Nur ein Vorname reicht. Du kannst später jederzeit ein Konto erstellen, um den Spielstand zu sichern."
+              />
+              <form
+                className="flex flex-col gap-3 w-full max-w-sm mt-2"
+                onSubmit={handleGuestSubmit}
+              >
+                <Label htmlFor="guest-name" className="sr-only">Vorname</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" aria-hidden />
+                  <Input
+                    id="guest-name"
+                    type="text"
+                    required
+                    autoFocus
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="z. B. Yasin"
+                    className="pl-9 h-12 text-base"
+                    autoComplete="given-name"
+                  />
+                </div>
+                <Button type="submit" size="lg" className="h-12 group" disabled={!name.trim()}>
+                  Weiter
+                  <ArrowRight className="size-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
+                </Button>
+              </form>
+            </StepShell>
+          )}
+
+          {step === 2 && (
+            <StepShell key="2">
+              <Hero
+                kicker="Schritt 2 von 3"
                 title="Mit welcher Partei trittst du an?"
-                blurb="Das wird deine Heimat im Wahlkampf — kannst du später wechseln."
+                blurb="Deine Heimat im Wahlkampf — kannst du später wechseln."
               />
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5 w-full max-w-md mt-2">
                 {parties.map((party) => {
@@ -218,10 +304,10 @@ export default function OnboardingPage() {
                       key={party.id}
                       type="button"
                       onClick={() => setPartyId(party.id)}
-                      className={`relative rounded-2xl border p-3 flex flex-col gap-1.5 items-start transition-all text-left min-h-[80px] backdrop-blur-md ${
+                      className={`relative rounded-2xl p-3 flex flex-col gap-1.5 items-start transition-all text-left min-h-[80px] ${
                         isSelected
-                          ? "bg-foreground text-background border-foreground shadow-md scale-[1.03]"
-                          : "bg-white/60 border-foreground/8 hover:border-foreground/30"
+                          ? "bg-foreground text-background border border-foreground shadow-md scale-[1.03]"
+                          : "glass-card hover:bg-foreground/5"
                       }`}
                     >
                       <span
@@ -237,7 +323,7 @@ export default function OnboardingPage() {
                 })}
               </div>
               <Button
-                onClick={() => setStep(2)}
+                onClick={() => setStep(3)}
                 size="lg"
                 className="h-12 group w-full max-w-sm mt-4"
                 disabled={!partyId}
@@ -248,18 +334,18 @@ export default function OnboardingPage() {
             </StepShell>
           )}
 
-          {step === 2 && (
-            <StepShell key="2">
+          {step === 3 && (
+            <StepShell key="3">
               <motion.div
                 initial={{ scale: 0.5, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                className="inline-flex items-center justify-center size-20 rounded-full bg-foreground/5 backdrop-blur-md border border-foreground/10"
+                className="glass-card inline-flex items-center justify-center size-20 rounded-full"
               >
                 <PartyPopper className="size-10 text-foreground" />
               </motion.div>
               <Hero
-                kicker="Bereit"
+                kicker="Schritt 3 von 3"
                 title={`Los geht's, ${name.trim() || "Politprofi"}.`}
                 blurb="Deine erste Tagesmission wartet. Ein Briefing, eine Entscheidung, ein Punkt auf dem Kompass."
               />

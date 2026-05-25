@@ -124,11 +124,11 @@ export default function HomePage() {
       {/* Versetzter, scrollbarer Pfad */}
       <section className="flex flex-col mt-2">
         <header className="flex items-center justify-between mb-3">
-          <h2 className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+          <h2 className="text-on-bg text-[10px] font-semibold uppercase tracking-[0.22em] text-foreground/70">
             Dein Pfad
           </h2>
           {party && (
-            <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <span className="text-on-bg inline-flex items-center gap-1.5 text-[11px] text-foreground/70">
               <span
                 className="size-2 rounded-full"
                 style={{ backgroundColor: party.color }}
@@ -267,7 +267,10 @@ function PfadNode({
       ? "size-18 sm:size-24"
       : "size-16 sm:size-20";
 
-  let markerBg = "bg-foreground/10 text-muted-foreground";
+  // Locked-Knoten brauchen einen opaken Wash, damit sie ueber dem Reichstag
+  // erkennbar bleiben. backdrop-blur greift den Glass-Look der Cards auf.
+  let markerBg =
+    "bg-background/85 border border-foreground/15 backdrop-blur-sm text-foreground/55";
   let iconSize = "size-7 sm:size-9";
   let markerIcon: React.ReactNode = <Lock className={iconSize} />;
   if (isDone) {
@@ -289,7 +292,7 @@ function PfadNode({
     <div
       id={isToday ? "pfad-today" : undefined}
       className={`relative ${markerSize} rounded-full flex items-center justify-center shrink-0 transition-transform ${markerBg} ${
-        isLocked ? "opacity-60" : "hover:scale-105 active:scale-95"
+        isLocked ? "" : "hover:scale-105 active:scale-95"
       }`}
     >
       {markerIcon}
@@ -302,17 +305,13 @@ function PfadNode({
   );
 
   const Label = (
-    <div
-      className={`flex flex-col items-center leading-tight gap-0.5 mt-2 text-center max-w-[160px] sm:max-w-[200px] ${
-        isLocked ? "opacity-60" : ""
-      }`}
-    >
-      <span className="text-[10px] font-mono tabular-nums text-muted-foreground">
+    <div className="flex flex-col items-center leading-tight gap-0.5 mt-2 text-center max-w-[160px] sm:max-w-[200px]">
+      <span className="text-on-bg text-[10px] font-mono tabular-nums text-foreground/65">
         {stop.weekdayShort}, {stop.dayNumber}. {stop.monthShort}
       </span>
       <span
-        className={`text-xs sm:text-sm leading-snug ${
-          isToday ? "font-serif font-semibold text-foreground" : "text-foreground/80"
+        className={`text-on-bg text-xs sm:text-sm leading-snug ${
+          isToday ? "font-serif font-semibold text-foreground" : "text-foreground/85"
         } line-clamp-2`}
       >
         {stop.headline}

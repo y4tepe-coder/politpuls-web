@@ -51,19 +51,30 @@ function seededRandom(seed: string): () => number {
 /**
  * Berechnet die Wahl. Score ist die User-Performance (-50..+50), Seed
  * sollte stabil pro Wahl-Zyklus sein (z.B. user_id + week).
+ *
+ * Game-Balance: Wir dämpfen die Base-Votes-Bias (CDU 30 % vs Linke 4 %)
+ * gegen ein 14,3 %-Gleichgewicht — sonst kann eine schwache Partei nie
+ * Kanzler werden. Plus: starker Performance-Bonus für die User-Partei
+ * (bis ±24 %), damit gute Spieler:innen mit Linke/BSW/FDP genauso
+ * gewinnen wie mit CDU.
  */
+const EQUAL_SHARE = 100 / 7; // 14.28
+const BASE_BIAS_WEIGHT = 0.45;  // <1 = Base-Bias dämpfen
+const USER_PERF_WEIGHT = 0.5;   // wie stark Performance den eigenen Score boostet
+
 export function computeElectionResult(
   myPartyId: PartyId | null,
   score: number,
   seed: string,
 ): ElectionResult[] {
   const rng = seededRandom(seed);
-  const myScoreBonus = Math.max(-8, Math.min(8, score * 0.15));
+  const myScoreBonus = score * USER_PERF_WEIGHT; // -25..+25
 
   const raw: Array<{ id: PartyId; percent: number }> = (Object.keys(BASE_VOTES) as PartyId[]).map(
     (id) => {
-      let pct = BASE_VOTES[id];
-      // User-Partei bekommt Score-Bonus
+      const baseBiased =
+        EQUAL_SHARE + (BASE_VOTES[id] - EQUAL_SHARE) * BASE_BIAS_WEIGHT;
+      let pct = baseBiased;
       if (id === myPartyId) pct += myScoreBonus;
       // Jitter ±2 für alle
       pct += (rng() - 0.5) * 4;

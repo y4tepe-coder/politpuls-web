@@ -85,7 +85,7 @@ export default function OnboardingPage() {
     if (partyId) {
       updateLocalState({ party_id: partyId });
     }
-    router.push("/heute");
+    router.push("/home");
   }
 
   return (

@@ -21,7 +21,7 @@ export default function LandingPage() {
 
   useEffect(() => {
     const session = getLocalSession();
-    if (session) setDestination("/heute");
+    if (session) setDestination("/home");
   }, []);
 
   return (

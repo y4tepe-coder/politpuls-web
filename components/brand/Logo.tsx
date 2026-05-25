@@ -4,6 +4,7 @@ type Props = {
   size?: "sm" | "md" | "lg";
   href?: string | null;
   iconOnly?: boolean;
+  textOnly?: boolean;
 };
 
 // Politpuls mark: a near-squircle speech bubble (tail bottom-left) with a white
@@ -28,7 +29,12 @@ function PolitpulsMark({ className }: { className?: string }) {
   );
 }
 
-export function Logo({ size = "md", href = "/", iconOnly = false }: Props) {
+export function Logo({
+  size = "md",
+  href = "/",
+  iconOnly = false,
+  textOnly = false,
+}: Props) {
   const layouts = {
     sm: { icon: "size-6", text: "text-base" },
     md: { icon: "size-8", text: "text-xl" },
@@ -38,7 +44,7 @@ export function Logo({ size = "md", href = "/", iconOnly = false }: Props) {
 
   const Inner = (
     <span className="inline-flex items-center gap-2.5">
-      <PolitpulsMark className={`${icon} text-foreground`} />
+      {!textOnly && <PolitpulsMark className={`${icon} text-foreground`} />}
       {!iconOnly && (
         <span
           className={`font-serif font-semibold tracking-tight text-foreground ${text}`}

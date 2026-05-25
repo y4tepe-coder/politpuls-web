@@ -17,7 +17,7 @@ export function TopNav() {
       style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
       <div className="mx-auto max-w-2xl flex items-center justify-between px-5 h-14">
-        <Logo size="md" />
+        <Logo size="md" textOnly href="/home" />
         <nav className="flex items-center gap-0.5 sm:gap-1">
           {streak > 0 && (
             <span
@@ -28,7 +28,7 @@ export function TopNav() {
               {streak}
             </span>
           )}
-          <NavIcon href="/heute" label="Heute" icon={<HomeIcon />} />
+          <NavIcon href="/home" label="Start" icon={<HomeIcon />} />
           <NavIcon href="/pfad" label="Pfad" icon={<MapIcon className="size-5" />} />
           <NavIcon href="/wahlkampf" label="Wahlkampf" icon={<Vote className="size-5" />} />
           <NavIcon href="/profil" label="Profil" icon={<User className="size-5" />} />

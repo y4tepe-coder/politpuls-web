@@ -2,7 +2,9 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+/* Dark-Variant ueber Media-Query: dark: greift wenn Mac/iPhone auf dunkel
+   steht, ohne dass wir die .dark-Klasse auf <html> setzen muessten. */
+@custom-variant dark (@media (prefers-color-scheme: dark));
 
 /*
  * Politpuls brand palette.

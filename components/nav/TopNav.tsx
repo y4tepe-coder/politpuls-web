@@ -12,10 +12,13 @@ export function TopNav() {
   const streak = state?.current_streak ?? 0;
 
   return (
-    <header className="sticky top-0 z-20 w-full border-b border-border bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+    <header
+      className="sticky top-0 z-20 w-full border-b border-border bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70"
+      style={{ paddingTop: "env(safe-area-inset-top)" }}
+    >
       <div className="mx-auto max-w-2xl flex items-center justify-between px-5 h-14">
         <Logo size="md" />
-        <nav className="flex items-center gap-1">
+        <nav className="flex items-center gap-0.5 sm:gap-1">
           {streak > 0 && (
             <span
               className="inline-flex items-center gap-1 rounded-full bg-warning/25 text-warning-foreground px-2.5 py-1 text-xs font-semibold mr-1"
@@ -44,11 +47,12 @@ function NavIcon({
   label: string;
   icon: React.ReactNode;
 }) {
+  // 44pt minimum touch target — Apple HIG standard for iOS.
   return (
     <Link
       href={href}
       aria-label={label}
-      className="inline-flex items-center justify-center size-9 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+      className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors active:bg-muted/80"
     >
       {icon}
     </Link>

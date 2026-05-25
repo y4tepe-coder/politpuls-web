@@ -89,7 +89,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <main className="relative flex flex-1 flex-col min-h-screen bg-background overflow-hidden">
+    <main className="relative flex flex-1 flex-col min-h-screen overflow-hidden">
       <header className="relative z-10 mx-auto w-full max-w-md px-5 pt-6 flex items-center justify-between">
         <button
           onClick={back}

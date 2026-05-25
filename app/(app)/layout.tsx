@@ -1,10 +1,9 @@
 import type { ReactNode } from "react";
 import { TopNav } from "@/components/nav/TopNav";
-import { AppBackground } from "@/components/nav/AppBackground";
 
 // Wrapping layout for the in-app surface (heute, pfad, wahlkampf, profil).
-// AppBackground = same painting + pastel washes as the landing hero, so the
-// in-app tabs feel like part of the same canvas, not a separate dashboard.
+// The Reichstag background is mounted globally in the root layout, so we
+// don't add it here a second time — we just lay out the nav + content.
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div
@@ -14,7 +13,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         paddingBottom: "env(safe-area-inset-bottom)",
       }}
     >
-      <AppBackground />
       <TopNav />
       <div className="flex-1 flex flex-col">{children}</div>
     </div>

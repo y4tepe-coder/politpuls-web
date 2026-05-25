@@ -44,7 +44,7 @@ export default function LandingPage() {
           src="/hero-reichstag.png"
           alt=""
           aria-hidden
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover object-center"
         />
       </picture>
 

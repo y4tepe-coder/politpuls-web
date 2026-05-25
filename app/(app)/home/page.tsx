@@ -177,8 +177,10 @@ function ZigzagPath({ stops }: { stops: PfadStop[] }) {
     const el = document.getElementById("pfad-today");
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    const targetY =
-      rect.top + window.scrollY - window.innerHeight / 2 + rect.height / 2;
+    // Today landet ~ein Knoten-Plus-Padding unter der TopNav — vergangene
+    // Knoten sind dann aus dem Bild raus, der User sieht heute + Zukunft.
+    const TOP_OFFSET = 96; // px unterhalb der sticky TopNav
+    const targetY = rect.top + window.scrollY - TOP_OFFSET;
     window.scrollTo({
       top: Math.max(0, targetY),
       behavior: smooth ? "smooth" : ("instant" as ScrollBehavior),
@@ -189,13 +191,15 @@ function ZigzagPath({ stops }: { stops: PfadStop[] }) {
     // Erst rendern lassen, dann scrollen (Layout muss fertig sein)
     const r = requestAnimationFrame(() => centerOnToday(false));
 
-    // "Heute"-Button zeigen wenn der heutige Knoten nicht mehr im Viewport ist
+    // "Heute"-Button zeigen wenn der heutige Knoten weit weg ist — sowohl
+    // wenn der User nach oben (Vergangenheit) als auch nach unten (Zukunft)
+    // wegscrollt.
     function onScroll() {
       const el = document.getElementById("pfad-today");
       if (!el) return;
       const rect = el.getBoundingClientRect();
       const offscreen =
-        rect.bottom < 80 || rect.top > window.innerHeight - 80;
+        rect.bottom < 60 || rect.top > window.innerHeight - 60;
       setShowJump(offscreen);
     }
     window.addEventListener("scroll", onScroll, { passive: true });

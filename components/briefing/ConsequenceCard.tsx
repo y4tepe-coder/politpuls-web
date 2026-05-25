@@ -37,32 +37,30 @@ export function ConsequenceCard({
   const deltas = choice.deltas ?? [];
 
   return (
-    <article className="flex flex-1 flex-col max-w-xl mx-auto w-full px-5 py-10 gap-7">
-      {/* Achievement banner — pastel mint instead of solid green */}
-      <div className="rounded-2xl bg-pastel-mint border border-pastel-mint-ink/15 p-5 flex items-center gap-4 shadow-sm">
-        <span className="inline-flex items-center justify-center size-12 rounded-full bg-pastel-mint-ink text-pastel-mint shadow-md">
-          <Sparkles className="size-6" />
+    <article className="flex flex-1 flex-col max-w-xl mx-auto w-full px-5 py-10 gap-6">
+      <div className="glass-card rounded-2xl p-5 flex items-center gap-4">
+        <span className="inline-flex items-center justify-center size-12 rounded-full bg-foreground text-background">
+          <Sparkles className="size-5" />
         </span>
-        <div className="flex flex-col text-pastel-mint-ink">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.18em]">
+        <div className="flex flex-col">
+          <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
             Entscheidung gefallen
           </span>
-          <span className="font-serif text-lg font-semibold leading-snug text-foreground">
+          <span className="font-serif text-lg font-semibold leading-snug">
             Du hast Wahl {choice.id} gewählt.
           </span>
         </div>
       </div>
 
-      <div className="rounded-2xl bg-card border border-border p-5 sm:p-6 flex flex-col gap-3">
+      <div className="glass-card rounded-2xl p-5 sm:p-6 flex flex-col gap-3">
         <h2 className="font-serif text-2xl sm:text-3xl font-semibold leading-snug">
           {choice.label}
         </h2>
-        <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
+        <p className="text-base sm:text-lg text-foreground/75 leading-relaxed">
           {consequence.summary}
         </p>
       </div>
 
-      {/* Impact deltas */}
       {deltas.length > 0 && (
         <section className="flex flex-col gap-3">
           <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground px-1">
@@ -72,7 +70,7 @@ export function ConsequenceCard({
             {deltas.map((d, i) => (
               <li
                 key={i}
-                className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3"
+                className="glass-card flex items-center gap-3 rounded-xl px-4 py-3"
               >
                 <div className="flex-1 min-w-0 flex flex-col">
                   <span className="text-sm font-medium leading-tight">
@@ -85,10 +83,10 @@ export function ConsequenceCard({
                   )}
                 </div>
                 <span
-                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-mono font-semibold tabular-nums ${
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-mono font-semibold tabular-nums border ${
                     d.good
-                      ? "bg-pastel-mint text-pastel-mint-ink border border-pastel-mint-ink/15"
-                      : "bg-pastel-rose text-pastel-rose-ink border border-pastel-rose-ink/15"
+                      ? "border-foreground/15 bg-foreground/5 text-foreground"
+                      : "border-foreground/15 bg-foreground/5 text-foreground/60"
                   }`}
                 >
                   {d.good ? (
@@ -108,22 +106,21 @@ export function ConsequenceCard({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <ReactionTile
-          tone="mint"
           title="Freuen sich"
           icon={<CheckCircle2 className="size-4" />}
           items={consequence.cheers}
         />
         <ReactionTile
-          tone="rose"
           title="Sind enttäuscht"
           icon={<Frown className="size-4" />}
           items={consequence.upset}
+          muted
         />
       </div>
 
-      <section className="rounded-2xl bg-card border border-border p-5 sm:p-6 flex flex-col gap-4">
+      <section className="glass-card rounded-2xl p-5 sm:p-6 flex flex-col gap-4">
         <header className="flex flex-col gap-1">
-          <span className="text-pastel-peach-ink text-[11px] font-semibold uppercase tracking-[0.18em]">
+          <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
             Dein politischer Kompass
           </span>
           <h3 className="font-serif text-xl font-semibold leading-snug">
@@ -149,34 +146,34 @@ export function ConsequenceCard({
       </Button>
 
       <p className="text-xs text-center text-muted-foreground">
-        Morgen wartet das nächste Dossier auf dich. Komm wieder, halte deine Streak.
+        Morgen wartet das nächste Dossier auf dich.
       </p>
     </article>
   );
 }
 
 function ReactionTile({
-  tone,
   title,
   icon,
   items,
+  muted,
 }: {
-  tone: "mint" | "rose";
   title: string;
   icon: React.ReactNode;
   items: string[];
+  muted?: boolean;
 }) {
-  const styles =
-    tone === "mint"
-      ? "bg-pastel-mint border-pastel-mint-ink/15 text-pastel-mint-ink"
-      : "bg-pastel-rose border-pastel-rose-ink/15 text-pastel-rose-ink";
   return (
-    <div className={`rounded-2xl border p-4 flex flex-col gap-3 ${styles}`}>
-      <h3 className="text-xs font-semibold uppercase tracking-wide flex items-center gap-1.5">
+    <div className="glass-card rounded-2xl p-4 flex flex-col gap-3">
+      <h3
+        className={`text-xs font-semibold uppercase tracking-wide flex items-center gap-1.5 ${
+          muted ? "text-muted-foreground" : "text-foreground"
+        }`}
+      >
         {icon}
         {title}
       </h3>
-      <ul className="flex flex-col gap-1 text-sm text-foreground">
+      <ul className="flex flex-col gap-1 text-sm text-foreground/80">
         {items.map((g) => (
           <li key={g}>{g}</li>
         ))}

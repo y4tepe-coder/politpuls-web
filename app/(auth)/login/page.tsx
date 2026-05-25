@@ -2,50 +2,43 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/brand/Logo";
-import { Mail, CheckCircle2 } from "lucide-react";
+import { Mail, Lock } from "lucide-react";
 
-// Login = magic link only. Kein Passwort, kein Google, kein Apple.
-// Gast-Modus läuft separat über /onboarding (wenn jemand das explizit will,
-// kann er da hin — wir verstecken den Button hier nicht hart, aber er steht
-// klein im Footer, nicht als Haupt-CTA).
+// Klassisch: Email + Passwort. Kein Magic Link, kein Google, kein Apple.
+// Brauche im Supabase-Dashboard: Auth → Settings → "Confirm email" off.
 export default function LoginPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("next") ?? "/heute";
 
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<
-    "idle" | "sending" | "sent" | "error"
-  >("idle");
-  const [message, setMessage] = useState<string | null>(null);
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  async function handleMagicLink(event: FormEvent) {
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    setMessage(null);
-    setStatus("sending");
+    setError(null);
+    setSubmitting(true);
 
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOtp({
+    const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectTo)}`,
-      },
+      password,
     });
 
-    if (error) {
-      setStatus("error");
-      setMessage(error.message);
+    if (signInError) {
+      setError(signInError.message);
+      setSubmitting(false);
       return;
     }
-    setStatus("sent");
-    setMessage(
-      `Wir haben dir einen Link an ${email} geschickt. Öffne ihn, um dich anzumelden.`,
-    );
+    router.push(redirectTo);
   }
 
   return (
@@ -57,21 +50,17 @@ export default function LoginPage() {
             Anmelden
           </h1>
           <p className="text-sm text-muted-foreground">
-            Gib deine E-Mail ein. Wir schicken dir einen Login-Link — kein
-            Passwort, kein Google, kein Apple.
+            Mit deiner E-Mail und deinem Passwort.
           </p>
         </header>
 
-        {status !== "sent" && (
-          <form onSubmit={handleMagicLink} className="flex flex-col gap-3">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2">
             <Label htmlFor="email" className="text-sm font-medium">
               E-Mail
             </Label>
             <div className="relative">
-              <Mail
-                className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none"
-                aria-hidden
-              />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" aria-hidden />
               <Input
                 id="email"
                 type="email"
@@ -79,50 +68,56 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="du@beispiel.de"
-                disabled={status === "sending"}
+                disabled={submitting}
                 className="pl-9 h-12"
                 autoComplete="email"
                 autoFocus
               />
             </div>
-            <Button
-              type="submit"
-              disabled={status === "sending" || !email}
-              size="lg"
-              className="h-12 mt-1"
-            >
-              {status === "sending" ? "Sende Link …" : "Magic Link senden"}
-            </Button>
-          </form>
-        )}
-
-        {status === "sent" && message && (
-          <div className="rounded-2xl border border-pastel-mint-ink/15 bg-pastel-mint text-pastel-mint-ink p-5 flex flex-col items-center gap-3 text-center">
-            <CheckCircle2 className="size-8" />
-            <p className="text-sm leading-relaxed">{message}</p>
-            <p className="text-xs opacity-80 mt-1">
-              Du kannst diesen Tab schließen, der Link öffnet einen neuen.
-            </p>
           </div>
-        )}
 
-        {message && status === "error" && (
-          <p className="text-sm text-center px-4 py-3 rounded-lg text-destructive bg-destructive/10">
-            {message}
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="password" className="text-sm font-medium">
+              Passwort
+            </Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" aria-hidden />
+              <Input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Mindestens 6 Zeichen"
+                minLength={6}
+                disabled={submitting}
+                className="pl-9 h-12"
+                autoComplete="current-password"
+              />
+            </div>
+          </div>
+
+          <Button
+            type="submit"
+            disabled={submitting || !email || !password}
+            size="lg"
+            className="h-12 mt-2"
+          >
+            {submitting ? "Anmelden …" : "Anmelden"}
+          </Button>
+        </form>
+
+        {error && (
+          <p className="text-sm text-center px-4 py-3 rounded-xl text-destructive bg-destructive/10">
+            {error}
           </p>
         )}
 
-        <div className="flex flex-col gap-1 text-center text-xs text-muted-foreground pt-4 border-t border-border">
-          <Link
-            href="/onboarding"
-            className="hover:text-foreground underline underline-offset-4 py-1.5"
-          >
-            Noch kein Konto? Hier starten
+        <div className="flex flex-col gap-1 text-center text-xs text-muted-foreground pt-4 border-t border-foreground/8">
+          <Link href="/onboarding" className="hover:text-foreground underline underline-offset-4 py-1.5">
+            Noch kein Konto? Hier registrieren
           </Link>
-          <Link
-            href="/"
-            className="hover:text-foreground underline underline-offset-4 py-1.5"
-          >
+          <Link href="/" className="hover:text-foreground underline underline-offset-4 py-1.5">
             Zurück zur Startseite
           </Link>
         </div>

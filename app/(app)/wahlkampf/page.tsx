@@ -69,12 +69,10 @@ const PHASES: {
   { id: "wahl", title: "Wahlsonntag", days: "Schritt 4", href: "/wahlkampf/wahl", pastel: "rose" },
 ];
 
-const PASTEL_BG = {
-  sky: "bg-pastel-sky text-pastel-sky-ink border-pastel-sky-ink/15",
-  rose: "bg-pastel-rose text-pastel-rose-ink border-pastel-rose-ink/15",
-  mint: "bg-pastel-mint text-pastel-mint-ink border-pastel-mint-ink/15",
-  peach: "bg-pastel-peach text-pastel-peach-ink border-pastel-peach-ink/15",
-} as const;
+// In iOS-glass we use one neutral look for all phases — the number tells
+// you the order, not the color.
+const PHASE_CARD =
+  "glass-card text-foreground hover:bg-foreground/5";
 
 export default function WahlkampfPage() {
   const [role, setRole] = useState<LocalRole>("kandidat");
@@ -103,7 +101,7 @@ export default function WahlkampfPage() {
   return (
     <main className="flex flex-1 flex-col max-w-2xl mx-auto w-full px-5 py-8 gap-8">
       <header className="flex flex-col gap-2">
-        <span className="text-accent text-[11px] font-semibold uppercase tracking-[0.18em]">
+        <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
           Wahlkampf-Modus
         </span>
         <h1 className="font-serif text-3xl sm:text-4xl font-semibold leading-tight">
@@ -117,12 +115,12 @@ export default function WahlkampfPage() {
       </header>
 
       {/* Status banner */}
-      <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-card border border-primary/20 p-5 sm:p-6 flex items-start gap-4 shadow-sm">
-        <span className="inline-flex items-center justify-center size-12 rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/30 shrink-0">
+      <div className="glass-card rounded-2xl p-5 sm:p-6 flex items-start gap-4">
+        <span className="inline-flex items-center justify-center size-12 rounded-xl bg-foreground text-background shrink-0">
           <CalendarDays className="size-6" />
         </span>
         <div className="flex flex-col gap-1.5">
-          <span className="text-primary text-[11px] font-semibold uppercase tracking-[0.18em]">
+          <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
             Dein Status
           </span>
           <h2 className="font-serif text-lg sm:text-xl font-semibold leading-snug">
@@ -269,15 +267,15 @@ export default function WahlkampfPage() {
             <li key={phase.id}>
               <Link
                 href={phase.href}
-                className={`group rounded-xl border p-4 flex items-center gap-4 transition-all hover:shadow-md min-h-[64px] ${PASTEL_BG[phase.pastel]}`}
+                className={`group ${PHASE_CARD} rounded-xl p-4 flex items-center gap-4 transition-all min-h-[64px]`}
               >
-                <span className="font-mono text-xs tabular-nums w-16 shrink-0 opacity-80">
+                <span className="font-mono text-xs tabular-nums w-16 shrink-0 text-muted-foreground">
                   {phase.days}
                 </span>
                 <span className="font-serif text-base font-semibold flex-1">
                   {phase.title}
                 </span>
-                <ChevronRight className="size-5 shrink-0 group-hover:translate-x-0.5 transition-transform opacity-70" />
+                <ChevronRight className="size-5 shrink-0 group-hover:translate-x-0.5 transition-transform text-muted-foreground" />
               </Link>
             </li>
           ))}

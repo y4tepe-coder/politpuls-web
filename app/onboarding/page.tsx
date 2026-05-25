@@ -16,89 +16,72 @@ import {
   ArrowLeft,
   Mail,
   User,
-  Sparkles,
-  ShieldCheck,
+  Lock,
   PartyPopper,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 
-// 4-step onboarding flow, iOS-style:
-//   0: auth-gate (Magic Link OR as guest)
-//   1: name
-//   2: party
-//   3: ready → /heute
+// Klassisches 3-Step-Onboarding (iOS-Stil, ohne Magic Link):
+//   0: Konto erstellen — Email + Passwort + Name
+//   1: Partei wählen
+//   2: Bereit → /heute
 
-type Step = 0 | 1 | 2 | 3;
-type AuthMode = null | "magic" | "guest";
+type Step = 0 | 1 | 2;
 
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState<Step>(0);
-  const [authMode, setAuthMode] = useState<AuthMode>(null);
   const [email, setEmail] = useState("");
-  const [magicSent, setMagicSent] = useState(false);
-  const [magicError, setMagicError] = useState<string | null>(null);
+  const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [partyId, setPartyId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function next() {
-    setStep((s) => Math.min(3, s + 1) as Step);
-  }
   function back() {
     if (step === 0) {
       router.push("/");
       return;
     }
-    if (step === 1 && authMode === "guest") {
-      setAuthMode(null);
-      setStep(0);
-      return;
-    }
-    if (step === 1 && authMode === "magic") {
-      setMagicSent(false);
-      setStep(0);
-      setAuthMode(null);
-      return;
-    }
     setStep((s) => Math.max(0, s - 1) as Step);
   }
 
-  async function sendMagicLink() {
-    if (!email.trim()) return;
+  async function handleSignUp(event: React.FormEvent) {
+    event.preventDefault();
+    setError(null);
     setSubmitting(true);
-    setMagicError(null);
+
+    // 1) Supabase signUp (wenn nicht configured oder fails: lokal weiter)
+    let supabaseOk = false;
     try {
       const supabase = createClient();
-      const { error } = await supabase.auth.signInWithOtp({
+      const { error: signUpError } = await supabase.auth.signUp({
         email: email.trim(),
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=/heute`,
-        },
+        password,
+        options: { data: { display_name: name.trim() } },
       });
-      if (error) {
-        setMagicError(error.message);
+      if (signUpError) {
+        setError(signUpError.message);
         setSubmitting(false);
         return;
       }
-      setMagicSent(true);
-    } catch (err) {
-      setMagicError(
-        err instanceof Error
-          ? err.message
-          : "Konnte Link nicht senden — versuch es als Gast.",
-      );
-    } finally {
-      setSubmitting(false);
+      supabaseOk = true;
+    } catch {
+      // Backend nicht erreichbar — wir machen lokal weiter
     }
+
+    // 2) Lokale Session immer anlegen (auch wenn Supabase signed in)
+    ensureLocalSession();
+    registerLocally(name, email);
+
+    setSubmitting(false);
+    setStep(1);
+    void supabaseOk; // unused-Marker
   }
 
   async function finish() {
     setSubmitting(true);
-    ensureLocalSession();
-    if (name.trim() || email.trim()) {
-      registerLocally(name, email);
-    }
     if (partyId) {
       updateLocalState({ party_id: partyId });
     }
@@ -107,94 +90,37 @@ export default function OnboardingPage() {
 
   return (
     <main className="relative flex flex-1 flex-col min-h-screen bg-background overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-10%,oklch(0.92_0.07_50/0.55),transparent_60%)] pointer-events-none" />
-
       <header className="relative z-10 mx-auto w-full max-w-md px-5 pt-6 flex items-center justify-between">
         <button
           onClick={back}
-          className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-full text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors"
           aria-label="Zurück"
         >
           <ArrowLeft className="size-5" />
         </button>
-        <ProgressDots current={step} total={3} />
-        <Link
-          href="/heute"
-          className="text-xs text-muted-foreground hover:text-foreground underline-offset-4 hover:underline min-h-[44px] inline-flex items-center"
-        >
-          Überspringen
-        </Link>
+        <ProgressDots current={step} total={2} />
+        <div className="w-11" />
       </header>
 
       <div className="flex-1 flex flex-col items-center justify-center px-5 py-8">
         <AnimatePresence mode="wait">
           {step === 0 && (
             <StepShell key="0">
-              <div className="inline-flex items-center justify-center size-14 rounded-2xl bg-pastel-sky">
-                <PolitpulsMark className="size-9 text-pastel-sky-ink" />
+              <div className="inline-flex items-center justify-center size-14 rounded-2xl bg-foreground/5 backdrop-blur-md border border-foreground/8">
+                <PolitpulsMark className="size-9 text-foreground" />
               </div>
               <Hero
                 kicker="Willkommen"
-                title="Wie möchtest du starten?"
-                blurb="Mit Anmeldung läuft dein Spielstand auf allen Geräten. Als Gast bleibt er auf diesem Browser."
+                title="Konto erstellen"
+                blurb="E-Mail, Passwort, Name. Mehr brauchst du nicht."
               />
 
-              {authMode === null && (
-                <div className="flex flex-col gap-3 w-full max-w-sm mt-2">
-                  <button
-                    type="button"
-                    onClick={() => setAuthMode("magic")}
-                    className="group rounded-2xl border-2 border-pastel-mint-ink/15 bg-pastel-mint text-pastel-mint-ink p-5 flex items-center gap-4 hover:shadow-md transition-all text-left"
-                  >
-                    <span className="inline-flex items-center justify-center size-11 rounded-xl bg-pastel-mint-ink text-pastel-mint shrink-0">
-                      <Mail className="size-5" />
-                    </span>
-                    <span className="flex flex-col flex-1 min-w-0">
-                      <span className="font-serif font-semibold text-lg leading-tight">
-                        Mit E-Mail anmelden
-                      </span>
-                      <span className="text-xs leading-snug opacity-80">
-                        Magic Link — kein Passwort. Spielstand syncs.
-                      </span>
-                    </span>
-                    <ArrowRight className="size-5 group-hover:translate-x-0.5 transition-transform" />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAuthMode("guest");
-                      next();
-                    }}
-                    className="group rounded-2xl border-2 border-pastel-peach-ink/15 bg-pastel-peach text-pastel-peach-ink p-5 flex items-center gap-4 hover:shadow-md transition-all text-left"
-                  >
-                    <span className="inline-flex items-center justify-center size-11 rounded-xl bg-pastel-peach-ink text-pastel-peach shrink-0">
-                      <ShieldCheck className="size-5" />
-                    </span>
-                    <span className="flex flex-col flex-1 min-w-0">
-                      <span className="font-serif font-semibold text-lg leading-tight">
-                        Als Gast spielen
-                      </span>
-                      <span className="text-xs leading-snug opacity-80">
-                        Sofort loslegen, läuft auf diesem Gerät.
-                      </span>
-                    </span>
-                    <ArrowRight className="size-5 group-hover:translate-x-0.5 transition-transform" />
-                  </button>
-                </div>
-              )}
-
-              {authMode === "magic" && !magicSent && (
-                <form
-                  className="flex flex-col gap-3 w-full max-w-sm mt-2"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    sendMagicLink();
-                  }}
-                >
-                  <Label htmlFor="email" className="sr-only">
-                    E-Mail
-                  </Label>
+              <form
+                className="flex flex-col gap-3 w-full max-w-sm mt-2"
+                onSubmit={handleSignUp}
+              >
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="email" className="sr-only">E-Mail</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" aria-hidden />
                     <Input
@@ -204,110 +130,83 @@ export default function OnboardingPage() {
                       autoFocus
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="du@beispiel.de"
+                      placeholder="E-Mail"
                       className="pl-9 h-12 text-base"
                       autoComplete="email"
                       disabled={submitting}
                     />
                   </div>
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="h-12 group"
-                    disabled={submitting || !email.trim()}
-                  >
-                    {submitting ? "Sende Link …" : "Magic Link senden"}
-                    <Mail className="size-4 ml-1" />
-                  </Button>
-                  {magicError && (
-                    <p className="text-xs text-destructive text-center">
-                      {magicError}
-                    </p>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAuthMode(null);
-                      setEmail("");
-                    }}
-                    className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4 mt-1"
-                  >
-                    Anders entscheiden
-                  </button>
-                </form>
-              )}
-
-              {authMode === "magic" && magicSent && (
-                <div className="flex flex-col gap-3 w-full max-w-sm mt-2 text-center">
-                  <div className="rounded-2xl border border-pastel-mint-ink/15 bg-pastel-mint text-pastel-mint-ink p-5 flex flex-col items-center gap-2">
-                    <Sparkles className="size-6" />
-                    <p className="text-sm leading-snug">
-                      Link an <span className="font-semibold">{email}</span> gesendet. Öffne ihn, um dich anzumelden.
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    size="lg"
-                    className="h-12 group"
-                    onClick={() => {
-                      next();
-                    }}
-                  >
-                    Während du wartest, weiter spielen
-                    <ArrowRight className="size-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
-                  </Button>
                 </div>
-              )}
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="password" className="sr-only">Passwort</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" aria-hidden />
+                    <Input
+                      id="password"
+                      type="password"
+                      required
+                      minLength={6}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Passwort (min. 6 Zeichen)"
+                      className="pl-9 h-12 text-base"
+                      autoComplete="new-password"
+                      disabled={submitting}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="name" className="sr-only">Name</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" aria-hidden />
+                    <Input
+                      id="name"
+                      type="text"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Wie sollen wir dich nennen?"
+                      className="pl-9 h-12 text-base"
+                      autoComplete="given-name"
+                      disabled={submitting}
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="h-12 mt-1 group"
+                  disabled={
+                    submitting || !email || !password || !name.trim()
+                  }
+                >
+                  {submitting ? "Konto erstellen …" : "Konto erstellen"}
+                  <ArrowRight className="size-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
+                </Button>
+
+                {error && (
+                  <p className="text-xs text-destructive text-center mt-1">
+                    {error}
+                  </p>
+                )}
+
+                <Link
+                  href="/login"
+                  className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4 mt-2 text-center"
+                >
+                  Schon ein Konto? Hier einloggen
+                </Link>
+              </form>
             </StepShell>
           )}
 
           {step === 1 && (
             <StepShell key="1">
               <Hero
-                kicker="Schritt 1 von 3"
-                title="Wie sollen wir dich nennen?"
-                blurb="Nur ein Vorname reicht — du kannst ihn später ändern."
-              />
-              <form
-                className="flex flex-col gap-3 w-full max-w-sm mt-2"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (name.trim()) next();
-                }}
-              >
-                <Label htmlFor="name" className="sr-only">
-                  Vorname
-                </Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" aria-hidden />
-                  <Input
-                    id="name"
-                    type="text"
-                    autoFocus
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="z. B. Yasin"
-                    className="pl-9 h-12 text-base"
-                    autoComplete="given-name"
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  size="lg"
-                  className="h-12 group"
-                  disabled={!name.trim()}
-                >
-                  Weiter
-                  <ArrowRight className="size-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
-                </Button>
-              </form>
-            </StepShell>
-          )}
-
-          {step === 2 && (
-            <StepShell key="2">
-              <Hero
-                kicker="Schritt 2 von 3"
+                kicker={`Hallo, ${name.trim() || "du"}`}
                 title="Mit welcher Partei trittst du an?"
                 blurb="Das wird deine Heimat im Wahlkampf — kannst du später wechseln."
               />
@@ -319,12 +218,11 @@ export default function OnboardingPage() {
                       key={party.id}
                       type="button"
                       onClick={() => setPartyId(party.id)}
-                      className={`relative rounded-xl border-2 p-3 flex flex-col gap-1.5 items-start transition-all text-left min-h-[80px] ${
+                      className={`relative rounded-2xl border p-3 flex flex-col gap-1.5 items-start transition-all text-left min-h-[80px] backdrop-blur-md ${
                         isSelected
-                          ? "bg-card shadow-md scale-[1.03]"
-                          : "border-border bg-card hover:border-foreground/30"
+                          ? "bg-foreground text-background border-foreground shadow-md scale-[1.03]"
+                          : "bg-white/60 border-foreground/8 hover:border-foreground/30"
                       }`}
-                      style={isSelected ? { borderColor: party.color } : undefined}
                     >
                       <span
                         className="size-5 rounded-full"
@@ -339,7 +237,7 @@ export default function OnboardingPage() {
                 })}
               </div>
               <Button
-                onClick={next}
+                onClick={() => setStep(2)}
                 size="lg"
                 className="h-12 group w-full max-w-sm mt-4"
                 disabled={!partyId}
@@ -350,25 +248,25 @@ export default function OnboardingPage() {
             </StepShell>
           )}
 
-          {step === 3 && (
-            <StepShell key="3">
+          {step === 2 && (
+            <StepShell key="2">
               <motion.div
                 initial={{ scale: 0.5, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                className="inline-flex items-center justify-center size-20 rounded-full bg-pastel-mint"
+                className="inline-flex items-center justify-center size-20 rounded-full bg-foreground/5 backdrop-blur-md border border-foreground/10"
               >
-                <PartyPopper className="size-10 text-pastel-mint-ink" />
+                <PartyPopper className="size-10 text-foreground" />
               </motion.div>
               <Hero
-                kicker="Schritt 3 von 3"
+                kicker="Bereit"
                 title={`Los geht's, ${name.trim() || "Politprofi"}.`}
                 blurb="Deine erste Tagesmission wartet. Ein Briefing, eine Entscheidung, ein Punkt auf dem Kompass."
               />
               <Button
                 onClick={finish}
                 size="lg"
-                className="h-13 px-8 group w-full max-w-sm shadow-md shadow-accent/30"
+                className="h-12 px-8 group w-full max-w-sm shadow-md"
                 disabled={submitting}
               >
                 {submitting ? "Starte …" : "Erste Mission starten"}
@@ -396,18 +294,10 @@ function StepShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Hero({
-  kicker,
-  title,
-  blurb,
-}: {
-  kicker: string;
-  title: string;
-  blurb: string;
-}) {
+function Hero({ kicker, title, blurb }: { kicker: string; title: string; blurb: string }) {
   return (
     <header className="flex flex-col gap-2 items-center">
-      <span className="text-pastel-peach-ink text-[11px] font-semibold uppercase tracking-[0.2em]">
+      <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.2em]">
         {kicker}
       </span>
       <h1 className="font-serif text-3xl sm:text-4xl font-semibold leading-tight">
@@ -428,10 +318,10 @@ function ProgressDots({ current, total }: { current: number; total: number }) {
           key={i}
           className={`h-1.5 rounded-full transition-all ${
             i === current
-              ? "w-6 bg-accent"
+              ? "w-6 bg-foreground"
               : i < current
-                ? "w-1.5 bg-foreground/60"
-                : "w-1.5 bg-border"
+                ? "w-1.5 bg-foreground/40"
+                : "w-1.5 bg-foreground/15"
           }`}
         />
       ))}

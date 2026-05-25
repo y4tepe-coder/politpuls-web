@@ -63,9 +63,9 @@ export default function ProfilPage() {
   const topAlignedParty = topAligned ? getPartyById(topAligned.partyId) : null;
 
   return (
-    <main className="flex flex-1 flex-col max-w-2xl mx-auto w-full px-5 py-8 gap-8">
+    <main className="flex flex-1 flex-col max-w-2xl mx-auto w-full px-5 py-8 gap-6">
       <header className="flex flex-col gap-1">
-        <span className="text-accent text-[11px] font-semibold uppercase tracking-[0.18em]">
+        <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
           Dein Profil
         </span>
         <h1 className="font-serif text-3xl sm:text-4xl font-semibold leading-tight">
@@ -78,15 +78,15 @@ export default function ProfilPage() {
         </p>
       </header>
 
-      {/* Werte-Check CTA (when not done) */}
+      {/* Werte-Check CTA */}
       {!werteCheckDone && (
-        <section className="rounded-2xl bg-gradient-to-br from-accent/20 via-accent/10 to-card border border-accent/30 p-5 flex flex-col gap-3">
+        <section className="glass-card rounded-2xl p-5 flex flex-col gap-3">
           <header className="flex items-center gap-3">
-            <span className="inline-flex items-center justify-center size-10 rounded-xl bg-accent text-accent-foreground shadow-md shadow-accent/30">
+            <span className="inline-flex items-center justify-center size-10 rounded-xl bg-foreground/5 text-foreground border border-foreground/10">
               <Sparkles className="size-5" />
             </span>
             <div className="flex flex-col">
-              <span className="text-accent text-[11px] font-semibold uppercase tracking-[0.18em]">
+              <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
                 Werte-Check
               </span>
               <h2 className="font-serif text-lg font-semibold">
@@ -98,7 +98,6 @@ export default function ProfilPage() {
           </header>
           <p className="text-sm text-muted-foreground">
             Bewerte 18 konkrete politische Aussagen mit Ja, Neutral oder Nein.
-            Wir rechnen dir aus, welche Partei zu welchem Thema zu dir passt.
           </p>
           <Link
             href="/werte-check"
@@ -109,9 +108,9 @@ export default function ProfilPage() {
         </section>
       )}
 
-      {/* Werte-Check Ergebnis (when done) */}
+      {/* Werte-Check Ergebnis */}
       {werteCheckDone && topAlignedParty && (
-        <section className="rounded-2xl bg-card border border-border p-5 sm:p-6 flex flex-col gap-4 shadow-sm">
+        <section className="glass-card rounded-2xl p-5 sm:p-6 flex flex-col gap-4">
           <header className="flex items-center gap-3">
             <span
               className="inline-flex items-center justify-center size-12 rounded-2xl text-white font-semibold text-lg"
@@ -148,7 +147,7 @@ export default function ProfilPage() {
                     {party.shortName}
                   </span>
                   <div className="flex items-center gap-2 w-32 sm:w-40">
-                    <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
+                    <div className="h-1.5 flex-1 rounded-full bg-foreground/8 overflow-hidden">
                       <div
                         className="h-full rounded-full"
                         style={{
@@ -168,7 +167,7 @@ export default function ProfilPage() {
         </section>
       )}
 
-      {/* Category breakdown (when answered at least some) */}
+      {/* Category breakdown */}
       {werteCheckStarted && categoryScores && (
         <section className="flex flex-col gap-3">
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
@@ -181,18 +180,11 @@ export default function ProfilPage() {
               return (
                 <li
                   key={c.categoryId}
-                  className="rounded-xl border border-border bg-card p-3 flex flex-col gap-1"
+                  className="glass-card rounded-xl p-3 flex flex-col gap-1"
                 >
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="size-2.5 rounded-full"
-                      style={{ backgroundColor: c.color }}
-                      aria-hidden
-                    />
-                    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      {c.label}
-                    </span>
-                  </div>
+                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {c.label}
+                  </span>
                   {c.answered > 0 ? (
                     <>
                       <span className="font-serif text-base font-semibold leading-tight">
@@ -214,14 +206,14 @@ export default function ProfilPage() {
         </section>
       )}
 
-      {/* Kompass (vom täglichen Spielen) */}
-      <section className="rounded-2xl bg-card border border-border p-5 sm:p-6 flex flex-col gap-4 shadow-sm">
+      {/* Kompass */}
+      <section className="glass-card rounded-2xl p-5 sm:p-6 flex flex-col gap-4">
         <header className="flex items-center gap-3">
-          <span className="inline-flex items-center justify-center size-10 rounded-xl bg-primary/10 text-primary">
+          <span className="inline-flex items-center justify-center size-10 rounded-xl bg-foreground/5 text-foreground border border-foreground/10">
             <Compass className="size-5" />
           </span>
           <div className="flex flex-col">
-            <span className="text-primary text-[11px] font-semibold uppercase tracking-[0.18em]">
+            <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
               Aus deinen Entscheidungen
             </span>
             <h2 className="font-serif text-xl font-semibold">
@@ -233,15 +225,14 @@ export default function ProfilPage() {
           <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start">
             <CompassMap user={state.spektrum} />
             <div className="w-full sm:flex-1 flex flex-col gap-3">
-              <h3 className="text-sm font-medium">Drei nächste Parteien (Kompass)</h3>
+              <h3 className="text-sm font-medium">Drei nächste Parteien</h3>
               <PartyMatches matches={matches} />
             </div>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-4 py-4 text-center">
             <p className="text-sm text-muted-foreground max-w-xs">
-              Der Kompass entsteht aus deinen Tagesentscheidungen — nicht aus
-              dem Werte-Check.
+              Der Kompass entsteht aus deinen Tagesentscheidungen.
             </p>
             <Link
               href="/heute"
@@ -258,23 +249,20 @@ export default function ProfilPage() {
         <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
           Deine Streak
         </h2>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-2.5">
           <Stat
-            tone="accent"
             icon={<Flame className="size-4" />}
             label="Heute"
             value={`${state.current_streak}`}
             unit="Tage"
           />
           <Stat
-            tone="success"
             icon={<Trophy className="size-4" />}
             label="Bestmarke"
             value={`${state.longest_streak}`}
             unit="Tage"
           />
           <Stat
-            tone="primary"
             icon={<Shield className="size-4" />}
             label="Rettung"
             value={`${state.streak_saves_left}`}
@@ -288,7 +276,6 @@ export default function ProfilPage() {
         )}
       </section>
 
-      {/* Werte-Check redo CTA (when done) */}
       {werteCheckDone && (
         <Link
           href="/werte-check"
@@ -299,13 +286,13 @@ export default function ProfilPage() {
         </Link>
       )}
 
-      <section className="flex flex-col gap-3 pt-4 border-t border-border">
+      <section className="flex flex-col gap-3 pt-4 border-t border-foreground/8">
         {!session?.isRegistered && (
           <Link
-            href="/registrieren"
+            href="/onboarding"
             className={buttonVariants({ size: "lg" }) + " h-12 w-full text-base"}
           >
-            Spielstand auf E-Mail sichern
+            Konto erstellen
           </Link>
         )}
         <Button
@@ -331,27 +318,19 @@ export default function ProfilPage() {
 }
 
 function Stat({
-  tone,
   icon,
   label,
   value,
   unit,
 }: {
-  tone: "accent" | "success" | "primary";
   icon: React.ReactNode;
   label: string;
   value: string;
   unit: string;
 }) {
-  // Pastel palette: peach for active streak, mint for personal best, sky for safety net.
-  const styles = {
-    accent: "bg-pastel-peach border-pastel-peach-ink/15 text-pastel-peach-ink",
-    success: "bg-pastel-mint border-pastel-mint-ink/15 text-pastel-mint-ink",
-    primary: "bg-pastel-sky border-pastel-sky-ink/15 text-pastel-sky-ink",
-  } as const;
   return (
-    <div className={`rounded-2xl border p-4 flex flex-col gap-2 ${styles[tone]}`}>
-      <span className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide">
+    <div className="glass-card rounded-2xl p-4 flex flex-col gap-2">
+      <span className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
         {icon}
         {label}
       </span>
@@ -368,12 +347,12 @@ function Stat({
 function ProfileSkeleton() {
   return (
     <main className="flex flex-1 flex-col max-w-2xl mx-auto w-full px-5 py-8 gap-6">
-      <div className="h-10 w-2/3 rounded-md bg-muted animate-pulse" />
-      <div className="h-64 rounded-2xl bg-muted animate-pulse" />
+      <div className="h-10 w-2/3 rounded-md bg-foreground/5 animate-pulse" />
+      <div className="h-64 rounded-2xl bg-foreground/5 animate-pulse" />
       <div className="grid grid-cols-3 gap-3">
-        <div className="h-24 rounded-2xl bg-muted animate-pulse" />
-        <div className="h-24 rounded-2xl bg-muted animate-pulse" />
-        <div className="h-24 rounded-2xl bg-muted animate-pulse" />
+        <div className="h-24 rounded-2xl bg-foreground/5 animate-pulse" />
+        <div className="h-24 rounded-2xl bg-foreground/5 animate-pulse" />
+        <div className="h-24 rounded-2xl bg-foreground/5 animate-pulse" />
       </div>
     </main>
   );

@@ -82,12 +82,12 @@ export default function WahlPage() {
           initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", stiffness: 200, damping: 15 }}
-          className="inline-flex items-center justify-center size-20 rounded-full bg-pastel-rose"
+          className="inline-flex items-center justify-center size-20 rounded-full bg-foreground/5"
         >
-          <Trophy className="size-10 text-pastel-rose-ink" />
+          <Trophy className="size-10 text-foreground" />
         </motion.div>
         <header className="flex flex-col gap-2">
-          <span className="text-pastel-rose-ink text-[11px] font-semibold uppercase tracking-[0.18em]">
+          <span className="text-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
             Wahlsonntag
           </span>
           <h1 className="font-serif text-3xl sm:text-4xl font-semibold leading-tight">
@@ -115,7 +115,7 @@ export default function WahlPage() {
     return (
       <main className="flex flex-1 flex-col max-w-2xl mx-auto w-full px-5 py-6 gap-5">
         <header className="flex flex-col gap-2">
-          <span className="text-pastel-rose-ink text-[11px] font-semibold uppercase tracking-[0.18em]">
+          <span className="text-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
             Hochrechnung 18:00
           </span>
           <h1 className="font-serif text-3xl sm:text-4xl font-semibold leading-tight">
@@ -202,7 +202,7 @@ export default function WahlPage() {
     return (
       <main className="flex flex-1 flex-col max-w-2xl mx-auto w-full px-5 py-6 gap-5">
         <header className="flex flex-col gap-2">
-          <span className="text-pastel-sky-ink text-[11px] font-semibold uppercase tracking-[0.18em]">
+          <span className="text-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
             Koalition
           </span>
           <h1 className="font-serif text-3xl sm:text-4xl font-semibold leading-tight">
@@ -221,7 +221,7 @@ export default function WahlPage() {
               <button
                 type="button"
                 onClick={() => finish(c)}
-                className="group w-full text-left rounded-2xl border-2 border-pastel-sky-ink/15 bg-pastel-sky text-pastel-sky-ink p-4 hover:shadow-md transition-all flex items-center gap-3"
+                className="glass-card group w-full text-left rounded-2xl text-foreground p-4 hover:bg-foreground/5 transition-all flex items-center gap-3"
               >
                 <div className="flex flex-col flex-1 min-w-0">
                   <span className="font-serif font-semibold text-lg leading-tight">
@@ -237,7 +237,7 @@ export default function WahlPage() {
                     return (
                       <span
                         key={pid}
-                        className="size-7 rounded-full border-2 border-pastel-sky shadow-sm"
+                        className="size-7 rounded-full border-2 border-white shadow-sm"
                         style={{ backgroundColor: p?.color ?? "#888" }}
                         aria-hidden
                       />
@@ -270,7 +270,7 @@ export default function WahlPage() {
       icon: <Crown className="size-10" />,
       blurb:
         "Deine Partei hat die Wahl gewonnen. Du übernimmst die Regierung — Außenpolitik, Haushalt, Krisen-Management liegen jetzt in deiner Hand.",
-      tone: "bg-pastel-peach text-pastel-peach-ink",
+      tone: "glass-card text-foreground",
     },
     minister: {
       title: "Minister:in",
@@ -278,14 +278,14 @@ export default function WahlPage() {
       blurb: picked
         ? `Du regierst in der ${picked.label}-Koalition mit. Welches Ressort? Das verhandelst du noch.`
         : "Du regierst in der Koalition mit. Welches Ressort? Das verhandelst du noch.",
-      tone: "bg-pastel-mint text-pastel-mint-ink",
+      tone: "glass-card text-foreground",
     },
     opposition: {
       title: "Opposition",
       icon: <Megaphone className="size-10" />,
       blurb:
         "Es hat nicht gereicht. Du wirst zur lautesten Stimme im Bundestag — andere Mechanik, gleicher Einfluss.",
-      tone: "bg-pastel-rose text-pastel-rose-ink",
+      tone: "glass-card text-foreground",
     },
   }[role];
 

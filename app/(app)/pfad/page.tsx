@@ -17,7 +17,7 @@ export default function PfadPage() {
   return (
     <main className="flex flex-1 flex-col">
       <header className="mx-auto w-full max-w-2xl px-5 pt-8 pb-2 flex flex-col gap-2">
-        <span className="text-pastel-peach-ink text-[11px] font-semibold uppercase tracking-[0.2em]">
+        <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.2em]">
           Dein Pfad
         </span>
         <h1 className="font-serif text-3xl sm:text-4xl font-semibold leading-tight">

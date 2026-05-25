@@ -9,9 +9,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, Tv, Sparkles, Trophy } from "lucide-react";
 import Link from "next/link";
 
-// 5-Fragen TV-Triell. Pro Frage zeigt: Topic + Moderator + Gegner-Statements,
-// dann der User pickt eine von drei Antworten. Score wird über Antwort-
-// Popularität summiert. Am Ende: Score-Reveal.
+// 5-Fragen TV-Triell — iOS-glass styling, no pastel chroma.
 
 export default function TvTriellPage() {
   const router = useRouter();
@@ -54,7 +52,6 @@ export default function TvTriellPage() {
   }
 
   if (finished) {
-    // Compute score
     const score = TV_TRIELL_FRAGEN.reduce((sum, f) => {
       const aId = answers[f.id];
       const a = f.answers.find((x) => x.id === aId);
@@ -74,12 +71,12 @@ export default function TvTriellPage() {
           initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", stiffness: 200, damping: 15 }}
-          className="inline-flex items-center justify-center size-20 rounded-full bg-pastel-sky"
+          className="glass-card inline-flex items-center justify-center size-20 rounded-full"
         >
-          <Trophy className="size-10 text-pastel-sky-ink" />
+          <Trophy className="size-10 text-foreground" />
         </motion.div>
         <header className="flex flex-col gap-2">
-          <span className="text-pastel-sky-ink text-[11px] font-semibold uppercase tracking-[0.18em]">
+          <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
             TV-Triell beendet
           </span>
           <h1 className="font-serif text-3xl sm:text-4xl font-semibold leading-tight">
@@ -122,15 +119,15 @@ export default function TvTriellPage() {
       <header className="flex items-center justify-between gap-3">
         <button
           onClick={back}
-          className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-full text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors"
           aria-label="Zurück"
         >
           <ArrowLeft className="size-5" />
         </button>
         <div className="flex flex-col items-center gap-1.5 flex-1 max-w-xs">
-          <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+          <div className="h-1.5 w-full rounded-full bg-foreground/8 overflow-hidden">
             <motion.div
-              className="h-full rounded-full bg-pastel-sky-ink"
+              className="h-full rounded-full bg-foreground"
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.3 }}
@@ -152,11 +149,10 @@ export default function TvTriellPage() {
           transition={{ duration: 0.3 }}
           className="flex flex-col gap-5"
         >
-          {/* Studio header */}
-          <div className="rounded-2xl bg-pastel-sky border border-pastel-sky-ink/15 text-pastel-sky-ink p-4 flex items-center gap-3">
-            <Tv className="size-5" />
+          <div className="glass-card rounded-2xl p-4 flex items-center gap-3">
+            <Tv className="size-5 text-foreground" />
             <div className="flex flex-col">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] opacity-80">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                 {frage.topic} · Moderation
               </span>
               <span className="font-serif font-semibold leading-tight">
@@ -165,30 +161,25 @@ export default function TvTriellPage() {
             </div>
           </div>
 
-          {/* Question */}
           <h2 className="font-serif text-2xl sm:text-3xl font-semibold leading-snug">
             {frage.question}
           </h2>
 
-          {/* Opponent statements */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <OpponentBubble
-              tone="rose"
               name={frage.opponentA.name}
               party={frage.opponentA.party}
               statement={frage.opponentA.statement}
             />
             <OpponentBubble
-              tone="peach"
               name={frage.opponentB.name}
               party={frage.opponentB.party}
               statement={frage.opponentB.statement}
             />
           </div>
 
-          {/* User answers */}
           <div className="flex flex-col gap-2.5 mt-2">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-pastel-mint-ink">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
               Deine Antwort
             </span>
             {frage.answers.map((a) => (
@@ -196,15 +187,15 @@ export default function TvTriellPage() {
                 key={a.id}
                 type="button"
                 onClick={() => pick(a.id)}
-                className="group w-full text-left rounded-2xl border-2 border-pastel-mint-ink/15 bg-pastel-mint text-pastel-mint-ink p-4 hover:shadow-md transition-all min-h-[60px] flex items-center gap-3"
+                className="glass-card group w-full text-left rounded-2xl p-4 hover:bg-foreground/5 transition-all min-h-[60px] flex items-center gap-3"
               >
-                <span className="inline-flex items-center justify-center size-8 rounded-full bg-pastel-mint-ink text-pastel-mint font-mono text-sm font-bold uppercase shrink-0">
+                <span className="inline-flex items-center justify-center size-8 rounded-full bg-foreground text-background font-mono text-sm font-bold uppercase shrink-0">
                   {a.id}
                 </span>
                 <span className="font-medium leading-snug flex-1">
                   {a.label}
                 </span>
-                <ArrowRight className="size-4 opacity-60 group-hover:translate-x-0.5 transition-transform" />
+                <ArrowRight className="size-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
               </button>
             ))}
           </div>
@@ -212,7 +203,7 @@ export default function TvTriellPage() {
       </AnimatePresence>
 
       <footer className="text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5 mt-2">
-        <Sparkles className="size-3.5 text-pastel-peach-ink" />
+        <Sparkles className="size-3.5" />
         Antworten werden gespeichert, du kannst zurück & ändern.
       </footer>
     </main>
@@ -220,20 +211,14 @@ export default function TvTriellPage() {
 }
 
 function OpponentBubble({
-  tone,
   name,
   party,
   statement,
 }: {
-  tone: "rose" | "peach";
   name: string;
   party: string;
   statement: string;
 }) {
-  const styles =
-    tone === "rose"
-      ? "bg-pastel-rose border-pastel-rose-ink/15 text-pastel-rose-ink"
-      : "bg-pastel-peach border-pastel-peach-ink/15 text-pastel-peach-ink";
   const initials = name
     .split(" ")
     .map((p) => p[0])
@@ -241,17 +226,17 @@ function OpponentBubble({
     .toUpperCase()
     .slice(0, 2);
   return (
-    <div className={`rounded-2xl border p-3.5 flex flex-col gap-2 ${styles}`}>
+    <div className="glass-card rounded-2xl p-3.5 flex flex-col gap-2">
       <div className="flex items-center gap-2">
-        <span className="inline-flex items-center justify-center size-7 rounded-full bg-card text-foreground font-mono text-xs font-bold">
+        <span className="inline-flex items-center justify-center size-7 rounded-full bg-foreground text-background font-mono text-xs font-bold">
           {initials}
         </span>
         <div className="flex flex-col leading-tight">
           <span className="text-xs font-semibold">{name}</span>
-          <span className="text-[10px] opacity-80">{party}</span>
+          <span className="text-[10px] text-muted-foreground">{party}</span>
         </div>
       </div>
-      <p className="text-sm leading-snug">"{statement}"</p>
+      <p className="text-sm leading-snug text-foreground/75">"{statement}"</p>
     </div>
   );
 }

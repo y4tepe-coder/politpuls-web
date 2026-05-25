@@ -88,7 +88,7 @@ export default function PlakatPage() {
       </header>
 
       <div className="flex flex-col gap-2">
-        <span className="text-pastel-peach-ink text-[11px] font-semibold uppercase tracking-[0.18em]">
+        <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
           Wahlplakat
         </span>
         <h1 className="font-serif text-3xl sm:text-4xl font-semibold leading-tight">
@@ -217,7 +217,7 @@ export default function PlakatPage() {
 
       {themen.length === 0 && (
         <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1.5">
-          <Sparkles className="size-3.5 text-pastel-mint-ink" />
+          <Sparkles className="size-3.5 text-foreground" />
           Tipp: Im Programm-Schritt gewählte Themen werden hier als Pille auf
           dem Plakat angezeigt.
         </p>

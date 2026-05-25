@@ -154,28 +154,27 @@ h1, h2, h3, .font-serif {
   font-feature-settings: "ss01", "ss02";
 }
 
-/* Subtle pixel-grain background — a finer dotted grid that echoes the gooey
-   pixel-trail on the landing, without becoming busy. Sits behind everything. */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background-image: radial-gradient(
-    oklch(0.4 0.06 260 / 0.06) 1px,
-    transparent 1.5px
-  );
-  background-size: 14px 14px;
+/* iOS-style frosted glass card — semi-transparent white with backdrop blur
+   and a feather-light border. Use this on every Card/Tile/Section in-app.
+   Looks the same whether the painting peeks through behind it or pure white. */
+.glass-card {
+  background-color: oklch(1 0 0 / 0.65);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid oklch(0 0 0 / 0.06);
+  box-shadow: 0 1px 3px oklch(0 0 0 / 0.04), 0 8px 24px -10px oklch(0 0 0 / 0.06);
 }
 
-body > * {
-  position: relative;
-  z-index: 1;
+/* Same but darker — for high-contrast headers / selected items. */
+.glass-card-strong {
+  background-color: oklch(0.18 0.025 260 / 0.9);
+  color: oklch(0.985 0.006 85);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid oklch(1 0 0 / 0.1);
 }
 
-/* Reusable utility: stronger pixel-dot pattern. Apply to a Card/Section
-   when you want the hand-painted texture to peek through. */
+/* Reusable utility: stronger pixel-dot pattern. */
 .bg-pixel-dots {
   background-image: radial-gradient(
     currentColor 1.25px,

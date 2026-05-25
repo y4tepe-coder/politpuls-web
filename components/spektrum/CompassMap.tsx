@@ -9,11 +9,8 @@ type Props = {
   size?: number;
 };
 
-// 2-axis political compass. SVG, no external deps.
-// X-axis: economic (left → right). Y-axis: social (conservative → progressive),
-// inverted so "progressive" sits at the top of the chart.
-// Quadrant tints use the same pastel family as the rest of the app so the
-// chart reads as part of the painting, not a digital widget.
+// 2-axis political compass. iOS-style: monochrome quadrants, party color dots
+// the only chroma. X = economic (left↔right), Y = social (conservative↔progressive).
 export function CompassMap({ user, previous, size = 280 }: Props) {
   const pad = 36;
   const inner = size - pad * 2;
@@ -35,21 +32,25 @@ export function CompassMap({ user, previous, size = 280 }: Props) {
       role="img"
       aria-label="Politischer Kompass: dein Standpunkt"
     >
-      {/* Pastel quadrant tints — top-left progressive-left, top-right progressive-right etc. */}
-      <rect x={pad} y={pad} width={inner / 2} height={inner / 2} fill="var(--pastel-mint)" />
-      <rect x={mid} y={pad} width={inner / 2} height={inner / 2} fill="var(--pastel-peach)" />
-      <rect x={pad} y={mid} width={inner / 2} height={inner / 2} fill="var(--pastel-sky)" />
-      <rect x={mid} y={mid} width={inner / 2} height={inner / 2} fill="var(--pastel-rose)" />
-
-      {/* Frame */}
+      {/* Plate */}
       <rect
         x={pad}
         y={pad}
         width={inner}
         height={inner}
-        className="fill-none stroke-border"
+        fill="white"
+        opacity="0.5"
+        rx={12}
+      />
+      <rect
+        x={pad}
+        y={pad}
+        width={inner}
+        height={inner}
+        fill="none"
+        className="stroke-foreground/10"
         strokeWidth={1}
-        rx={10}
+        rx={12}
       />
 
       {/* Axes */}
@@ -57,35 +58,16 @@ export function CompassMap({ user, previous, size = 280 }: Props) {
       <line x1={mid} y1={pad} x2={mid} y2={pad + inner} className="stroke-foreground/15" strokeWidth={1} />
 
       {/* Axis labels */}
-      <text
-        x={mid}
-        y={pad - 10}
-        className="fill-muted-foreground text-[10px] font-medium"
-        textAnchor="middle"
-      >
+      <text x={mid} y={pad - 10} className="fill-muted-foreground text-[10px] font-medium" textAnchor="middle">
         progressiv
       </text>
-      <text
-        x={mid}
-        y={size - pad + 18}
-        className="fill-muted-foreground text-[10px] font-medium"
-        textAnchor="middle"
-      >
+      <text x={mid} y={size - pad + 18} className="fill-muted-foreground text-[10px] font-medium" textAnchor="middle">
         konservativ
       </text>
-      <text
-        x={pad - 6}
-        y={mid + 4}
-        className="fill-muted-foreground text-[10px] font-medium"
-        textAnchor="end"
-      >
+      <text x={pad - 6} y={mid + 4} className="fill-muted-foreground text-[10px] font-medium" textAnchor="end">
         links
       </text>
-      <text
-        x={pad + inner + 6}
-        y={mid + 4}
-        className="fill-muted-foreground text-[10px] font-medium"
-      >
+      <text x={pad + inner + 6} y={mid + 4} className="fill-muted-foreground text-[10px] font-medium">
         rechts
       </text>
 
@@ -95,18 +77,13 @@ export function CompassMap({ user, previous, size = 280 }: Props) {
         return (
           <g key={party.id}>
             <circle cx={x} cy={y} r={6} fill={party.color} stroke="white" strokeWidth={1.5} />
-            <text
-              x={x + 9}
-              y={y + 3}
-              className="fill-foreground text-[10px] font-semibold"
-            >
+            <text x={x + 9} y={y + 3} className="fill-foreground text-[10px] font-semibold">
               {party.shortName}
             </text>
           </g>
         );
       })}
 
-      {/* Previous position ghost + connecting arrow */}
       {prevPos && (
         <>
           <line
@@ -119,25 +96,11 @@ export function CompassMap({ user, previous, size = 280 }: Props) {
             strokeDasharray="4 3"
             strokeLinecap="round"
           />
-          <circle
-            cx={prevPos.x}
-            cy={prevPos.y}
-            r={5}
-            className="fill-card stroke-foreground/60"
-            strokeWidth={1.5}
-          />
+          <circle cx={prevPos.x} cy={prevPos.y} r={5} className="fill-white stroke-foreground/60" strokeWidth={1.5} />
         </>
       )}
 
-      {/* User position */}
-      <circle
-        cx={userPos.x}
-        cy={userPos.y}
-        r={10}
-        className="fill-foreground"
-        stroke="white"
-        strokeWidth={3}
-      />
+      <circle cx={userPos.x} cy={userPos.y} r={10} className="fill-foreground" stroke="white" strokeWidth={3} />
       <circle cx={userPos.x} cy={userPos.y} r={4} className="fill-white" />
     </svg>
   );

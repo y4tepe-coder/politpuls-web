@@ -45,15 +45,9 @@ const ICONS = {
   Compass,
 } as const;
 
-const PASTEL_BG = {
-  sky: "bg-pastel-sky text-pastel-sky-ink border-pastel-sky-ink/15",
-  rose: "bg-pastel-rose text-pastel-rose-ink border-pastel-rose-ink/15",
-  mint: "bg-pastel-mint text-pastel-mint-ink border-pastel-mint-ink/15",
-  peach: "bg-pastel-peach text-pastel-peach-ink border-pastel-peach-ink/15",
-  lavender:
-    "bg-pastel-lavender text-pastel-lavender-ink border-pastel-lavender-ink/15",
-  sand: "bg-pastel-sand text-pastel-sand-ink border-pastel-sand-ink/15",
-} as const;
+// In iOS-glass: all theme tiles share one neutral glass look. The order/icon
+// is the visual hook, not the color.
+const TILE = "glass-card text-foreground";
 
 export default function ProgrammPage() {
   const router = useRouter();
@@ -103,7 +97,7 @@ export default function ProgrammPage() {
       </header>
 
       <div className="flex flex-col gap-2">
-        <span className="text-pastel-mint-ink text-[11px] font-semibold uppercase tracking-[0.18em]">
+        <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
           Wahlversprechen
         </span>
         <h1 className="font-serif text-3xl sm:text-4xl font-semibold leading-tight">
@@ -131,18 +125,18 @@ export default function ProgrammPage() {
                 type="button"
                 onClick={() => toggle(thema.id)}
                 disabled={disabled}
-                className={`relative w-full text-left rounded-2xl border-2 p-3.5 flex flex-col gap-2 transition-all min-h-[110px] ${
+                className={`relative w-full text-left rounded-2xl p-3.5 flex flex-col gap-2 transition-all min-h-[110px] ${
                   isSelected
-                    ? `${PASTEL_BG[thema.pastel]} border-foreground shadow-md`
-                    : `${PASTEL_BG[thema.pastel]} ${disabled ? "opacity-40 cursor-not-allowed" : "hover:shadow-md"} border-transparent`
+                    ? "bg-foreground text-background border border-foreground shadow-md"
+                    : `${TILE} ${disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-foreground/5"}`
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="inline-flex items-center justify-center size-8 rounded-lg bg-card/80">
+                  <span className={`inline-flex items-center justify-center size-8 rounded-lg ${isSelected ? "bg-background/15" : "bg-foreground/5"}`}>
                     {Icon && <Icon className="size-4" />}
                   </span>
                   {isSelected && (
-                    <span className="inline-flex items-center justify-center size-6 rounded-full bg-foreground text-background">
+                    <span className="inline-flex items-center justify-center size-6 rounded-full bg-background text-foreground">
                       <Check className="size-3.5" strokeWidth={3} />
                     </span>
                   )}
@@ -151,7 +145,7 @@ export default function ProgrammPage() {
                   <span className="font-serif font-semibold text-base leading-tight">
                     {thema.label}
                   </span>
-                  <span className="text-[11px] leading-snug opacity-80">
+                  <span className={`text-[11px] leading-snug ${isSelected ? "opacity-80" : "text-muted-foreground"}`}>
                     {thema.blurb}
                   </span>
                 </div>

@@ -343,10 +343,11 @@ function Stat({
   value: string;
   unit: string;
 }) {
+  // Pastel palette: peach for active streak, mint for personal best, sky for safety net.
   const styles = {
-    accent: "bg-accent/15 border-accent/30 text-accent-foreground/90",
-    success: "bg-success/15 border-success/30 text-success",
-    primary: "bg-primary/10 border-primary/25 text-primary",
+    accent: "bg-pastel-peach border-pastel-peach-ink/15 text-pastel-peach-ink",
+    success: "bg-pastel-mint border-pastel-mint-ink/15 text-pastel-mint-ink",
+    primary: "bg-pastel-sky border-pastel-sky-ink/15 text-pastel-sky-ink",
   } as const;
   return (
     <div className={`rounded-2xl border p-4 flex flex-col gap-2 ${styles[tone]}`}>

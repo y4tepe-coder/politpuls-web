@@ -11,11 +11,9 @@ type Props = {
 
 // 2-axis political compass. SVG, no external deps.
 // X-axis: economic (left → right). Y-axis: social (conservative → progressive),
-// inverted so "progressive" sits at the top of the chart per popular convention.
-//
-// Renders the four quadrants in subtle colour washes, party markers, an optional
-// previous-position ghost (for the shift arrow), and the current user point.
-// Coordinates run -100..+100 in domain space.
+// inverted so "progressive" sits at the top of the chart.
+// Quadrant tints use the same pastel family as the rest of the app so the
+// chart reads as part of the painting, not a digital widget.
 export function CompassMap({ user, previous, size = 280 }: Props) {
   const pad = 36;
   const inner = size - pad * 2;
@@ -37,11 +35,11 @@ export function CompassMap({ user, previous, size = 280 }: Props) {
       role="img"
       aria-label="Politischer Kompass: dein Standpunkt"
     >
-      {/* Four quadrant tints — gentle so the markers stay readable */}
-      <rect x={pad} y={pad} width={inner / 2} height={inner / 2} fill="oklch(0.96 0.04 145)" />
-      <rect x={mid} y={pad} width={inner / 2} height={inner / 2} fill="oklch(0.96 0.04 65)" />
-      <rect x={pad} y={mid} width={inner / 2} height={inner / 2} fill="oklch(0.96 0.04 255)" />
-      <rect x={mid} y={mid} width={inner / 2} height={inner / 2} fill="oklch(0.96 0.04 0)" />
+      {/* Pastel quadrant tints — top-left progressive-left, top-right progressive-right etc. */}
+      <rect x={pad} y={pad} width={inner / 2} height={inner / 2} fill="var(--pastel-mint)" />
+      <rect x={mid} y={pad} width={inner / 2} height={inner / 2} fill="var(--pastel-peach)" />
+      <rect x={pad} y={mid} width={inner / 2} height={inner / 2} fill="var(--pastel-sky)" />
+      <rect x={mid} y={mid} width={inner / 2} height={inner / 2} fill="var(--pastel-rose)" />
 
       {/* Frame */}
       <rect
@@ -55,8 +53,8 @@ export function CompassMap({ user, previous, size = 280 }: Props) {
       />
 
       {/* Axes */}
-      <line x1={pad} y1={mid} x2={pad + inner} y2={mid} className="stroke-border" strokeWidth={1} />
-      <line x1={mid} y1={pad} x2={mid} y2={pad + inner} className="stroke-border" strokeWidth={1} />
+      <line x1={pad} y1={mid} x2={pad + inner} y2={mid} className="stroke-foreground/15" strokeWidth={1} />
+      <line x1={mid} y1={pad} x2={mid} y2={pad + inner} className="stroke-foreground/15" strokeWidth={1} />
 
       {/* Axis labels */}
       <text
@@ -116,7 +114,7 @@ export function CompassMap({ user, previous, size = 280 }: Props) {
             y1={prevPos.y}
             x2={userPos.x}
             y2={userPos.y}
-            className="stroke-accent"
+            className="stroke-foreground/60"
             strokeWidth={2}
             strokeDasharray="4 3"
             strokeLinecap="round"
@@ -125,27 +123,22 @@ export function CompassMap({ user, previous, size = 280 }: Props) {
             cx={prevPos.x}
             cy={prevPos.y}
             r={5}
-            className="fill-card stroke-accent"
+            className="fill-card stroke-foreground/60"
             strokeWidth={1.5}
           />
         </>
       )}
 
-      {/* User position (front-most) */}
+      {/* User position */}
       <circle
         cx={userPos.x}
         cy={userPos.y}
         r={10}
-        className="fill-accent"
+        className="fill-foreground"
         stroke="white"
         strokeWidth={3}
       />
-      <circle
-        cx={userPos.x}
-        cy={userPos.y}
-        r={4}
-        className="fill-white"
-      />
+      <circle cx={userPos.x} cy={userPos.y} r={4} className="fill-white" />
     </svg>
   );
 }

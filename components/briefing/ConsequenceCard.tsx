@@ -26,9 +26,6 @@ type Props = {
   onRestart: () => void;
 };
 
-// Final card: shows the user's choice, group reactions, the spektrum shift,
-// and (ported from iOS) impact delta rows per choice — labelled metrics with
-// a signed percent pill colored green/red.
 export function ConsequenceCard({
   choice,
   consequence,
@@ -41,15 +38,16 @@ export function ConsequenceCard({
 
   return (
     <article className="flex flex-1 flex-col max-w-xl mx-auto w-full px-5 py-10 gap-7">
-      <div className="rounded-2xl bg-gradient-to-br from-success/20 via-success/10 to-card border border-success/30 p-5 flex items-center gap-4">
-        <span className="inline-flex items-center justify-center size-12 rounded-full bg-success text-success-foreground shadow-md shadow-success/30">
+      {/* Achievement banner — pastel mint instead of solid green */}
+      <div className="rounded-2xl bg-pastel-mint border border-pastel-mint-ink/15 p-5 flex items-center gap-4 shadow-sm">
+        <span className="inline-flex items-center justify-center size-12 rounded-full bg-pastel-mint-ink text-pastel-mint shadow-md">
           <Sparkles className="size-6" />
         </span>
-        <div className="flex flex-col">
-          <span className="text-success text-[11px] font-semibold uppercase tracking-[0.18em]">
+        <div className="flex flex-col text-pastel-mint-ink">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.18em]">
             Entscheidung gefallen
           </span>
-          <span className="font-serif text-lg font-semibold leading-snug">
+          <span className="font-serif text-lg font-semibold leading-snug text-foreground">
             Du hast Wahl {choice.id} gewählt.
           </span>
         </div>
@@ -64,7 +62,7 @@ export function ConsequenceCard({
         </p>
       </div>
 
-      {/* Impact deltas (iOS-style) */}
+      {/* Impact deltas */}
       {deltas.length > 0 && (
         <section className="flex flex-col gap-3">
           <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground px-1">
@@ -89,8 +87,8 @@ export function ConsequenceCard({
                 <span
                   className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-mono font-semibold tabular-nums ${
                     d.good
-                      ? "bg-success/15 text-success border border-success/30"
-                      : "bg-chart-4/15 text-chart-4 border border-chart-4/30"
+                      ? "bg-pastel-mint text-pastel-mint-ink border border-pastel-mint-ink/15"
+                      : "bg-pastel-rose text-pastel-rose-ink border border-pastel-rose-ink/15"
                   }`}
                 >
                   {d.good ? (
@@ -110,13 +108,13 @@ export function ConsequenceCard({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <ReactionTile
-          tone="success"
+          tone="mint"
           title="Freuen sich"
           icon={<CheckCircle2 className="size-4" />}
           items={consequence.cheers}
         />
         <ReactionTile
-          tone="warm"
+          tone="rose"
           title="Sind enttäuscht"
           icon={<Frown className="size-4" />}
           items={consequence.upset}
@@ -125,7 +123,7 @@ export function ConsequenceCard({
 
       <section className="rounded-2xl bg-card border border-border p-5 sm:p-6 flex flex-col gap-4">
         <header className="flex flex-col gap-1">
-          <span className="text-accent text-[11px] font-semibold uppercase tracking-[0.18em]">
+          <span className="text-pastel-peach-ink text-[11px] font-semibold uppercase tracking-[0.18em]">
             Dein politischer Kompass
           </span>
           <h3 className="font-serif text-xl font-semibold leading-snug">
@@ -163,15 +161,15 @@ function ReactionTile({
   icon,
   items,
 }: {
-  tone: "success" | "warm";
+  tone: "mint" | "rose";
   title: string;
   icon: React.ReactNode;
   items: string[];
 }) {
   const styles =
-    tone === "success"
-      ? "bg-success/10 border-success/30 text-success"
-      : "bg-chart-4/10 border-chart-4/30 text-chart-4";
+    tone === "mint"
+      ? "bg-pastel-mint border-pastel-mint-ink/15 text-pastel-mint-ink"
+      : "bg-pastel-rose border-pastel-rose-ink/15 text-pastel-rose-ink";
   return (
     <div className={`rounded-2xl border p-4 flex flex-col gap-3 ${styles}`}>
       <h3 className="text-xs font-semibold uppercase tracking-wide flex items-center gap-1.5">

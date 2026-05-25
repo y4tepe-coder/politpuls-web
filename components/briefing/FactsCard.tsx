@@ -10,22 +10,23 @@ type Props = {
 };
 
 // Second card: three numbered facts that frame the decision. One CTA.
-// Each fact gets its own color tile to give the screen visual rhythm.
+// Each fact tile uses a pastel hand-painted look so the page feels alive,
+// not corporate. Three tones rotate to give the screen visual rhythm.
 export function FactsCard({ facts, onContinue }: Props) {
   const palettes = [
-    "from-primary/12 via-primary/5 border-primary/30 text-primary",
-    "from-accent/15 via-accent/5 border-accent/40 text-accent-foreground",
-    "from-success/15 via-success/5 border-success/40 text-success",
+    "bg-pastel-sky text-pastel-sky-ink border-pastel-sky-ink/15",
+    "bg-pastel-peach text-pastel-peach-ink border-pastel-peach-ink/15",
+    "bg-pastel-mint text-pastel-mint-ink border-pastel-mint-ink/15",
   ] as const;
 
   return (
     <article className="flex flex-1 flex-col justify-center max-w-xl mx-auto w-full px-5 py-10 gap-7">
       <header className="flex items-center gap-3">
-        <span className="inline-flex items-center justify-center size-10 rounded-xl bg-accent/15 text-accent">
+        <span className="inline-flex items-center justify-center size-10 rounded-xl bg-pastel-peach text-pastel-peach-ink">
           <BarChart3 className="size-5" />
         </span>
         <div className="flex flex-col">
-          <span className="text-accent text-[11px] font-semibold uppercase tracking-[0.18em]">
+          <span className="text-pastel-peach-ink text-[11px] font-semibold uppercase tracking-[0.18em]">
             Worüber gestritten wird
           </span>
           <h2 className="font-serif text-2xl sm:text-3xl font-semibold leading-snug">
@@ -40,12 +41,12 @@ export function FactsCard({ facts, onContinue }: Props) {
           return (
             <li
               key={`${fact.label}-${index}`}
-              className={`rounded-2xl border bg-gradient-to-br to-card p-5 flex items-baseline gap-4 ${palette}`}
+              className={`rounded-2xl border p-5 flex items-baseline gap-4 shadow-sm ${palette}`}
             >
               <span className="font-serif text-3xl sm:text-4xl font-bold leading-none tabular-nums whitespace-nowrap">
                 {fact.value}
               </span>
-              <span className="text-sm sm:text-base text-foreground/80 leading-snug">
+              <span className="text-sm sm:text-base leading-snug">
                 {fact.label}
               </span>
             </li>

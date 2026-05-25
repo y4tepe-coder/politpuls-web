@@ -51,6 +51,22 @@
   --chart-4: oklch(0.6 0.18 0);    /* warm red */
   --chart-5: oklch(0.5 0.12 305);  /* violet */
 
+  /* Pastel palette — picked from the Reichstag painting's colour spread.
+     Use these for tiles, choice stripes, category accents — anything that
+     should look hand-painted rather than digital. */
+  --pastel-sky: oklch(0.92 0.045 230);
+  --pastel-sky-ink: oklch(0.42 0.12 250);
+  --pastel-rose: oklch(0.92 0.05 15);
+  --pastel-rose-ink: oklch(0.5 0.16 18);
+  --pastel-mint: oklch(0.93 0.065 150);
+  --pastel-mint-ink: oklch(0.45 0.13 150);
+  --pastel-sand: oklch(0.93 0.05 80);
+  --pastel-sand-ink: oklch(0.5 0.12 70);
+  --pastel-lavender: oklch(0.9 0.06 295);
+  --pastel-lavender-ink: oklch(0.45 0.15 295);
+  --pastel-peach: oklch(0.92 0.07 50);
+  --pastel-peach-ink: oklch(0.5 0.16 40);
+
   --radius: 0.875rem;
 
   --sidebar: oklch(0.985 0.006 85);
@@ -75,6 +91,18 @@
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  --color-pastel-sky: var(--pastel-sky);
+  --color-pastel-sky-ink: var(--pastel-sky-ink);
+  --color-pastel-rose: var(--pastel-rose);
+  --color-pastel-rose-ink: var(--pastel-rose-ink);
+  --color-pastel-mint: var(--pastel-mint);
+  --color-pastel-mint-ink: var(--pastel-mint-ink);
+  --color-pastel-sand: var(--pastel-sand);
+  --color-pastel-sand-ink: var(--pastel-sand-ink);
+  --color-pastel-lavender: var(--pastel-lavender);
+  --color-pastel-lavender-ink: var(--pastel-lavender-ink);
+  --color-pastel-peach: var(--pastel-peach);
+  --color-pastel-peach-ink: var(--pastel-peach-ink);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-serif: var(--font-source-serif);
@@ -126,7 +154,8 @@ h1, h2, h3, .font-serif {
   font-feature-settings: "ss01", "ss02";
 }
 
-/* Subtle paper-grain background to take the digital edge off the cream surface */
+/* Subtle pixel-grain background — a finer dotted grid that echoes the gooey
+   pixel-trail on the landing, without becoming busy. Sits behind everything. */
 body::before {
   content: "";
   position: fixed;
@@ -134,15 +163,26 @@ body::before {
   pointer-events: none;
   z-index: 0;
   background-image: radial-gradient(
-    oklch(0.5 0.02 260 / 0.025) 1px,
-    transparent 1px
+    oklch(0.4 0.06 260 / 0.06) 1px,
+    transparent 1.5px
   );
-  background-size: 24px 24px;
+  background-size: 14px 14px;
 }
 
 body > * {
   position: relative;
   z-index: 1;
+}
+
+/* Reusable utility: stronger pixel-dot pattern. Apply to a Card/Section
+   when you want the hand-painted texture to peek through. */
+.bg-pixel-dots {
+  background-image: radial-gradient(
+    currentColor 1.25px,
+    transparent 1.5px
+  );
+  background-size: 12px 12px;
+  background-position: 0 0;
 }
 
 @layer base {

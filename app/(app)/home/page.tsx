@@ -165,64 +165,89 @@ export default function HomePage() {
   );
 }
 
-/** Versetzte Zigzag-Path-Darstellung. Heute wird mit ref-id versehen damit
- *  der User initial dort landet, aber komplett scrollbar (oben Vergangenheit,
- *  unten Zukunft inkl. Events wie Wahlkampf/Triell/Wahl). */
+/** Duolingo-Style-Pfad: grosse Knoten in zentrierter Mittellinie, leicht
+ *  zigzag versetzt. Knoten skalieren responsiv (Mobile 64–80 px, Desktop
+ *  bis 112 px). Label klein UNTER dem Knoten. Auto-Scroll zu Heute. */
 function ZigzagPath({ stops }: { stops: PfadStop[] }) {
-  // Anker beim ersten Render: zum heutigen Knoten scrollen
   useEffect(() => {
     const el = document.getElementById("pfad-today");
     if (el) {
-      const top = el.getBoundingClientRect().top + window.scrollY - 140;
+      const top = el.getBoundingClientRect().top + window.scrollY - 160;
       window.scrollTo({ top, behavior: "instant" as ScrollBehavior });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // 5 Zigzag-Positionen, damit der Pfad "schlängelt" wie bei Duolingo
+  const offsets = [
+    "translate-x-0",
+    "translate-x-[22%]",
+    "translate-x-[14%]",
+    "-translate-x-[14%]",
+    "-translate-x-[22%]",
+  ];
+
   return (
-    <ol className="relative flex flex-col gap-3">
-      {/* Vertikale Mittel-Linie */}
-      <span
-        aria-hidden
-        className="absolute left-1/2 -translate-x-px top-4 bottom-4 w-px bg-foreground/15"
-      />
+    <ol className="relative flex flex-col items-center gap-6 sm:gap-8 py-4">
       {stops.map((stop, i) => (
-        <PfadRow key={stop.date + i} stop={stop} side={i % 2 === 0 ? "left" : "right"} />
+        <PfadNode
+          key={stop.date + i}
+          stop={stop}
+          offsetClass={offsets[i % offsets.length]}
+        />
       ))}
     </ol>
   );
 }
 
-function PfadRow({ stop, side }: { stop: PfadStop; side: "left" | "right" }) {
+function PfadNode({
+  stop,
+  offsetClass,
+}: {
+  stop: PfadStop;
+  offsetClass: string;
+}) {
   const isDone = stop.status === "done";
   const isToday = stop.status === "today";
   const isEvent = !!stop.eventTag;
+  const isLocked = stop.status === "locked" && !isEvent;
 
-  // Marker
-  const markerSize = isToday ? "size-16" : isEvent ? "size-14" : "size-12";
-  let markerBg = "bg-foreground/8 text-muted-foreground";
-  let markerIcon: React.ReactNode = <Lock className="size-4" />;
+  // Duolingo-mässig grosse Knoten. Mobile 64 px (done/locked) bis 80 px
+  // (today), Desktop bis 112 px für Today.
+  const markerSize = isToday
+    ? "size-20 sm:size-28"
+    : isEvent
+      ? "size-18 sm:size-24"
+      : "size-16 sm:size-20";
+
+  let markerBg = "bg-foreground/10 text-muted-foreground";
+  let iconSize = "size-7 sm:size-9";
+  let markerIcon: React.ReactNode = <Lock className={iconSize} />;
   if (isDone) {
-    markerBg = "bg-emerald-500 text-white";
-    markerIcon = <Check className="size-5" strokeWidth={3} />;
+    markerBg = "bg-emerald-500 text-white shadow-[0_6px_0_-2px] shadow-emerald-700/40";
+    markerIcon = <Check className={iconSize} strokeWidth={3} />;
   } else if (isToday) {
-    markerBg = "bg-gold text-gold-ink";
-    markerIcon = <Play className="size-5 ml-0.5" fill="currentColor" />;
+    markerBg = "bg-gold text-gold-ink shadow-[0_8px_0_-2px] shadow-yellow-700/40";
+    iconSize = "size-9 sm:size-12";
+    markerIcon = <Play className={iconSize + " ml-1"} fill="currentColor" />;
   } else if (isEvent) {
-    markerBg = "bg-pp-red/15 text-pp-red border border-pp-red/30";
-    if (stop.eventTag === "triell") markerIcon = <Mic className="size-5" />;
-    else if (stop.eventTag === "wahl") markerIcon = <Crown className="size-5" />;
-    else markerIcon = <Vote className="size-5" />;
+    markerBg = "bg-pp-red text-white shadow-[0_6px_0_-2px] shadow-red-900/40";
+    iconSize = "size-7 sm:size-9";
+    if (stop.eventTag === "triell") markerIcon = <Mic className={iconSize} />;
+    else if (stop.eventTag === "wahl") markerIcon = <Crown className={iconSize} />;
+    else markerIcon = <Vote className={iconSize} />;
   }
 
   const Marker = (
     <div
       id={isToday ? "pfad-today" : undefined}
-      className={`relative ${markerSize} rounded-full flex items-center justify-center shadow-sm shrink-0 ${markerBg}`}
+      className={`relative ${markerSize} rounded-full flex items-center justify-center shrink-0 transition-transform ${markerBg} ${
+        isLocked ? "opacity-60" : "hover:scale-105 active:scale-95"
+      }`}
     >
       {markerIcon}
       {isEvent && (
-        <span className="absolute -top-2 left-1/2 -translate-x-1/2 inline-flex items-center rounded-full bg-pp-red px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider text-white whitespace-nowrap">
+        <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 inline-flex items-center rounded-full bg-pp-red px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white whitespace-nowrap shadow-sm">
           {stop.eventTag === "wahl" ? "Wahl" : stop.eventTag === "triell" ? "Triell" : "Wahlkampf"}
         </span>
       )}
@@ -231,43 +256,34 @@ function PfadRow({ stop, side }: { stop: PfadStop; side: "left" | "right" }) {
 
   const Label = (
     <div
-      className={`flex flex-col leading-tight gap-0.5 max-w-[60%] ${
-        side === "left" ? "items-end text-right pr-1" : "items-start text-left pl-1"
-      } ${stop.status === "locked" && !isEvent ? "opacity-60" : ""}`}
+      className={`flex flex-col items-center leading-tight gap-0.5 mt-2 text-center max-w-[160px] sm:max-w-[200px] ${
+        isLocked ? "opacity-60" : ""
+      }`}
     >
       <span className="text-[10px] font-mono tabular-nums text-muted-foreground">
         {stop.weekdayShort}, {stop.dayNumber}. {stop.monthShort}
       </span>
       <span
-        className={`text-sm leading-snug truncate w-full ${
-          isToday
-            ? "font-serif font-semibold text-foreground"
-            : "text-foreground/80"
-        }`}
+        className={`text-xs sm:text-sm leading-snug ${
+          isToday ? "font-serif font-semibold text-foreground" : "text-foreground/80"
+        } line-clamp-2`}
       >
         {stop.headline}
       </span>
-      <span className="text-[10px] text-muted-foreground">{stop.kicker}</span>
     </div>
   );
 
   const content = (
-    <div className="relative grid grid-cols-[1fr_auto_1fr] items-center gap-3 py-1">
-      {side === "left" ? Label : <span />}
+    <div className={`flex flex-col items-center ${offsetClass} transition-transform`}>
       {Marker}
-      {side === "right" ? Label : <span />}
+      {Label}
     </div>
   );
 
-  if (stop.status === "locked" && !isEvent) {
-    return <li>{content}</li>;
-  }
+  if (isLocked) return <li>{content}</li>;
   return (
     <li>
-      <Link
-        href={stop.href}
-        className="block rounded-2xl hover:bg-foreground/[0.02] transition-colors"
-      >
+      <Link href={stop.href} className="block">
         {content}
       </Link>
     </li>

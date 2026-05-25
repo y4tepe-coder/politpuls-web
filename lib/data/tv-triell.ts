@@ -1,19 +1,22 @@
 // TV-Triell: 5 Fragen × 3 Antworten. Zwei simulierte Gegnerinnen, ein:e
-// "Moderator:in" (Hugo Briefcase Persona), und du. Antworten haben ein "tone"
-// (populär/risiko/wagnis) — wird am Ende für den Score genutzt.
+// Moderator:in, und du. Antworten haben "popularity" für den Score.
+//
+// Personas sind FIKTIV — leicht verfremdete Namen ähnlich zu bekannten
+// dt. Politiker:innen / TV-Moderator:innen. Wir zeigen die Partei klar,
+// damit die politische Position erkennbar bleibt. Statements sind
+// realistisch, aber nicht zitiert.
 
 export type TriellAnswer = {
-  id: string; // a | b | c
+  id: string;
   label: string;
-  // Wie das Volk diese Antwort wertet (für score). Höher = beliebter.
-  popularity: number; // -10..+10
+  popularity: number;
 };
 
 export type TriellFrage = {
   id: string;
   topic: string;
   question: string;
-  moderator: string; // Wer fragt
+  moderator: string;
   opponentA: { name: string; party: string; statement: string };
   opponentB: { name: string; party: string; statement: string };
   answers: TriellAnswer[];
@@ -25,15 +28,15 @@ export const TV_TRIELL_FRAGEN: TriellFrage[] = [
     topic: "Klima & Wirtschaft",
     question:
       "Wenn morgen Industrie und Klimaschutz kollidieren — was hat Vorrang?",
-    moderator: "Sandra Maischberger",
+    moderator: "Sarah Maischner",
     opponentA: {
-      name: "Annalena B.",
+      name: "Lena Baermann",
       party: "Grüne",
       statement:
         "Die Klimakrise ist die wirtschaftliche Krise. Wer Klima rettet, rettet auch unsere Wirtschaft.",
     },
     opponentB: {
-      name: "Friedrich M.",
+      name: "Friedrich Mertel",
       party: "CDU",
       statement:
         "Erst der Wohlstand, dann der Klimaschutz. Sonst verliert Deutschland seinen Standort.",
@@ -61,15 +64,15 @@ export const TV_TRIELL_FRAGEN: TriellFrage[] = [
     topic: "Migration",
     question:
       "Drittstaaten-Asylverfahren an der EU-Außengrenze — Ja oder Nein?",
-    moderator: "Maybrit Illner",
+    moderator: "Maybrit Iller",
     opponentA: {
-      name: "Friedrich M.",
+      name: "Friedrich Mertel",
       party: "CDU",
       statement:
         "Ja. Wir können nicht alle aufnehmen. Drittstaaten-Verfahren sind der einzige Weg.",
     },
     opponentB: {
-      name: "Ricarda L.",
+      name: "Robin Habich",
       party: "Grüne",
       statement:
         "Nein. Das ist Menschenrechte aufgeben. Wir müssen integrieren, nicht abschieben.",
@@ -97,15 +100,15 @@ export const TV_TRIELL_FRAGEN: TriellFrage[] = [
     topic: "Verteidigung",
     question:
       "Bundeswehr-Etat dauerhaft auf 3 % BIP — wie stehst du dazu?",
-    moderator: "Markus Lanz",
+    moderator: "Markus Lange",
     opponentA: {
-      name: "Friedrich M.",
+      name: "Friedrich Mertel",
       party: "CDU",
       statement:
         "Ja. Wir brauchen eine wehrhafte Demokratie. Russland zeigt es uns täglich.",
     },
     opponentB: {
-      name: "Sahra W.",
+      name: "Sara Waagenstein",
       party: "BSW",
       statement:
         "Nein. Aufrüstung schafft keine Sicherheit. Wir brauchen Diplomatie.",
@@ -121,15 +124,15 @@ export const TV_TRIELL_FRAGEN: TriellFrage[] = [
     topic: "Rente",
     question:
       "Renteneintrittsalter erhöhen, weil wir länger leben — Ja oder Nein?",
-    moderator: "Sandra Maischberger",
+    moderator: "Sarah Maischner",
     opponentA: {
-      name: "Christian L.",
+      name: "Christof Lindstedt",
       party: "FDP",
       statement:
         "Wir müssen das Renteneintrittsalter mit der Lebenserwartung koppeln. Sonst kollabiert das System.",
     },
     opponentB: {
-      name: "Janine W.",
+      name: "Janine Wissmann",
       party: "Linke",
       statement:
         "Nein. Wer hart gearbeitet hat, soll früher in Rente. Das Geld ist da — bei den Reichen.",
@@ -145,15 +148,15 @@ export const TV_TRIELL_FRAGEN: TriellFrage[] = [
     topic: "Bildung",
     question:
       "100 Mrd. € Sondervermögen für Schulen — mit neuen Schulden finanzieren?",
-    moderator: "Maybrit Illner",
+    moderator: "Maybrit Iller",
     opponentA: {
-      name: "Olaf S.",
+      name: "Olaf Schillemann",
       party: "SPD",
       statement:
         "Ja. Bildung ist Zukunft. Wir können uns nicht leisten, das zu sparen.",
     },
     opponentB: {
-      name: "Christian L.",
+      name: "Christof Lindstedt",
       party: "FDP",
       statement:
         "Nein. Neue Schulden lähmen die nächste Generation. Geld umverteilen, nicht aufnehmen.",

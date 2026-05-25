@@ -5,11 +5,19 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { TV_TRIELL_FRAGEN } from "@/lib/data/tv-triell";
 import { getLocalState, updateLocalState } from "@/lib/local/state";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, Tv, Sparkles, Trophy } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Tv,
+  Trophy,
+  CircleUserRound,
+} from "lucide-react";
 import Link from "next/link";
 
-// 5-Fragen TV-Triell — iOS-glass styling, no pastel chroma.
+// 5-Fragen TV-Triell — klare Hierarchie:
+// [topic pill + moderator] → [Frage] → "Was sagen die anderen" (2 chat bubbles)
+// → "Deine Antwort" (3 große CTA buttons).
 
 export default function TvTriellPage() {
   const router = useRouter();
@@ -115,7 +123,7 @@ export default function TvTriellPage() {
   const progress = ((index + 1) / total) * 100;
 
   return (
-    <main className="flex flex-1 flex-col max-w-2xl mx-auto w-full px-5 py-6 gap-5">
+    <main className="flex flex-1 flex-col max-w-2xl mx-auto w-full px-5 py-6 gap-6">
       <header className="flex items-center justify-between gap-3">
         <button
           onClick={back}
@@ -147,64 +155,72 @@ export default function TvTriellPage() {
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -30 }}
           transition={{ duration: 0.3 }}
-          className="flex flex-col gap-5"
+          className="flex flex-col gap-6"
         >
-          <div className="glass-card rounded-2xl p-4 flex items-center gap-3">
-            <Tv className="size-5 text-foreground" />
-            <div className="flex flex-col">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                {frage.topic} · Moderation
+          {/* Topic + Moderator (klein, zweizeilig oben) */}
+          <div className="flex items-start gap-3">
+            <span className="inline-flex items-center justify-center size-10 rounded-xl bg-foreground/5 border border-foreground/10 shrink-0">
+              <Tv className="size-5 text-foreground" />
+            </span>
+            <div className="flex flex-col gap-0.5 leading-tight">
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                {frage.topic} · TV-Studio
               </span>
-              <span className="font-serif font-semibold leading-tight">
-                {frage.moderator}
+              <span className="text-sm font-medium text-foreground/70">
+                Moderation: {frage.moderator}
               </span>
             </div>
           </div>
 
+          {/* Hauptfrage */}
           <h2 className="font-serif text-2xl sm:text-3xl font-semibold leading-snug">
             {frage.question}
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <OpponentBubble
-              name={frage.opponentA.name}
-              party={frage.opponentA.party}
-              statement={frage.opponentA.statement}
-            />
-            <OpponentBubble
-              name={frage.opponentB.name}
-              party={frage.opponentB.party}
-              statement={frage.opponentB.statement}
-            />
-          </div>
+          {/* Was sagen die anderen */}
+          <section className="flex flex-col gap-3">
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              Was sagen die anderen
+            </h3>
+            <div className="flex flex-col gap-3">
+              <OpponentBubble {...frage.opponentA} side="left" />
+              <OpponentBubble {...frage.opponentB} side="right" />
+            </div>
+          </section>
 
-          <div className="flex flex-col gap-2.5 mt-2">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Deine Antwort
-            </span>
-            {frage.answers.map((a) => (
-              <button
-                key={a.id}
-                type="button"
-                onClick={() => pick(a.id)}
-                className="glass-card group w-full text-left rounded-2xl p-4 hover:bg-foreground/5 transition-all min-h-[60px] flex items-center gap-3"
-              >
-                <span className="inline-flex items-center justify-center size-8 rounded-full bg-foreground text-background font-mono text-sm font-bold uppercase shrink-0">
-                  {a.id}
-                </span>
-                <span className="font-medium leading-snug flex-1">
-                  {a.label}
-                </span>
-                <ArrowRight className="size-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
-              </button>
-            ))}
-          </div>
+          {/* Deine Antwort — visuell deutlich separiert */}
+          <section className="flex flex-col gap-3 pt-2 border-t border-foreground/8">
+            <header className="flex items-center gap-2">
+              <CircleUserRound className="size-5 text-foreground" />
+              <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground">
+                Du bist dran
+              </h3>
+            </header>
+            <ul className="flex flex-col gap-2.5">
+              {frage.answers.map((a) => (
+                <li key={a.id}>
+                  <button
+                    type="button"
+                    onClick={() => pick(a.id)}
+                    className="glass-card group w-full text-left rounded-2xl p-4 hover:bg-foreground/5 hover:border-foreground/20 transition-all min-h-[60px] flex items-center gap-3"
+                  >
+                    <span className="inline-flex items-center justify-center size-8 rounded-full bg-foreground text-background font-mono text-sm font-bold uppercase shrink-0">
+                      {a.id}
+                    </span>
+                    <span className="font-medium leading-snug flex-1">
+                      {a.label}
+                    </span>
+                    <ArrowRight className="size-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
         </motion.div>
       </AnimatePresence>
 
-      <footer className="text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5 mt-2">
-        <Sparkles className="size-3.5" />
-        Antworten werden gespeichert, du kannst zurück & ändern.
+      <footer className="text-center text-xs text-muted-foreground mt-2">
+        Antworten werden gespeichert · du kannst zurück & ändern
       </footer>
     </main>
   );
@@ -214,10 +230,12 @@ function OpponentBubble({
   name,
   party,
   statement,
+  side,
 }: {
   name: string;
   party: string;
   statement: string;
+  side: "left" | "right";
 }) {
   const initials = name
     .split(" ")
@@ -225,18 +243,38 @@ function OpponentBubble({
     .join("")
     .toUpperCase()
     .slice(0, 2);
+  const align = side === "left" ? "self-start" : "self-end";
+  const bubbleCorner =
+    side === "left" ? "rounded-tl-md" : "rounded-tr-md";
+
   return (
-    <div className="glass-card rounded-2xl p-3.5 flex flex-col gap-2">
-      <div className="flex items-center gap-2">
-        <span className="inline-flex items-center justify-center size-7 rounded-full bg-foreground text-background font-mono text-xs font-bold">
+    <div
+      className={`${align} max-w-[88%] sm:max-w-[78%] flex flex-col gap-2 ${
+        side === "right" ? "items-end" : "items-start"
+      }`}
+    >
+      <div
+        className={`flex items-center gap-2 ${
+          side === "right" ? "flex-row-reverse" : ""
+        }`}
+      >
+        <span className="inline-flex items-center justify-center size-8 rounded-full bg-foreground text-background font-mono text-xs font-bold shrink-0">
           {initials}
         </span>
-        <div className="flex flex-col leading-tight">
-          <span className="text-xs font-semibold">{name}</span>
-          <span className="text-[10px] text-muted-foreground">{party}</span>
+        <div
+          className={`flex flex-col leading-tight ${
+            side === "right" ? "items-end" : ""
+          }`}
+        >
+          <span className="text-sm font-semibold">{name}</span>
+          <span className="text-[11px] text-muted-foreground">{party}</span>
         </div>
       </div>
-      <p className="text-sm leading-snug text-foreground/75">"{statement}"</p>
+      <div className={`glass-card rounded-2xl ${bubbleCorner} px-4 py-3`}>
+        <p className="text-sm leading-snug text-foreground/85">
+          „{statement}"
+        </p>
+      </div>
     </div>
   );
 }

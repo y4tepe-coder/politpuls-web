@@ -13,7 +13,7 @@ export function TopNav() {
 
   return (
     <header
-      className="sticky top-0 z-20 w-full border-b border-border bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70"
+      className="sticky top-0 z-20 w-full border-b border-foreground/8 bg-background/60 backdrop-blur-md supports-[backdrop-filter]:bg-background/50"
       style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
       <div className="mx-auto max-w-2xl flex items-center justify-between px-5 h-14">

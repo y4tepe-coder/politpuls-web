@@ -1,9 +1,11 @@
 "use client";
 
 // Fixed, full-bleed background for all in-app pages.
-// Reichstag painting at very low opacity — same canvas as the landing hero,
-// but quiet enough that frosted-glass cards on top read cleanly. No pastel
-// orbs, no dots — clean iOS feel.
+// Same Reichstag painting as the landing hero, kept noticeably more visible
+// here than before (35 % opacity) — the user wanted the in-app screens to
+// feel like part of the same canvas, with the painting's pastel colors
+// peeking through. Cards on top use .glass-card with backdrop-blur, so they
+// stay readable regardless.
 
 export function AppBackground() {
   return (
@@ -17,10 +19,13 @@ export function AppBackground() {
           src="/hero-reichstag.png"
           alt=""
           aria-hidden
-          className="absolute inset-0 w-full h-full object-cover opacity-[0.14]"
+          className="absolute inset-0 w-full h-full object-cover object-center opacity-[0.32]"
         />
       </picture>
-      <div className="absolute inset-0 bg-gradient-to-b from-background/55 via-background/75 to-background/90" />
+      {/* Soft wash so glass cards stay legible. Stronger at the top
+          (header area) and bottom (CTA area), lighter through the middle
+          where the painting's most colorful part sits. */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background/65 via-background/50 to-background/80" />
     </div>
   );
 }

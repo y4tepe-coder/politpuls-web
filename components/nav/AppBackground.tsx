@@ -17,12 +17,12 @@ export function AppBackground() {
           src="/hero-reichstag.png"
           alt=""
           aria-hidden
-          className="absolute inset-0 w-full h-full object-cover object-center opacity-90"
+          className="absolute inset-0 w-full h-full object-cover object-center opacity-[0.12]"
         />
       </picture>
-      {/* Soft cream wash on top so the painting feels like a background, not
-          a foreground — but light enough that the colors really come through. */}
-      <div className="absolute inset-0 bg-background/45" />
+      {/* Strong cream wash — keeps the background feeling like clean paper
+          with just a hint of the painting. Cards stay crisp and white. */}
+      <div className="absolute inset-0 bg-background/80" />
     </div>
   );
 }

@@ -154,15 +154,35 @@ h1, h2, h3, .font-serif {
   font-feature-settings: "ss01", "ss02";
 }
 
-/* iOS-style frosted glass card — semi-transparent white with backdrop blur
-   and a feather-light border. Use this on every Card/Tile/Section in-app.
-   Looks the same whether the painting peeks through behind it or pure white. */
+/* iOS Politpuls design tokens — warm ink instead of pure black,
+   gold accent (#F6C414), red campaign accent (#D81E26). */
+:root {
+  --ink: oklch(0.22 0.02 85);
+  --gold: oklch(0.84 0.165 88);
+  --gold-ink: oklch(0.22 0.04 80);
+  --pp-red: oklch(0.55 0.22 25);
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-gold: var(--gold);
+  --color-gold-ink: var(--gold-ink);
+  --color-pp-red: var(--pp-red);
+}
+
+/* Cards — solide weiß mit haarfeiner Bordure (1.5px), kein Glass-Effekt mehr.
+   iOS-Look: ruhig, klar, papierhaft. */
 .glass-card {
-  background-color: oklch(1 0 0 / 0.65);
-  backdrop-filter: blur(20px) saturate(140%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
-  border: 1px solid oklch(0 0 0 / 0.06);
-  box-shadow: 0 1px 3px oklch(0 0 0 / 0.04), 0 8px 24px -10px oklch(0 0 0 / 0.06);
+  background-color: oklch(1 0 0);
+  border: 1.5px solid oklch(0 0 0 / 0.08);
+  box-shadow: 0 1px 2px oklch(0 0 0 / 0.04);
+}
+
+/* Dunkle Hero-Karten (Home-Mission, Profil-Hero). */
+.ink-card {
+  background-color: var(--ink);
+  color: oklch(0.96 0.012 85);
+  border: 1.5px solid oklch(0 0 0 / 0.2);
 }
 
 /* Same but darker — for high-contrast headers / selected items. */

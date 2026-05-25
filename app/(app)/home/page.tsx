@@ -2,28 +2,31 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import { getLocalSession, type LocalSession } from "@/lib/local/session";
 import { getLocalState, type LocalState } from "@/lib/local/state";
 import { buildPfadStops, type PfadStop } from "@/lib/data/pfad-stops";
-import { seedDossier } from "@/lib/data/seed-dossier";
 import { getPartyById } from "@/lib/spektrum/parties";
 import { ALL_POSITIONS } from "@/lib/data/positions-catalogue";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { PolitpulsMark } from "@/components/brand/Logo";
 import {
   Play,
   Flame,
-  ArrowRight,
-  Sparkles,
-  Vote,
   Check,
   Lock,
+  ArrowRight,
+  Vote,
+  Sparkles,
   UserPlus,
 } from "lucide-react";
 
-// iOS-style Homescreen — Greeting, heutige Mission als Hero, Pfad-Vorschau,
-// Streak, Wahlkampf-Status, Werte-Check CTA. Kein direktes Reinschubsen ins
-// Briefing — der User wählt selbst, wann er heute spielt.
+// Homescreen — iOS HomeView nachgebaut:
+// 1. Datum-Bar (groß, Versalien)
+// 2. Heute-Hero (Ink-Card: links Text + gold pill, rechts Logo)
+// 3. Mini-Pfad (vertikal, Knoten + Verbindungslinien)
+// 4. Werte-Check / Wahlkampf / Gast-Konto als Mini-Rows
+
+const WEEKDAYS = ["SONNTAG", "MONTAG", "DIENSTAG", "MITTWOCH", "DONNERSTAG", "FREITAG", "SAMSTAG"];
+const MONTHS = ["JAN", "FEB", "MÄR", "APR", "MAI", "JUN", "JUL", "AUG", "SEP", "OKT", "NOV", "DEZ"];
 
 export default function HomePage() {
   const [session, setSession] = useState<LocalSession | null>(null);
@@ -42,32 +45,23 @@ export default function HomePage() {
   const isGuest = !session?.isRegistered;
   const stops = buildPfadStops();
   const todayStop = stops.find((s) => s.status === "today") ?? stops[3];
-  const nextStops = stops.slice(0, 5);
   const positionsAnswered = Object.keys(state.positions ?? {}).length;
   const werteCheckOpen = positionsAnswered < ALL_POSITIONS.length;
   const party = state.party_id ? getPartyById(state.party_id) : null;
-  const wahlkampfStarted =
-    (state.campaign_themen?.length ?? 0) > 0 ||
-    !!state.campaign_plakat ||
-    Object.keys(state.campaign_triell_answers ?? {}).length > 0;
 
   const now = new Date();
-  const greeting =
-    now.getHours() < 12
-      ? "Guten Morgen"
-      : now.getHours() < 18
-        ? "Hallo"
-        : "Guten Abend";
+  const dateLine = `${WEEKDAYS[now.getDay()]}, ${now.getDate()}. ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
+  const playedToday = !!state.last_briefing_date;
 
   return (
-    <main className="flex flex-1 flex-col max-w-2xl mx-auto w-full px-5 py-6 gap-5">
-      {/* Greeting + party badge */}
+    <main className="flex flex-1 flex-col max-w-2xl mx-auto w-full px-5 py-5 gap-5">
+      {/* Datum + Gruß */}
       <header className="flex flex-col gap-1">
-        <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
-          {greeting}
+        <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground tabular-nums">
+          {dateLine}
         </span>
-        <h1 className="font-serif text-3xl sm:text-4xl font-semibold leading-tight">
-          {name}.
+        <h1 className="font-serif text-3xl font-semibold leading-tight">
+          Hallo, {name}.
         </h1>
         {party && (
           <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
@@ -81,83 +75,82 @@ export default function HomePage() {
         )}
       </header>
 
-      {/* Heutige Mission — Hero Card */}
-      <motion.section
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="glass-card rounded-2xl p-5 sm:p-6 flex flex-col gap-4"
+      {/* Heute-Hero — Ink-Card iOS-Style */}
+      <Link
+        href="/heute"
+        className="ink-card rounded-3xl p-5 sm:p-6 flex items-stretch gap-4 group hover:opacity-95 transition-opacity"
       >
-        <header className="flex items-center justify-between gap-3">
-          <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
-            Heutige Mission
-          </span>
-          {state.last_briefing_date && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-foreground/5 px-2 py-0.5 text-[10px] font-mono text-muted-foreground">
-              <Check className="size-3" /> bereits gespielt
+        <div className="flex flex-col flex-1 gap-3 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/55">
+              Heutige Mission
             </span>
-          )}
-        </header>
-        <div className="flex flex-col gap-2">
-          <span className="text-xs font-semibold text-foreground/60 uppercase tracking-wide">
-            {todayStop.kicker}
-          </span>
-          <h2 className="font-serif text-xl sm:text-2xl font-semibold leading-snug">
-            {todayStop.headline}
-          </h2>
-        </div>
-        <Link
-          href="/heute"
-          className={
-            buttonVariants({ size: "lg" }) +
-            " h-12 mt-1 group inline-flex items-center justify-center"
-          }
-        >
-          <Play className="size-4 mr-2" fill="currentColor" />
-          {state.last_briefing_date ? "Briefing nochmal" : "Jetzt spielen"}
-          <ArrowRight className="size-4 ml-2 group-hover:translate-x-0.5 transition-transform" />
-        </Link>
-      </motion.section>
-
-      {/* Streak */}
-      {state.current_streak > 0 && (
-        <section className="glass-card rounded-2xl p-4 flex items-center gap-4">
-          <span className="inline-flex items-center justify-center size-12 rounded-xl bg-foreground/5 border border-foreground/10">
-            <Flame className="size-6 text-orange-500" fill="currentColor" />
-          </span>
-          <div className="flex flex-col flex-1">
-            <span className="font-serif text-2xl font-semibold leading-none">
-              {state.current_streak}{" "}
-              <span className="text-sm text-muted-foreground font-sans font-normal">
-                {state.current_streak === 1 ? "Tag" : "Tage"} in Folge
-              </span>
-            </span>
-            {state.longest_streak > state.current_streak && (
-              <span className="text-xs text-muted-foreground mt-0.5">
-                Bestmarke: {state.longest_streak} Tage
+            {playedToday && (
+              <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-white/70">
+                <Check className="size-3" /> gespielt
               </span>
             )}
           </div>
-        </section>
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[11px] font-medium uppercase tracking-wide text-white/55">
+              {todayStop.kicker}
+            </span>
+            <h2 className="font-serif text-xl sm:text-2xl font-semibold leading-tight">
+              {todayStop.headline}
+            </h2>
+          </div>
+          <span className="inline-flex items-center justify-center self-start mt-1 rounded-full bg-gold text-gold-ink px-5 py-2.5 text-sm font-semibold gap-2 group-hover:scale-[1.02] transition-transform">
+            <Play className="size-3.5" fill="currentColor" />
+            {playedToday ? "Briefing nochmal" : "Jetzt spielen"}
+          </span>
+        </div>
+        <div className="hidden sm:flex shrink-0 size-24 rounded-2xl bg-white/8 items-center justify-center self-center">
+          <PolitpulsMark className="size-14 text-white" />
+        </div>
+      </Link>
+
+      {/* Streak — nur wenn > 0, sehr clean */}
+      {state.current_streak > 0 && (
+        <div className="glass-card rounded-2xl p-4 flex items-center gap-3">
+          <Flame className="size-6 text-pp-red shrink-0" fill="currentColor" />
+          <span className="flex-1 font-serif text-xl font-semibold leading-none">
+            {state.current_streak}
+            <span className="text-sm text-muted-foreground font-sans font-normal ml-1.5">
+              {state.current_streak === 1 ? "Tag in Folge" : "Tage in Folge"}
+            </span>
+          </span>
+          {state.longest_streak > state.current_streak && (
+            <span className="text-[11px] text-muted-foreground tabular-nums">
+              Best: {state.longest_streak}
+            </span>
+          )}
+        </div>
       )}
 
-      {/* Pfad-Vorschau */}
-      <section className="flex flex-col gap-3">
+      {/* Mini-Pfad — vertikal mit Verbindungslinien */}
+      <section className="flex flex-col gap-2">
         <header className="flex items-center justify-between">
-          <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          <h2 className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
             Dein Pfad
           </h2>
           <Link
             href="/pfad"
-            className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5"
+            className="text-[11px] font-medium text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5"
           >
             Alle <ArrowRight className="size-3" />
           </Link>
         </header>
-        <div className="flex gap-2 overflow-x-auto pb-1 -mx-5 px-5 snap-x">
-          {nextStops.map((stop) => (
-            <PfadMiniStop key={stop.date} stop={stop} />
-          ))}
+        <div className="relative pl-6">
+          {/* Vertikale Linie */}
+          <span
+            aria-hidden
+            className="absolute left-[10px] top-2 bottom-2 w-px bg-foreground/15"
+          />
+          <ul className="flex flex-col gap-1.5">
+            {stops.slice(0, 5).map((stop) => (
+              <PfadMiniRow key={stop.date} stop={stop} />
+            ))}
+          </ul>
         </div>
       </section>
 
@@ -165,64 +158,60 @@ export default function HomePage() {
       {isGuest && (
         <Link
           href="/onboarding"
-          className="glass-card rounded-2xl p-4 flex items-center gap-4 hover:bg-foreground/5 transition-all border-foreground/15"
+          className="glass-card rounded-2xl p-4 flex items-center gap-3 hover:bg-foreground/[0.02] transition-all"
         >
-          <span className="inline-flex items-center justify-center size-11 rounded-xl bg-foreground text-background shrink-0">
-            <UserPlus className="size-5" />
+          <span className="inline-flex items-center justify-center size-9 rounded-full bg-ink text-background shrink-0">
+            <UserPlus className="size-4" />
           </span>
           <div className="flex flex-col flex-1 min-w-0">
-            <span className="font-serif font-semibold leading-tight">
+            <span className="text-sm font-semibold leading-tight">
               Spielstand sichern
             </span>
-            <span className="text-xs text-muted-foreground">
-              Du spielst als Gast. Erstelle ein Konto, um auf allen Geräten weiterzuspielen.
+            <span className="text-[11px] text-muted-foreground">
+              Du spielst als Gast. Konto erstellen für Sync.
             </span>
           </div>
           <ArrowRight className="size-4 text-muted-foreground shrink-0" />
         </Link>
       )}
 
-      {/* Werte-Check CTA */}
+      {/* Werte-Check */}
       {werteCheckOpen && (
         <Link
           href="/werte-check"
-          className="glass-card rounded-2xl p-4 flex items-center gap-4 hover:bg-foreground/5 transition-all"
+          className="glass-card rounded-2xl p-4 flex items-center gap-3 hover:bg-foreground/[0.02] transition-all"
         >
-          <span className="inline-flex items-center justify-center size-11 rounded-xl bg-foreground/5 border border-foreground/10 shrink-0">
-            <Sparkles className="size-5 text-foreground" />
+          <span className="inline-flex items-center justify-center size-9 rounded-full bg-foreground/5 shrink-0">
+            <Sparkles className="size-4 text-foreground" />
           </span>
           <div className="flex flex-col flex-1 min-w-0">
-            <span className="font-serif font-semibold leading-tight">
+            <span className="text-sm font-semibold leading-tight">
               {positionsAnswered === 0
                 ? "Werte-Check starten"
-                : `Werte-Check fortsetzen (${ALL_POSITIONS.length - positionsAnswered} offen)`}
+                : `Werte-Check fortsetzen`}
             </span>
-            <span className="text-xs text-muted-foreground">
-              18 Aussagen — finde, welche Partei wirklich zu dir passt
+            <span className="text-[11px] text-muted-foreground">
+              18 Aussagen — finde deine Partei
             </span>
           </div>
           <ArrowRight className="size-4 text-muted-foreground shrink-0" />
         </Link>
       )}
 
-      {/* Wahlkampf-Status */}
+      {/* Wahlkampf */}
       <Link
         href="/wahlkampf"
-        className="glass-card rounded-2xl p-4 flex items-center gap-4 hover:bg-foreground/5 transition-all"
+        className="glass-card rounded-2xl p-4 flex items-center gap-3 hover:bg-foreground/[0.02] transition-all"
       >
-        <span className="inline-flex items-center justify-center size-11 rounded-xl bg-foreground/5 border border-foreground/10 shrink-0">
-          <Vote className="size-5 text-foreground" />
+        <span className="inline-flex items-center justify-center size-9 rounded-full bg-foreground/5 shrink-0">
+          <Vote className="size-4 text-foreground" />
         </span>
         <div className="flex flex-col flex-1 min-w-0">
-          <span className="font-serif font-semibold leading-tight">
-            {wahlkampfStarted
-              ? "Wahlkampf-Modus fortsetzen"
-              : "Wahlkampf starten"}
+          <span className="text-sm font-semibold leading-tight">
+            So läuft ein Wahlkampf
           </span>
-          <span className="text-xs text-muted-foreground">
-            {wahlkampfStarted
-              ? "Programm, Plakat, TV-Triell oder Wahl"
-              : "4 Schritte bis zur Kanzlerschaft"}
+          <span className="text-[11px] text-muted-foreground">
+            6 Schritte bis zur Kanzlerschaft
           </span>
         </div>
         <ArrowRight className="size-4 text-muted-foreground shrink-0" />
@@ -231,54 +220,71 @@ export default function HomePage() {
   );
 }
 
-function PfadMiniStop({ stop }: { stop: PfadStop }) {
+function PfadMiniRow({ stop }: { stop: PfadStop }) {
+  const isToday = stop.status === "today";
+  const isDone = stop.status === "done";
+  const isLocked = stop.status === "locked";
+
+  const Marker = (
+    <span
+      className={`absolute -left-6 top-1.5 inline-flex items-center justify-center rounded-full ${
+        isToday
+          ? "size-5 bg-gold text-gold-ink ring-2 ring-gold/30"
+          : isDone
+            ? "size-4 bg-foreground/15 text-foreground/60"
+            : "size-4 bg-foreground/5 text-muted-foreground"
+      }`}
+      style={{ left: "-1.5rem" }}
+    >
+      {isDone ? (
+        <Check className="size-2.5" strokeWidth={3} />
+      ) : isToday ? (
+        <Play className="size-2.5 ml-0.5" fill="currentColor" />
+      ) : (
+        <Lock className="size-2.5" />
+      )}
+    </span>
+  );
+
   const Inner = (
-    <div className="flex flex-col items-center gap-2 min-w-[64px] snap-start">
+    <div className="relative flex items-baseline gap-3 py-1.5">
+      {Marker}
+      <span className="text-[10px] font-mono tabular-nums w-12 shrink-0 text-muted-foreground">
+        {stop.weekdayShort} {stop.dayNumber}.
+      </span>
       <span
-        className={`relative inline-flex items-center justify-center size-12 rounded-full ${
-          stop.status === "today"
-            ? "bg-foreground text-background ring-4 ring-accent/30"
-            : stop.status === "done"
-              ? "bg-foreground/10 text-foreground ring-2 ring-foreground/15"
-              : "bg-foreground/5 text-muted-foreground"
+        className={`text-sm leading-snug flex-1 truncate ${
+          isToday
+            ? "font-serif font-semibold text-foreground"
+            : isLocked
+              ? "text-muted-foreground"
+              : "text-foreground/80"
         }`}
       >
-        {stop.status === "today" && (
-          <span className="absolute inset-0 rounded-full bg-accent/30 animate-ping" />
-        )}
-        {stop.status === "done" ? (
-          <Check className="size-5 relative" strokeWidth={3} />
-        ) : stop.status === "today" ? (
-          <Play className="size-4 ml-0.5 relative" fill="currentColor" />
-        ) : (
-          <Lock className="size-4" />
-        )}
-      </span>
-      <span className="text-[10px] font-mono tabular-nums text-muted-foreground">
-        {stop.weekdayShort}
-        <br />
-        {stop.dayNumber}
+        {stop.headline}
       </span>
     </div>
   );
-  if (stop.status === "locked") return Inner;
+
+  if (isLocked) return <li>{Inner}</li>;
   return (
-    <Link href={stop.href} className="block">
-      {Inner}
-    </Link>
+    <li>
+      <Link
+        href={stop.href}
+        className="block rounded-md hover:bg-foreground/[0.03] transition-colors"
+      >
+        {Inner}
+      </Link>
+    </li>
   );
 }
 
 function HomeSkeleton() {
   return (
-    <main className="flex flex-1 flex-col max-w-2xl mx-auto w-full px-5 py-6 gap-5">
-      <div className="h-10 w-1/3 rounded-md bg-foreground/5 animate-pulse" />
-      <div className="h-48 rounded-2xl bg-foreground/5 animate-pulse" />
-      <div className="h-16 rounded-2xl bg-foreground/5 animate-pulse" />
-      <div className="h-16 rounded-2xl bg-foreground/5 animate-pulse" />
+    <main className="flex flex-1 flex-col max-w-2xl mx-auto w-full px-5 py-5 gap-5">
+      <div className="h-8 w-1/3 rounded-md bg-foreground/5 animate-pulse" />
+      <div className="h-48 rounded-3xl bg-foreground/5 animate-pulse" />
+      <div className="h-32 rounded-2xl bg-foreground/5 animate-pulse" />
     </main>
   );
 }
-
-// Use the seed dossier as today's mission preview when no live data yet
-void seedDossier;

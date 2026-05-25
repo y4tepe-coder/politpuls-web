@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { Suspense, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -12,7 +12,16 @@ import { Mail, Lock } from "lucide-react";
 
 // Klassisch: Email + Passwort. Kein Magic Link, kein Google, kein Apple.
 // Brauche im Supabase-Dashboard: Auth → Settings → "Confirm email" off.
+// useSearchParams braucht eine Suspense-Boundary für static rendering.
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="flex flex-1" />}>
+      <LoginPageInner />
+    </Suspense>
+  );
+}
+
+function LoginPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("next") ?? "/heute";

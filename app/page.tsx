@@ -2,58 +2,47 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { GooeyFilter } from "@/components/ui/gooey-filter";
 import { PixelTrail } from "@/components/ui/pixel-trail";
-import { MagneticButton } from "@/components/ui/magnetic-button";
 import { useScreenSize } from "@/hooks/use-screen-size";
-import { getLocalSession } from "@/lib/local/session";
+import { getLocalSession, startGuestSession } from "@/lib/local/session";
 import { PolitpulsMark } from "@/components/brand/Logo";
-import { ArrowRight } from "lucide-react";
 
-// Full-bleed hero. Reichstag painting in impressionist pastels (day version) or
-// dark night (system dark-mode), both saved locally in /public/. White pixel
-// trail + gooey filter for the interactive "cloud" effect.
+const HERO_BG_URL = "/hero-reichstag.png";
 
+// Landing — Reichstag-Hero mit iOS-Welcome-CTAs.
+// Drei Wege: Konto erstellen (gold pill primary), Anmelden (link),
+// Ohne Konto fortfahren (link, ein-Klick zu /home).
 export default function LandingPage() {
+  const router = useRouter();
   const screenSize = useScreenSize();
-  const [destination, setDestination] = useState("/onboarding");
+  const [returning, setReturning] = useState(false);
 
   useEffect(() => {
     const session = getLocalSession();
-    if (session) setDestination("/home");
+    if (session) setReturning(true);
   }, []);
 
+  function continueAsGuest() {
+    startGuestSession();
+    router.push("/home");
+  }
+
   return (
-    <main
-      className="relative w-full overflow-hidden flex flex-col items-center justify-center text-center bg-background"
-      style={{
-        minHeight: "100dvh",
-        paddingTop: "env(safe-area-inset-top)",
-        paddingBottom: "env(safe-area-inset-bottom)",
-      }}
-    >
-      {/* Light/Dark image swap via <picture>. The browser picks the right source
-          automatically — no JS detection, no flicker. */}
-      <picture className="absolute inset-0 w-full h-full">
-        <source
-          srcSet="/hero-reichstag-night.png"
-          media="(prefers-color-scheme: dark)"
-        />
-        <img
-          src="/hero-reichstag.png"
-          alt=""
-          aria-hidden
-          className="absolute inset-0 w-full h-full object-cover object-center"
-        />
-      </picture>
+    <main className="relative h-screen w-full overflow-hidden flex flex-col bg-ink text-white">
+      {/* Reichstag-Painting im Hintergrund — auf Welcome-Page nur dezent. */}
+      <img
+        src={HERO_BG_URL}
+        alt=""
+        aria-hidden
+        className="absolute inset-0 w-full h-full object-cover object-center opacity-25"
+      />
+      <div className="absolute inset-0 bg-ink/55" />
 
-      {/* Gentle wash — keeps the painting's pastel colours visible, lifts contrast
-          under the headline. Stronger at the bottom for the CTA area. */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-black/45" />
-
+      {/* Pixel-Trail-Effekt für den Pastell-Vibe — der User mag das */}
       <GooeyFilter id="politpuls-hero-goo" strength={5} />
-
       <div
         className="absolute inset-0 z-0"
         style={{ filter: "url(#politpuls-hero-goo)" }}
@@ -62,65 +51,81 @@ export default function LandingPage() {
           pixelSize={screenSize.lessThan("md") ? 22 : 32}
           fadeDuration={0}
           delay={500}
-          pixelClassName="bg-white"
+          pixelClassName="bg-white/70"
         />
       </div>
 
+      {/* Mittelteil: Maskottchen-Mark + Wordmark + Tagline */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, ease: "easeOut" }}
+        className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-6"
+      >
+        <div className="flex flex-col items-center gap-5 max-w-md">
+          <div className="size-24 sm:size-28 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 flex items-center justify-center">
+            <PolitpulsMark className="size-14 sm:size-16 text-white" />
+          </div>
+          <h1 className="font-serif text-5xl sm:text-6xl font-bold leading-none tracking-tight">
+            <span className="text-white">Polit</span>
+            <span className="text-gold">puls</span>
+          </h1>
+          <p className="text-base sm:text-lg text-white/75 max-w-sm leading-relaxed">
+            Bundespolitik in drei Minuten am Tag.
+            <br />
+            Speichere deinen Fortschritt sicher.
+          </p>
+        </div>
+      </motion.div>
+
+      {/* Sticky Bottom-Section mit den 3 CTAs */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-        className="relative z-10 flex flex-col items-center gap-5 sm:gap-6 px-6 max-w-3xl pointer-events-none"
+        transition={{ delay: 0.3, duration: 0.6 }}
+        className="relative z-10 px-5 pb-8 pt-4 flex flex-col gap-3"
+        style={{ paddingBottom: "max(env(safe-area-inset-bottom), 2rem)" }}
       >
-        <div className="inline-flex items-center gap-3 pointer-events-none">
-          <PolitpulsMark className="size-10 sm:size-12 text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]" />
-        </div>
+        {returning ? (
+          <Link
+            href="/home"
+            className="block w-full rounded-full bg-gold text-gold-ink font-bold text-center py-4 text-base shadow-[0_8px_24px_-6px] shadow-gold/40 hover:scale-[1.01] active:scale-[0.99] transition-transform"
+          >
+            Weiterspielen
+          </Link>
+        ) : (
+          <Link
+            href="/onboarding"
+            className="block w-full rounded-full bg-gold text-gold-ink font-bold uppercase tracking-wide text-center py-4 text-base shadow-[0_8px_24px_-6px] shadow-gold/40 hover:scale-[1.01] active:scale-[0.99] transition-transform"
+          >
+            Konto erstellen
+          </Link>
+        )}
 
-        <span className="inline-flex items-center gap-2 rounded-full bg-white/95 backdrop-blur-sm border border-white/60 px-3 py-1 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-foreground shadow-sm">
-          Das tägliche Politik-Spiel
-        </span>
-
-        <h1 className="font-serif text-5xl sm:text-7xl lg:text-8xl font-semibold leading-[0.95] tracking-tight text-white drop-shadow-[0_6px_30px_rgba(0,0,0,0.6)]">
-          Politpuls
-        </h1>
-
-        <p className="text-base sm:text-xl text-white/95 max-w-xl leading-relaxed drop-shadow-[0_2px_12px_rgba(0,0,0,0.65)] px-2">
-          Bundespolitik in drei Minuten am Tag. Eine echte Nachricht aus Berlin —
-          du entscheidest.
-        </p>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4, duration: 0.6 }}
-          className="pointer-events-auto mt-4 flex flex-col items-center gap-3"
-        >
-          <MagneticButton distance={0.3}>
-            <Link
-              href={destination}
-              className="group relative inline-flex items-center gap-2.5 rounded-full bg-white text-foreground px-9 py-4 sm:px-12 sm:py-5 text-base sm:text-lg font-semibold shadow-[0_20px_60px_-12px_rgba(0,0,0,0.6)] hover:shadow-[0_24px_70px_-10px_rgba(0,0,0,0.7)] hover:bg-white/95 transition-all min-h-[44px]"
-            >
-              Jetzt spielen
-              <ArrowRight className="size-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </MagneticButton>
+        <div className="text-center text-sm text-white/70">
+          Schon ein Konto?{" "}
           <Link
             href="/login"
-            className="text-xs sm:text-sm text-white/80 hover:text-white underline underline-offset-4 transition-colors drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)] min-h-[44px] inline-flex items-center"
+            className="text-gold font-semibold hover:underline underline-offset-4"
           >
-            Schon angemeldet? Hier rein
+            Anmelden
           </Link>
-        </motion.div>
-      </motion.div>
+        </div>
 
-      <div
-        className="absolute left-0 right-0 text-center z-10 pointer-events-none"
-        style={{ bottom: "max(env(safe-area-inset-bottom), 1rem)" }}
-      >
-        <p className="text-[10px] text-white/60 uppercase tracking-[0.3em] drop-shadow-sm">
-          Politpuls · Berlin
+        <button
+          type="button"
+          onClick={continueAsGuest}
+          className="text-center text-sm text-white/80 hover:text-white py-2"
+        >
+          Ohne Konto fortfahren
+        </button>
+
+        <p className="text-[10px] text-white/40 text-center mt-1 leading-relaxed">
+          Mit dem Fortfahren akzeptierst du unsere
+          <br />
+          Nutzungsbedingungen und Datenschutzhinweise.
         </p>
-      </div>
+      </motion.div>
     </main>
   );
 }

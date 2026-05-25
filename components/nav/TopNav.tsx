@@ -1,78 +1,68 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Logo } from "@/components/brand/Logo";
-import { Flame, Map as MapIcon, User, Vote } from "lucide-react";
+import { Flame, Home, Compass, User } from "lucide-react";
 import { useLocalSession } from "@/hooks/useLocalSession";
 
-// Sticky top nav. Logo left, streak badge + four icon links right.
-// Reads the streak from local state — works whether or not Supabase is connected.
+// Top-Nav iOS-Style:
+// - Logo links (nur Wortmarke)
+// - Streak-Badge wenn > 0
+// - DREI Tabs (Home / Spektrum / Profil) — der aktuelle Tab wird AUSGEBLENDET,
+//   die anderen zwei sind sichtbar. Pfad + Wahlkampf sind keine Top-Tabs mehr,
+//   man kommt da vom Homescreen rein.
+const TABS = [
+  { href: "/home", label: "Start", icon: Home, prefix: ["/home", "/heute", "/pfad", "/wahlkampf"] },
+  { href: "/spektrum", label: "Spektrum", icon: Compass, prefix: ["/spektrum", "/werte-check"] },
+  { href: "/profil", label: "Profil", icon: User, prefix: ["/profil"] },
+] as const;
+
 export function TopNav() {
   const { state } = useLocalSession(true);
   const streak = state?.current_streak ?? 0;
+  const pathname = usePathname() ?? "";
+
+  function isActive(prefixes: readonly string[]): boolean {
+    return prefixes.some((p) => pathname === p || pathname.startsWith(p + "/"));
+  }
+
+  // 2 von 3 Tabs anzeigen: der aktive ist versteckt
+  const visibleTabs = TABS.filter((t) => !isActive(t.prefix));
 
   return (
     <header
-      className="sticky top-0 z-20 w-full border-b border-foreground/8 bg-background/60 backdrop-blur-md supports-[backdrop-filter]:bg-background/50"
+      className="sticky top-0 z-20 w-full border-b border-foreground/8 bg-background/80 backdrop-blur-md"
       style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
       <div className="mx-auto max-w-2xl flex items-center justify-between px-5 h-14">
         <Logo size="md" textOnly href="/home" />
-        <nav className="flex items-center gap-0.5 sm:gap-1">
+        <nav className="flex items-center gap-1">
           {streak > 0 && (
             <span
-              className="inline-flex items-center gap-1 rounded-full bg-warning/25 text-warning-foreground px-2.5 py-1 text-xs font-semibold mr-1"
+              className="inline-flex items-center gap-1 rounded-full bg-pp-red/12 text-pp-red px-2.5 py-1 text-xs font-semibold mr-1"
               aria-label={`Streak: ${streak} Tage`}
             >
-              <Flame className="size-3.5 text-orange-500" fill="currentColor" />
+              <Flame className="size-3.5" fill="currentColor" />
               {streak}
             </span>
           )}
-          <NavIcon href="/home" label="Start" icon={<HomeIcon />} />
-          <NavIcon href="/pfad" label="Pfad" icon={<MapIcon className="size-5" />} />
-          <NavIcon href="/wahlkampf" label="Wahlkampf" icon={<Vote className="size-5" />} />
-          <NavIcon href="/profil" label="Profil" icon={<User className="size-5" />} />
+          {visibleTabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                aria-label={tab.label}
+                className="inline-flex items-center gap-1.5 min-h-[44px] px-3 rounded-full text-foreground/80 hover:text-foreground hover:bg-foreground/5 transition-colors text-sm font-medium"
+              >
+                <Icon className="size-4" />
+                <span className="hidden sm:inline">{tab.label}</span>
+              </Link>
+            );
+          })}
         </nav>
       </div>
     </header>
-  );
-}
-
-function NavIcon({
-  href,
-  label,
-  icon,
-}: {
-  href: string;
-  label: string;
-  icon: React.ReactNode;
-}) {
-  // 44pt minimum touch target — Apple HIG standard for iOS.
-  return (
-    <Link
-      href={href}
-      aria-label={label}
-      className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors active:bg-muted/80"
-    >
-      {icon}
-    </Link>
-  );
-}
-
-function HomeIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="size-5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M3 12 12 3l9 9" />
-      <path d="M5 10v10h14V10" />
-    </svg>
   );
 }

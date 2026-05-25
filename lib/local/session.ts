@@ -62,6 +62,23 @@ export function ensureLocalSession(): LocalSession {
   return session;
 }
 
+// 1-Klick-Gast: erstellt anonyme Session mit Default-Namen "Gast".
+// User kann den Namen später im Profil ändern oder zu echtem Konto upgraden.
+export function startGuestSession(): LocalSession {
+  const existing = getLocalSession();
+  if (existing) return existing;
+  const session: LocalSession = {
+    userId: `guest-${randomId()}`,
+    displayName: "Gast",
+    email: null,
+    isRegistered: false,
+    createdAt: new Date().toISOString(),
+  };
+  const storage = safeStorage();
+  if (storage) storage.setItem(KEY, JSON.stringify(session));
+  return session;
+}
+
 export function updateLocalSession(
   updates: Partial<Omit<LocalSession, "userId" | "createdAt">>,
 ): LocalSession {

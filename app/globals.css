@@ -142,13 +142,21 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* html behaelt den Background als Fallback (verhindert Flash beim Laden).
+   body ist TRANSPARENT, damit das fixed AppBackground (Reichstag-Painting)
+   durchscheint. Wenn body opak waere, wuerde es den -z-10 Layer ueberdecken. */
+html {
+  background: var(--background);
+}
 html,
 body {
-  background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+body {
+  background: transparent;
 }
 
 h1, h2, h3, .font-serif {
@@ -282,9 +290,11 @@ h1, h2, h3, .font-serif {
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    /* bewusst KEIN bg-background — body bleibt transparent, damit das
+       Reichstag-AppBackground durchscheint. Hintergrund liegt auf html. */
+    @apply text-foreground;
   }
   html {
-    @apply font-sans;
+    @apply font-sans bg-background;
   }
 }

@@ -68,11 +68,12 @@ function formatDate(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-// Liefert ~21 Stops: 7 Tage zurück, heute, 14 Tage voraus (inkl. Events).
+// Liefert 15 Stops: heute + 14 Tage voraus (inkl. Events).
+// Vergangene Tage zeigen wir nicht — pro User-Wunsch.
 export function buildPfadStops(today: Date = new Date()): PfadStop[] {
   const stops: PfadStop[] = [];
 
-  for (let offset = -7; offset <= 14; offset++) {
+  for (let offset = 0; offset <= 14; offset++) {
     const date = addDays(today, offset);
     const dateStr = formatDate(date);
     const base = {
@@ -104,15 +105,6 @@ export function buildPfadStops(today: Date = new Date()): PfadStop[] {
         status: "today",
         href: "/heute",
       });
-    } else if (offset < 0) {
-      const topic = PAST_TOPICS[(PAST_TOPICS.length + offset) % PAST_TOPICS.length];
-      stops.push({
-        ...base,
-        kicker: topic.kicker,
-        headline: topic.headline,
-        status: "done",
-        href: "/heute",
-      });
     } else {
       const topic = FUTURE_TOPICS[(offset - 1) % FUTURE_TOPICS.length];
       stops.push({
@@ -127,3 +119,7 @@ export function buildPfadStops(today: Date = new Date()): PfadStop[] {
 
   return stops;
 }
+
+// PAST_TOPICS bleibt als Reserve im Datenfile, falls wir spaeter ein
+// "Archiv"-Feature bauen wollen.
+void PAST_TOPICS;

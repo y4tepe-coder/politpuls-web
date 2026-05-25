@@ -8,13 +8,12 @@ import { GooeyFilter } from "@/components/ui/gooey-filter";
 import { PixelTrail } from "@/components/ui/pixel-trail";
 import { useScreenSize } from "@/hooks/use-screen-size";
 import { getLocalSession, startGuestSession } from "@/lib/local/session";
-import { PolitpulsMark } from "@/components/brand/Logo";
 
 const HERO_BG_URL = "/hero-reichstag.png";
 
-// Landing — Reichstag-Hero mit iOS-Welcome-CTAs.
-// Drei Wege: Konto erstellen (gold pill primary), Anmelden (link),
-// Ohne Konto fortfahren (link, ein-Klick zu /home).
+// Landing — vollflächiges Reichstag-Bild perfekt zentriert (wie früher),
+// weißer "Politpuls"-Schriftzug groß auf dem Bild, Pixel-Trail mit Gooey,
+// drei iOS-Style CTAs unten.
 export default function LandingPage() {
   const router = useRouter();
   const screenSize = useScreenSize();
@@ -31,17 +30,27 @@ export default function LandingPage() {
   }
 
   return (
-    <main className="relative h-screen w-full overflow-hidden flex flex-col bg-ink text-white">
-      {/* Reichstag-Painting im Hintergrund — auf Welcome-Page nur dezent. */}
+    <main
+      className="relative w-full overflow-hidden flex flex-col items-center text-center"
+      style={{
+        minHeight: "100dvh",
+        paddingTop: "env(safe-area-inset-top)",
+        paddingBottom: "env(safe-area-inset-bottom)",
+      }}
+    >
+      {/* Reichstag-Painting in voller Pracht, perfekt zentriert auf jedem iPhone */}
       <img
         src={HERO_BG_URL}
         alt=""
         aria-hidden
-        className="absolute inset-0 w-full h-full object-cover object-center opacity-25"
+        className="absolute inset-0 w-full h-full object-cover object-center"
       />
-      <div className="absolute inset-0 bg-ink/55" />
 
-      {/* Pixel-Trail-Effekt für den Pastell-Vibe — der User mag das */}
+      {/* Sanfter dunkler Wash unten für Lesbarkeit der CTAs,
+          oben fast transparent damit Bild atmet */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/15 to-black/55" />
+
+      {/* Gooey Pixel-Trail bleibt — interaktiver Pastell-Vibe */}
       <GooeyFilter id="politpuls-hero-goo" strength={5} />
       <div
         className="absolute inset-0 z-0"
@@ -51,58 +60,54 @@ export default function LandingPage() {
           pixelSize={screenSize.lessThan("md") ? 22 : 32}
           fadeDuration={0}
           delay={500}
-          pixelClassName="bg-white/70"
+          pixelClassName="bg-white"
         />
       </div>
 
-      {/* Mittelteil: Maskottchen-Mark + Wordmark + Tagline */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, ease: "easeOut" }}
-        className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-6"
-      >
-        <div className="flex flex-col items-center gap-5 max-w-md">
-          <div className="size-24 sm:size-28 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 flex items-center justify-center">
-            <PolitpulsMark className="size-14 sm:size-16 text-white" />
-          </div>
-          <h1 className="font-serif text-5xl sm:text-6xl font-bold leading-none tracking-tight">
-            <span className="text-white">Polit</span>
-            <span className="text-gold">puls</span>
-          </h1>
-          <p className="text-base sm:text-lg text-white/75 max-w-sm leading-relaxed">
-            Bundespolitik in drei Minuten am Tag.
-            <br />
-            Speichere deinen Fortschritt sicher.
-          </p>
-        </div>
-      </motion.div>
-
-      {/* Sticky Bottom-Section mit den 3 CTAs */}
+      {/* Content — zentriert oben/mitte */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.6 }}
-        className="relative z-10 px-5 pb-8 pt-4 flex flex-col gap-3"
-        style={{ paddingBottom: "max(env(safe-area-inset-bottom), 2rem)" }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 max-w-2xl pointer-events-none"
+      >
+        <span className="inline-flex items-center gap-2 rounded-full bg-white/90 backdrop-blur-sm border border-white/60 px-3 py-1 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-foreground shadow-sm mb-6">
+          Das tägliche Politik-Spiel
+        </span>
+
+        <h1 className="font-serif text-6xl sm:text-8xl lg:text-9xl font-semibold leading-[0.95] tracking-tight text-white drop-shadow-[0_6px_30px_rgba(0,0,0,0.55)]">
+          Politpuls
+        </h1>
+
+        <p className="text-base sm:text-xl text-white/95 max-w-xl leading-relaxed drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)] mt-5">
+          Bundespolitik in drei Minuten am Tag.
+        </p>
+      </motion.div>
+
+      {/* Sticky Bottom CTAs */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4, duration: 0.6 }}
+        className="relative z-10 w-full max-w-md px-5 pb-6 flex flex-col gap-3"
       >
         {returning ? (
           <Link
             href="/home"
-            className="block w-full rounded-full bg-gold text-gold-ink font-bold text-center py-4 text-base shadow-[0_8px_24px_-6px] shadow-gold/40 hover:scale-[1.01] active:scale-[0.99] transition-transform"
+            className="block w-full rounded-full bg-white text-foreground font-semibold text-center py-4 text-base shadow-[0_12px_36px_-8px_rgba(0,0,0,0.5)] hover:scale-[1.01] active:scale-[0.99] transition-transform"
           >
             Weiterspielen
           </Link>
         ) : (
           <Link
             href="/onboarding"
-            className="block w-full rounded-full bg-gold text-gold-ink font-bold uppercase tracking-wide text-center py-4 text-base shadow-[0_8px_24px_-6px] shadow-gold/40 hover:scale-[1.01] active:scale-[0.99] transition-transform"
+            className="block w-full rounded-full bg-gold text-gold-ink font-bold uppercase tracking-wide text-center py-4 text-base shadow-[0_12px_36px_-8px_rgba(0,0,0,0.5)] hover:scale-[1.01] active:scale-[0.99] transition-transform"
           >
             Konto erstellen
           </Link>
         )}
 
-        <div className="text-center text-sm text-white/70">
+        <div className="text-center text-sm text-white/85 drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)]">
           Schon ein Konto?{" "}
           <Link
             href="/login"
@@ -115,16 +120,10 @@ export default function LandingPage() {
         <button
           type="button"
           onClick={continueAsGuest}
-          className="text-center text-sm text-white/80 hover:text-white py-2"
+          className="text-center text-sm text-white/85 hover:text-white py-2 drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)]"
         >
           Ohne Konto fortfahren
         </button>
-
-        <p className="text-[10px] text-white/40 text-center mt-1 leading-relaxed">
-          Mit dem Fortfahren akzeptierst du unsere
-          <br />
-          Nutzungsbedingungen und Datenschutzhinweise.
-        </p>
       </motion.div>
     </main>
   );

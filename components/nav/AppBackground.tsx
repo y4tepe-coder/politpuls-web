@@ -1,28 +1,27 @@
 "use client";
 
-// Fixed, full-bleed Reichstag-Painting. Per Media-Query swappen wir Tag-
-// und Nacht-Bild. Im Light-Mode haelt ein leichter Cream-Wash die Cards
-// lesbar; im Dark-Mode lassen wir das Bild voll wirken.
+// Fixed, full-bleed Reichstag-Painting. Tag-Bild im Light-Mode, Nacht-Bild
+// im Dark-Mode. Wir nutzen reine CSS-Klassen (definiert in globals.css per
+// @media prefers-color-scheme), statt der Tailwind dark:-Variant —
+// damit es garantiert greift, ohne von der Tailwind-Config abzuhaengen.
 
 export function AppBackground() {
   return (
     <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-background">
-      {/* Tag-Bild — Light-Mode default, im Dark-Mode versteckt */}
       <img
         src="/hero-reichstag.png"
         alt=""
         aria-hidden
-        className="dark:hidden absolute inset-0 w-full h-full object-cover object-center opacity-70"
+        className="app-bg-day absolute inset-0 w-full h-full object-cover object-center"
       />
-      {/* Nacht-Bild — nur Dark-Mode */}
       <img
         src="/hero-reichstag-night.png"
         alt=""
         aria-hidden
-        className="hidden dark:block absolute inset-0 w-full h-full object-cover object-center opacity-100"
+        className="app-bg-night absolute inset-0 w-full h-full object-cover object-center"
       />
-      {/* Cream-Wash nur im Light-Mode (Dark braucht keinen — Bild ist eh dunkel) */}
-      <div className="absolute inset-0 bg-background/30 dark:bg-transparent" />
+      {/* Cream-Wash nur im Light-Mode (Dark-Bild wirkt allein) */}
+      <div className="app-bg-wash absolute inset-0" />
     </div>
   );
 }

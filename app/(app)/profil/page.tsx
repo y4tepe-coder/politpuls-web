@@ -6,16 +6,31 @@ import { CompassMap } from "@/components/spektrum/CompassMap";
 import { PartyMatches } from "@/components/spektrum/PartyMatches";
 import { partyProximity } from "@/lib/spektrum/compute";
 import {
+  computeCategoryScores,
+  rankedPartyAlignment,
+} from "@/lib/spektrum/alignment";
+import { getPartyById } from "@/lib/spektrum/parties";
+import { ALL_POSITIONS } from "@/lib/data/positions-catalogue";
+import {
   getLocalSession,
   clearLocalSession,
   type LocalSession,
 } from "@/lib/local/session";
-import { getLocalState, resetLocalState, type LocalState } from "@/lib/local/state";
+import {
+  getLocalState,
+  resetLocalState,
+  type LocalState,
+} from "@/lib/local/state";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Flame, Trophy, Shield, Compass, Sparkles } from "lucide-react";
+import {
+  Flame,
+  Trophy,
+  Shield,
+  Compass,
+  Sparkles,
+  CheckCircle2,
+} from "lucide-react";
 
-// Profile page — reads from local state by default, works offline.
-// When Supabase is wired we'll also hydrate from the server profile here.
 export default function ProfilPage() {
   const [session, setSession] = useState<LocalSession | null>(null);
   const [state, setState] = useState<LocalState | null>(null);
@@ -33,6 +48,19 @@ export default function ProfilPage() {
 
   const matches = partyProximity(state.spektrum);
   const hasPlayed = state.decisions.length > 0;
+  const positionsAnswered = Object.keys(state.positions ?? {}).length;
+  const positionsTotal = ALL_POSITIONS.length;
+  const werteCheckDone = positionsAnswered >= positionsTotal;
+  const werteCheckStarted = positionsAnswered > 0;
+
+  const alignedRanking = werteCheckStarted
+    ? rankedPartyAlignment(state.positions)
+    : null;
+  const categoryScores = werteCheckStarted
+    ? computeCategoryScores(state.positions)
+    : null;
+  const topAligned = alignedRanking?.[0];
+  const topAlignedParty = topAligned ? getPartyById(topAligned.partyId) : null;
 
   return (
     <main className="flex flex-1 flex-col max-w-2xl mx-auto w-full px-5 py-8 gap-8">
@@ -50,17 +78,154 @@ export default function ProfilPage() {
         </p>
       </header>
 
+      {/* Werte-Check CTA (when not done) */}
+      {!werteCheckDone && (
+        <section className="rounded-2xl bg-gradient-to-br from-accent/20 via-accent/10 to-card border border-accent/30 p-5 flex flex-col gap-3">
+          <header className="flex items-center gap-3">
+            <span className="inline-flex items-center justify-center size-10 rounded-xl bg-accent text-accent-foreground shadow-md shadow-accent/30">
+              <Sparkles className="size-5" />
+            </span>
+            <div className="flex flex-col">
+              <span className="text-accent text-[11px] font-semibold uppercase tracking-[0.18em]">
+                Werte-Check
+              </span>
+              <h2 className="font-serif text-lg font-semibold">
+                {werteCheckStarted
+                  ? `Weiter geht's — ${positionsTotal - positionsAnswered} Aussagen offen.`
+                  : "18 Aussagen, 3 Minuten — finde deine Partei."}
+              </h2>
+            </div>
+          </header>
+          <p className="text-sm text-muted-foreground">
+            Bewerte 18 konkrete politische Aussagen mit Ja, Neutral oder Nein.
+            Wir rechnen dir aus, welche Partei zu welchem Thema zu dir passt.
+          </p>
+          <Link
+            href="/werte-check"
+            className={buttonVariants({ size: "lg" }) + " h-12 mt-1"}
+          >
+            {werteCheckStarted ? "Werte-Check fortsetzen" : "Werte-Check starten"}
+          </Link>
+        </section>
+      )}
+
+      {/* Werte-Check Ergebnis (when done) */}
+      {werteCheckDone && topAlignedParty && (
+        <section className="rounded-2xl bg-card border border-border p-5 sm:p-6 flex flex-col gap-4 shadow-sm">
+          <header className="flex items-center gap-3">
+            <span
+              className="inline-flex items-center justify-center size-12 rounded-2xl text-white font-semibold text-lg"
+              style={{ backgroundColor: topAlignedParty.color }}
+            >
+              {topAlignedParty.shortName.charAt(0)}
+            </span>
+            <div className="flex flex-col">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                Beste Übereinstimmung
+              </span>
+              <h2 className="font-serif text-xl sm:text-2xl font-semibold leading-snug">
+                {topAlignedParty.name}
+              </h2>
+              <span className="text-sm text-muted-foreground">
+                {Math.round((topAligned?.score ?? 0) * 100)}% bei{" "}
+                {positionsAnswered} Aussagen
+              </span>
+            </div>
+          </header>
+          <ul className="flex flex-col gap-2 mt-1">
+            {alignedRanking?.slice(0, 7).map((r) => {
+              const party = getPartyById(r.partyId);
+              if (!party) return null;
+              const pct = Math.round(r.score * 100);
+              return (
+                <li key={r.partyId} className="flex items-center gap-3">
+                  <span
+                    className="size-3 rounded-full shrink-0"
+                    style={{ backgroundColor: party.color }}
+                    aria-hidden
+                  />
+                  <span className="flex-1 text-sm font-medium">
+                    {party.shortName}
+                  </span>
+                  <div className="flex items-center gap-2 w-32 sm:w-40">
+                    <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${pct}%`,
+                          backgroundColor: party.color,
+                        }}
+                      />
+                    </div>
+                    <span className="text-xs font-mono tabular-nums text-muted-foreground w-8 text-right">
+                      {pct}%
+                    </span>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
+      {/* Category breakdown (when answered at least some) */}
+      {werteCheckStarted && categoryScores && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            Themenfelder
+          </h2>
+          <ul className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+            {categoryScores.map((c) => {
+              const party = c.topPartyId ? getPartyById(c.topPartyId) : null;
+              const pct = Math.round(c.topPartyScore * 100);
+              return (
+                <li
+                  key={c.categoryId}
+                  className="rounded-xl border border-border bg-card p-3 flex flex-col gap-1"
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="size-2.5 rounded-full"
+                      style={{ backgroundColor: c.color }}
+                      aria-hidden
+                    />
+                    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {c.label}
+                    </span>
+                  </div>
+                  {c.answered > 0 ? (
+                    <>
+                      <span className="font-serif text-base font-semibold leading-tight">
+                        {party?.shortName ?? "—"}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {pct}% übereinstimmend
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-xs text-muted-foreground italic">
+                      Noch keine Antworten
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
+      {/* Kompass (vom täglichen Spielen) */}
       <section className="rounded-2xl bg-card border border-border p-5 sm:p-6 flex flex-col gap-4 shadow-sm">
         <header className="flex items-center gap-3">
-          <span className="inline-flex items-center justify-center size-10 rounded-xl bg-accent/15 text-accent">
+          <span className="inline-flex items-center justify-center size-10 rounded-xl bg-primary/10 text-primary">
             <Compass className="size-5" />
           </span>
           <div className="flex flex-col">
-            <span className="text-accent text-[11px] font-semibold uppercase tracking-[0.18em]">
-              Dein politischer Kompass
+            <span className="text-primary text-[11px] font-semibold uppercase tracking-[0.18em]">
+              Aus deinen Entscheidungen
             </span>
             <h2 className="font-serif text-xl font-semibold">
-              {hasPlayed ? "Wo du heute stehst." : "Spiel das erste Briefing!"}
+              {hasPlayed ? "Dein Kompass." : "Noch leer — spiel ein Briefing!"}
             </h2>
           </div>
         </header>
@@ -68,17 +233,15 @@ export default function ProfilPage() {
           <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start">
             <CompassMap user={state.spektrum} />
             <div className="w-full sm:flex-1 flex flex-col gap-3">
-              <h3 className="text-sm font-medium">Deine drei nächsten Parteien</h3>
+              <h3 className="text-sm font-medium">Drei nächste Parteien (Kompass)</h3>
               <PartyMatches matches={matches} />
             </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-4 py-6 text-center">
-            <Sparkles className="size-8 text-accent" />
+          <div className="flex flex-col items-center gap-4 py-4 text-center">
             <p className="text-sm text-muted-foreground max-w-xs">
-              Dein Kompass entsteht, sobald du das tägliche Briefing gespielt
-              hast. Jede Entscheidung verschiebt deinen Punkt zwischen den
-              Parteien.
+              Der Kompass entsteht aus deinen Tagesentscheidungen — nicht aus
+              dem Werte-Check.
             </p>
             <Link
               href="/heute"
@@ -90,6 +253,7 @@ export default function ProfilPage() {
         )}
       </section>
 
+      {/* Streak */}
       <section className="flex flex-col gap-3">
         <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
           Deine Streak
@@ -123,6 +287,17 @@ export default function ProfilPage() {
           </p>
         )}
       </section>
+
+      {/* Werte-Check redo CTA (when done) */}
+      {werteCheckDone && (
+        <Link
+          href="/werte-check"
+          className="text-xs text-center text-muted-foreground hover:text-foreground underline underline-offset-4 inline-flex items-center justify-center gap-1.5"
+        >
+          <CheckCircle2 className="size-3" />
+          Werte-Check wiederholen oder anpassen
+        </Link>
+      )}
 
       <section className="flex flex-col gap-3 pt-4 border-t border-border">
         {!session?.isRegistered && (

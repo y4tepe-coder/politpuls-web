@@ -1,6 +1,7 @@
 "use client";
 
 import type { SpektrumVector } from "@/lib/spektrum/types";
+import type { Stance } from "@/lib/data/positions-catalogue";
 
 // Browser-local game state. Mirrors what would live on the Supabase profiles
 // row when the user is signed in. Source of truth when offline.
@@ -24,6 +25,8 @@ export type LocalState = {
   decisions: LocalDecision[];
   role: LocalRole;
   party_id: string | null;
+  // Werte-Check Antworten (id → stance). Leer bis User /werte-check macht.
+  positions: Record<string, Stance>;
 };
 
 const KEY = "politpuls.state.v1";
@@ -37,6 +40,7 @@ const DEFAULT_STATE: LocalState = {
   decisions: [],
   role: "kandidat",
   party_id: null,
+  positions: {},
 };
 
 function safeStorage(): Storage | null {

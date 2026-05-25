@@ -10,17 +10,18 @@ import { markBriefingDoneLocally } from "@/lib/local/streak";
 import { BriefingCard } from "./BriefingCard";
 import { FactsCard } from "./FactsCard";
 import { ChoiceCard } from "./ChoiceCard";
+import { PressChatCard } from "./PressChatCard";
 import { ConsequenceCard } from "./ConsequenceCard";
 
-type Step = "briefing" | "facts" | "choice" | "consequence";
+type Step = "briefing" | "facts" | "choice" | "chat" | "consequence";
 
 type Props = {
   dossier: Dossier;
 };
 
-// Drives the four-card daily flow.
-// Source of truth = local state (LocalStorage). We also POST to /api/decision
-// best-effort; once Supabase is configured the server will persist too.
+// Drives the five-card daily flow (ported from iOS DecisionView):
+// briefing → facts → choice → press chat → consequence.
+// LocalStorage is the source of truth; server (Supabase) is best-effort.
 export function BriefingFlow({ dossier }: Props) {
   const [step, setStep] = useState<Step>("briefing");
   const [chosenId, setChosenId] = useState<ChoiceId | null>(null);
@@ -34,7 +35,6 @@ export function BriefingFlow({ dossier }: Props) {
   });
   const [submitting, setSubmitting] = useState(false);
 
-  // Hydrate from LocalStorage on mount (skips SSR to avoid hydration mismatch).
   useEffect(() => {
     ensureLocalSession();
     const local = getLocalState();
@@ -57,7 +57,6 @@ export function BriefingFlow({ dossier }: Props) {
     const before = getLocalState().spektrum;
     const after = applyDecision(before, choice.spektrum_delta);
 
-    // Persist locally first — that's the offline-safe truth.
     appendLocalDecision({
       dossierId: dossier.id,
       choiceId: id,
@@ -70,21 +69,22 @@ export function BriefingFlow({ dossier }: Props) {
     setSpektrumBefore(before);
     setSpektrumAfter(after);
 
-    // Best-effort server sync. If Supabase is configured the server overwrites
-    // our local "after" with the canonical value (e.g. profile already had drift).
     try {
-      const res = await fetch("/api/decision", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          dossierId: dossier.id,
-          choiceId: id,
-          delta: choice.spektrum_delta,
+      const [decisionRes] = await Promise.all([
+        fetch("/api/decision", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            dossierId: dossier.id,
+            choiceId: id,
+            delta: choice.spektrum_delta,
+          }),
         }),
-      });
+        fetch("/api/streak/save", { method: "POST" }).catch(() => null),
+      ]);
 
-      if (res.ok) {
-        const data = (await res.json()) as {
+      if (decisionRes.ok) {
+        const data = (await decisionRes.json()) as {
           before: SpektrumVector;
           after: SpektrumVector;
           persisted?: boolean;
@@ -94,14 +94,14 @@ export function BriefingFlow({ dossier }: Props) {
           setSpektrumAfter(data.after);
         }
       }
-
-      // Streak save is fire-and-forget — local already happened.
-      fetch("/api/streak/save", { method: "POST" }).catch(() => null);
     } catch {
-      // Already updated locally; nothing to do.
+      // Local state already updated; skip server.
     } finally {
       setSubmitting(false);
-      setStep("consequence");
+      // Go to press chat if dossier has a press persona AND this choice has chat data.
+      const hasPressChat =
+        !!dossier.press && !!choice.press_question;
+      setStep(hasPressChat ? "chat" : "consequence");
     }
   }
 
@@ -134,6 +134,16 @@ export function BriefingFlow({ dossier }: Props) {
         streitfrage={dossier.streitfrage}
         choices={dossier.choices}
         onChoose={handleChoose}
+      />
+    );
+  }
+
+  if (step === "chat" && chosen && dossier.press) {
+    return (
+      <PressChatCard
+        press={dossier.press}
+        choice={chosen}
+        onContinue={() => setStep("consequence")}
       />
     );
   }

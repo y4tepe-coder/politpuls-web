@@ -9,7 +9,14 @@ import { partyProximity } from "@/lib/spektrum/compute";
 import { Button } from "@/components/ui/button";
 import { CompassMap } from "@/components/spektrum/CompassMap";
 import { PartyMatches } from "@/components/spektrum/PartyMatches";
-import { CheckCircle2, Frown, Sparkles, RotateCcw } from "lucide-react";
+import {
+  CheckCircle2,
+  Frown,
+  Sparkles,
+  RotateCcw,
+  TrendingUp,
+  TrendingDown,
+} from "lucide-react";
 
 type Props = {
   choice: DossierChoice;
@@ -19,8 +26,9 @@ type Props = {
   onRestart: () => void;
 };
 
-// Final card: celebrates the decision, shows group reactions, and reveals
-// the spektrum shift on the 2D compass with the top three closest parties.
+// Final card: shows the user's choice, group reactions, the spektrum shift,
+// and (ported from iOS) impact delta rows per choice — labelled metrics with
+// a signed percent pill colored green/red.
 export function ConsequenceCard({
   choice,
   consequence,
@@ -29,10 +37,10 @@ export function ConsequenceCard({
   onRestart,
 }: Props) {
   const matches = partyProximity(spektrumAfter);
+  const deltas = choice.deltas ?? [];
 
   return (
     <article className="flex flex-1 flex-col max-w-xl mx-auto w-full px-5 py-10 gap-7">
-      {/* Achievement banner */}
       <div className="rounded-2xl bg-gradient-to-br from-success/20 via-success/10 to-card border border-success/30 p-5 flex items-center gap-4">
         <span className="inline-flex items-center justify-center size-12 rounded-full bg-success text-success-foreground shadow-md shadow-success/30">
           <Sparkles className="size-6" />
@@ -55,6 +63,50 @@ export function ConsequenceCard({
           {consequence.summary}
         </p>
       </div>
+
+      {/* Impact deltas (iOS-style) */}
+      {deltas.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground px-1">
+            Konkrete Auswirkungen
+          </h3>
+          <ul className="flex flex-col gap-2">
+            {deltas.map((d, i) => (
+              <li
+                key={i}
+                className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3"
+              >
+                <div className="flex-1 min-w-0 flex flex-col">
+                  <span className="text-sm font-medium leading-tight">
+                    {d.label}
+                  </span>
+                  {d.note && (
+                    <span className="text-xs text-muted-foreground leading-tight mt-0.5">
+                      {d.note}
+                    </span>
+                  )}
+                </div>
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-mono font-semibold tabular-nums ${
+                    d.good
+                      ? "bg-success/15 text-success border border-success/30"
+                      : "bg-chart-4/15 text-chart-4 border border-chart-4/30"
+                  }`}
+                >
+                  {d.good ? (
+                    <TrendingUp className="size-3" />
+                  ) : (
+                    <TrendingDown className="size-3" />
+                  )}
+                  {d.delta > 0 ? "+" : ""}
+                  {d.delta}
+                  {d.unit ?? ""}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <ReactionTile

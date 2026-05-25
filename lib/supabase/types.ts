@@ -24,6 +24,14 @@ export type SpektrumRaw = {
 
 export type ChoiceId = "A" | "B" | "C" | "D";
 
+export type DossierDelta = {
+  label: string;
+  delta: number; // signed percent, e.g. +5 or -3
+  unit?: string;
+  good: boolean; // colors the pill green vs. red
+  note?: string;
+};
+
 export type DossierChoice = {
   id: ChoiceId;
   label: string;
@@ -32,6 +40,20 @@ export type DossierChoice = {
   spektrum_delta: SpektrumDisplay;
   spektrum_delta_raw?: Partial<SpektrumRaw>;
   affected_groups: string[];
+  // Press chat step (ported from iOS DecisionView step 2):
+  press_question?: string;
+  press_presets?: string[];
+  // Impact rows shown on the consequence screen:
+  deltas?: DossierDelta[];
+};
+
+export type PressPersona = {
+  name: string;
+  role: string;
+  outlet: string;
+  initials: string;
+  gradient_from: string; // tailwind color e.g. "from-amber-400"
+  gradient_to: string; // tailwind color e.g. "to-rose-500"
 };
 
 export type DossierFact = { label: string; value: string };
@@ -58,6 +80,7 @@ export type Dossier = {
   choices: DossierChoice[];
   consequences: Record<ChoiceId, DossierConsequence>;
   sources: DossierSource[];
+  press?: PressPersona;
   model_version: string | null;
   prompt_version: string | null;
   generation_log_id: string | null;

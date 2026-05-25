@@ -2,6 +2,8 @@ import type { Dossier } from "@/lib/supabase/types";
 
 // Hand-written seed dossier so /heute works before the AI pipeline is live.
 // Topic chosen to be evergreen-ish: a typical German budget trade-off.
+// Each choice carries press_question/presets (for the chat step) and deltas
+// (impact rows shown on the consequence screen) — same shape as iOS dossiers.
 export const seedDossier: Dossier = {
   id: "seed-2026-05-25",
   publish_date: "2026-05-25",
@@ -12,18 +14,9 @@ export const seedDossier: Dossier = {
     "Die Koalition streitet, wohin im nächsten Haushalt das frische Geld geht. Eine Entscheidung muss noch dieses Jahr fallen.",
   body: [],
   facts: [
-    {
-      label: "Steigerung des Verteidigungsetats 2024 → 2025",
-      value: "+11 %",
-    },
-    {
-      label: "Klimainvestitionen, die bis 2030 fehlen",
-      value: "~280 Mrd. €",
-    },
-    {
-      label: "Schuldenbremse erlaubt zusätzliche Neuverschuldung von",
-      value: "0,35 % des BIP",
-    },
+    { label: "Steigerung des Verteidigungsetats 2024 → 2025", value: "+11 %" },
+    { label: "Klimainvestitionen, die bis 2030 fehlen", value: "~280 Mrd. €" },
+    { label: "Schuldenbremse erlaubt neue Schulden von", value: "0,35 % BIP" },
   ],
   glossar: {
     Schuldenbremse:
@@ -31,10 +24,18 @@ export const seedDossier: Dossier = {
     Verteidigungsetat:
       "Geld, das der Bund pro Jahr für Bundeswehr, Beschaffung und NATO-Beiträge ausgibt.",
     Klimainvestitionen:
-      "Ausgaben für Energiewende, Verkehrswende, Wärme­wende — alles, was Treibhausgase reduziert.",
+      "Ausgaben für Energiewende, Verkehrswende, Wärmewende — alles, was Treibhausgase reduziert.",
   },
   streitfrage:
     "Du sitzt im Bundeskabinett. Wohin fließt das zusätzliche Geld?",
+  press: {
+    name: "Lena Westphal",
+    role: "Hauptstadt-Korrespondentin",
+    outlet: "Süddeutsche Zeitung",
+    initials: "LW",
+    gradient_from: "from-amber-400",
+    gradient_to: "to-rose-500",
+  },
   choices: [
     {
       id: "A",
@@ -47,6 +48,18 @@ export const seedDossier: Dossier = {
       ],
       spektrum_delta: { economic: 18, social: -10 },
       affected_groups: ["CDU/CSU-Wähler:innen", "AfD-Wähler:innen"],
+      press_question:
+        "Sie kürzen damit faktisch beim Klima. Wie erklären Sie das jungen Wähler:innen?",
+      press_presets: [
+        "Sicherheit zuerst — Klimaschutz funktioniert nur in einem stabilen Land.",
+        "Wir kürzen nicht beim Klima, wir verschieben Prioritäten zeitlich.",
+        "Russland zwingt uns dazu. Das ist keine Entscheidung gegen Klima.",
+      ],
+      deltas: [
+        { label: "Beliebtheit", delta: -4, unit: "%", good: false, note: "Junge Wähler:innen enttäuscht" },
+        { label: "Sicherheitsgefühl", delta: 8, unit: "%", good: true },
+        { label: "CO₂-Pfad", delta: -3, unit: "%", good: false, note: "Verzögerung in Energiewende" },
+      ],
     },
     {
       id: "B",
@@ -59,6 +72,18 @@ export const seedDossier: Dossier = {
       ],
       spektrum_delta: { economic: -12, social: 22 },
       affected_groups: ["Grüne-Wähler:innen", "SPD-Wähler:innen"],
+      press_question:
+        "Wie wollen Sie das gegenüber der NATO und gegenüber Russland erklären, dass die Bundeswehr leer bleibt?",
+      press_presets: [
+        "Wir investieren in echte Sicherheit: Klimasicherheit.",
+        "Verteidigung bleibt finanziert — nur kein zusätzliches Geld.",
+        "Die NATO weiß: Deutschland trägt seinen Anteil ohne Mehrausgaben.",
+      ],
+      deltas: [
+        { label: "Beliebtheit", delta: 6, unit: "%", good: true, note: "Junge feiern dich" },
+        { label: "Sicherheitsgefühl", delta: -5, unit: "%", good: false },
+        { label: "CO₂-Pfad", delta: 7, unit: "%", good: true, note: "1,5-Grad bleibt erreichbar" },
+      ],
     },
     {
       id: "C",
@@ -67,10 +92,22 @@ export const seedDossier: Dossier = {
       bullets: [
         "Vermögensteuer reaktivieren",
         "Spitzensteuersatz ab 1 Mio €",
-        "Erbschaftsteuer-Schlupflöcher schließen",
+        "Erbschaftsteuer-Lücken schließen",
       ],
       spektrum_delta: { economic: -28, social: 12 },
       affected_groups: ["Linke-Wähler:innen", "SPD-Wähler:innen"],
+      press_question:
+        "Der Mittelstand fürchtet, dass das nur der Anfang ist. Was sagen Sie?",
+      press_presets: [
+        "Es geht nur um die obersten 0,1 % — nicht um den Mittelstand.",
+        "Eine starke Demokratie braucht starke Schultern, die mehr tragen.",
+        "Wir kompensieren mit Entlastungen für Familien und Geringverdienende.",
+      ],
+      deltas: [
+        { label: "Beliebtheit", delta: 3, unit: "%", good: true },
+        { label: "Standortbewertung", delta: -7, unit: "%", good: false, note: "Wirtschaftsverbände warnen" },
+        { label: "Soziale Gerechtigkeit", delta: 9, unit: "%", good: true },
+      ],
     },
     {
       id: "D",
@@ -83,6 +120,18 @@ export const seedDossier: Dossier = {
       ],
       spektrum_delta: { economic: 8, social: 6 },
       affected_groups: ["FDP-Wähler:innen", "Wirtschaftsverbände"],
+      press_question:
+        "Reformieren Sie die Schuldenbremse — und damit ein verfassungsrechtliches Versprechen. Wo ist die Grenze?",
+      press_presets: [
+        "Wir schaffen ein zweckgebundenes Sondervermögen, nicht offene Verschuldung.",
+        "Investitionen in Zukunft sind keine Konsumschulden.",
+        "Die Schuldenbremse ist nicht mehr zeitgemäß. Reform ist nötig.",
+      ],
+      deltas: [
+        { label: "Beliebtheit", delta: 2, unit: "%", good: true },
+        { label: "Inflationsrisiko", delta: 4, unit: "%", good: false, note: "Bundesbank warnt" },
+        { label: "Investitionsklima", delta: 6, unit: "%", good: true },
+      ],
     },
   ],
   consequences: {
@@ -124,7 +173,7 @@ export const seedDossier: Dossier = {
     },
   ],
   model_version: "seed",
-  prompt_version: "seed-v1",
+  prompt_version: "seed-v2",
   generation_log_id: null,
   factcheck_passed: true,
   balance_score: 0.85,

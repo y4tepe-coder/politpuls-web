@@ -8,15 +8,12 @@ import { PixelTrail } from "@/components/ui/pixel-trail";
 import { MagneticButton } from "@/components/ui/magnetic-button";
 import { useScreenSize } from "@/hooks/use-screen-size";
 import { getLocalSession } from "@/lib/local/session";
+import { PolitpulsMark } from "@/components/brand/Logo";
 import { ArrowRight } from "lucide-react";
 
-// Reichstag im impressionistischen Stil — liegt unter web/public/hero-reichstag.png.
-// Wenn du ein anderes Bild willst, leg es in web/public/ ab und passe den Pfad an.
-const HERO_BG_URL = "/hero-reichstag.png";
-
-// Full-bleed light hero with the Bundestag (or any impressionist painting) behind
-// a white pixel-trail that gets glued together by a gooey SVG filter — the user
-// drags their cursor and white "clouds" follow.
+// Full-bleed hero. Reichstag painting in impressionist pastels (day version) or
+// dark night (system dark-mode), both saved locally in /public/. White pixel
+// trail + gooey filter for the interactive "cloud" effect.
 
 export default function LandingPage() {
   const screenSize = useScreenSize();
@@ -28,79 +25,98 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <main className="relative h-screen w-full overflow-hidden flex flex-col items-center justify-center text-center bg-background">
-      {/* Background image — Reichstag / impressionist painting */}
-      <img
-        src={HERO_BG_URL}
-        alt=""
-        aria-hidden
-        className="absolute inset-0 w-full h-full object-cover"
-      />
+    <main
+      className="relative w-full overflow-hidden flex flex-col items-center justify-center text-center bg-background"
+      style={{
+        minHeight: "100dvh",
+        paddingTop: "env(safe-area-inset-top)",
+        paddingBottom: "env(safe-area-inset-bottom)",
+      }}
+    >
+      {/* Light/Dark image swap via <picture>. The browser picks the right source
+          automatically — no JS detection, no flicker. */}
+      <picture className="absolute inset-0 w-full h-full">
+        <source
+          srcSet="/hero-reichstag-night.png"
+          media="(prefers-color-scheme: dark)"
+        />
+        <img
+          src="/hero-reichstag.png"
+          alt=""
+          aria-hidden
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      </picture>
 
-      {/* Very gentle wash — the painting is pastel and bright, so we keep
-          most of the colour and just lift contrast under the headline. */}
-      <div className="absolute inset-0 bg-black/15" />
+      {/* Gentle wash — keeps the painting's pastel colours visible, lifts contrast
+          under the headline. Stronger at the bottom for the CTA area. */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-black/45" />
 
-      {/* Gooey filter def (invisible) */}
       <GooeyFilter id="politpuls-hero-goo" strength={5} />
 
-      {/* Pixel-trail layer with gooey filter applied. Pixels stay 500ms then snap
-          out — same recipe as the 21st.dev demo for that "white cloud" feel. */}
       <div
         className="absolute inset-0 z-0"
         style={{ filter: "url(#politpuls-hero-goo)" }}
       >
         <PixelTrail
-          pixelSize={screenSize.lessThan("md") ? 24 : 32}
+          pixelSize={screenSize.lessThan("md") ? 22 : 32}
           fadeDuration={0}
           delay={500}
           pixelClassName="bg-white"
         />
       </div>
 
-      {/* Content layer — sits above the gooey pixels */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        className="relative z-10 flex flex-col items-center gap-6 px-6 max-w-3xl pointer-events-none"
+        className="relative z-10 flex flex-col items-center gap-5 sm:gap-6 px-6 max-w-3xl pointer-events-none"
       >
-        <span className="inline-flex items-center gap-2 rounded-full bg-white/90 backdrop-blur-sm border border-white/60 px-3 py-1 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-foreground shadow-sm">
+        <div className="inline-flex items-center gap-3 pointer-events-none">
+          <PolitpulsMark className="size-10 sm:size-12 text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]" />
+        </div>
+
+        <span className="inline-flex items-center gap-2 rounded-full bg-white/95 backdrop-blur-sm border border-white/60 px-3 py-1 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-foreground shadow-sm">
           Das tägliche Politik-Spiel
         </span>
 
-        <h1 className="font-serif text-6xl sm:text-8xl lg:text-9xl font-semibold leading-[0.95] tracking-tight text-white drop-shadow-[0_6px_30px_rgba(0,0,0,0.55)]">
+        <h1 className="font-serif text-5xl sm:text-7xl lg:text-8xl font-semibold leading-[0.95] tracking-tight text-white drop-shadow-[0_6px_30px_rgba(0,0,0,0.6)]">
           Politpuls
         </h1>
 
-        <p className="text-base sm:text-xl text-white/95 max-w-xl leading-relaxed drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
-          Bundespolitik in drei Minuten am Tag. Eine echte Nachricht aus Berlin,
-          vier Wege sie zu lösen — du entscheidest.
+        <p className="text-base sm:text-xl text-white/95 max-w-xl leading-relaxed drop-shadow-[0_2px_12px_rgba(0,0,0,0.65)] px-2">
+          Bundespolitik in drei Minuten am Tag. Eine echte Nachricht aus Berlin —
+          du entscheidest.
         </p>
 
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.6 }}
-          className="pointer-events-auto mt-3 flex flex-col items-center gap-3"
+          className="pointer-events-auto mt-4 flex flex-col items-center gap-3"
         >
-          <MagneticButton distance={0.35}>
+          <MagneticButton distance={0.3}>
             <Link
               href={destination}
-              className="group relative inline-flex items-center gap-2.5 rounded-full bg-foreground text-background px-9 py-4 sm:px-12 sm:py-5 text-base sm:text-lg font-semibold shadow-[0_20px_60px_-12px_rgba(0,0,0,0.6)] hover:shadow-[0_24px_70px_-10px_rgba(0,0,0,0.7)] hover:bg-foreground/90 transition-all"
+              className="group relative inline-flex items-center gap-2.5 rounded-full bg-white text-foreground px-9 py-4 sm:px-12 sm:py-5 text-base sm:text-lg font-semibold shadow-[0_20px_60px_-12px_rgba(0,0,0,0.6)] hover:shadow-[0_24px_70px_-10px_rgba(0,0,0,0.7)] hover:bg-white/95 transition-all min-h-[44px]"
             >
-              Politpuls starten
+              Jetzt spielen
               <ArrowRight className="size-5 group-hover:translate-x-1 transition-transform" />
             </Link>
           </MagneticButton>
-          <p className="text-[11px] text-white/80 mt-1 drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]">
-            Bewege die Maus über den Hintergrund · Pixel reagieren
-          </p>
+          <Link
+            href="/login"
+            className="text-xs sm:text-sm text-white/80 hover:text-white underline underline-offset-4 transition-colors drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)] min-h-[44px] inline-flex items-center"
+          >
+            Schon angemeldet? Hier rein
+          </Link>
         </motion.div>
       </motion.div>
 
-      {/* Subtle footer mark */}
-      <div className="absolute bottom-4 left-0 right-0 text-center z-10 pointer-events-none">
+      <div
+        className="absolute left-0 right-0 text-center z-10 pointer-events-none"
+        style={{ bottom: "max(env(safe-area-inset-bottom), 1rem)" }}
+      >
         <p className="text-[10px] text-white/60 uppercase tracking-[0.3em] drop-shadow-sm">
           Politpuls · Berlin
         </p>

@@ -1,36 +1,24 @@
 import { seedDossier } from "./seed-dossier";
 
-// One stop on the daily path. Until the AI pipeline goes live (Tag 8+), we render
-// a deterministic 7-day window around today using fake topics so the path looks alive.
-// Once dossiers are in Supabase the path will read from there.
+// One stop on the daily path. Mix aus täglichen Briefings + speziellen Events
+// (z.B. Wahlkampf). Sobald die KI-Pipeline live ist, kommen die Dossiers aus
+// Supabase und Events können in einer eigenen Tabelle kuratiert werden.
 export type PfadStop = {
   date: string; // YYYY-MM-DD, Berlin date
-  weekdayShort: string; // "Mo", "Di", ...
+  weekdayShort: string;
   dayNumber: number;
   monthShort: string;
   kicker: string;
   headline: string;
   status: "done" | "today" | "locked";
+  /** Specialevent-Marker für die Pfad-Knoten (Wahlkampf, Triell etc.). */
+  eventTag?: "wahlkampf" | "triell" | "wahl";
   href: string;
 };
 
 const WEEKDAYS_DE = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"] as const;
-const MONTHS_DE = [
-  "Jan",
-  "Feb",
-  "Mär",
-  "Apr",
-  "Mai",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Okt",
-  "Nov",
-  "Dez",
-] as const;
+const MONTHS_DE = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"] as const;
 
-// Placeholder topics — replaced once we read from the dossiers table.
 const PAST_TOPICS = [
   { kicker: "Sozialpolitik", headline: "Bürgergeld bleibt — wer zahlt?" },
   { kicker: "Migration", headline: "Familiennachzug: Stopp oder Reform?" },
@@ -38,6 +26,10 @@ const PAST_TOPICS = [
   { kicker: "Bildung", headline: "G9 für alle? Länder uneins" },
   { kicker: "Sicherheit", headline: "Vorratsdatenspeicherung kommt zurück" },
   { kicker: "EU", headline: "Brüssels neue Asyl-Regeln in der Kritik" },
+  { kicker: "Wirtschaft", headline: "Mindestlohn auf 15 €?" },
+  { kicker: "Verkehr", headline: "9-Euro-Ticket: Comeback-Debatte" },
+  { kicker: "Gesundheit", headline: "Krankenhaus-Reform: Wer zahlt?" },
+  { kicker: "Außenpolitik", headline: "Taurus für die Ukraine — Ja oder Nein?" },
 ];
 
 const FUTURE_TOPICS = [
@@ -47,6 +39,19 @@ const FUTURE_TOPICS = [
   { kicker: "Außenpolitik", headline: "Bundeswehr-Einsatz in Mali verlängern?" },
   { kicker: "Digital", headline: "Chatkontrolle: Brüssel will durchregieren" },
   { kicker: "Wohnen", headline: "Mietendeckel auch im Bund?" },
+  { kicker: "Bildung", headline: "Digitalpakt 2.0 — was kostet das?" },
+  { kicker: "Klima", headline: "Kohleausstieg auf 2030 vorziehen?" },
+  { kicker: "Soziales", headline: "Vermögensteuer für Milliardäre?" },
+  { kicker: "EU", headline: "EU-Erweiterung Westbalkan — wann?" },
+];
+
+// Spezial-Events, die zwischen die täglichen Briefings gestreut werden
+// (relative day-offsets ab heute).
+const EVENT_SCHEDULE: { offset: number; tag: "wahlkampf" | "triell" | "wahl"; kicker: string; headline: string; href: string }[] = [
+  { offset: 4, tag: "wahlkampf", kicker: "Wahlkampf", headline: "Dein Wahlprogramm schreiben", href: "/wahlkampf/programm" },
+  { offset: 7, tag: "wahlkampf", kicker: "Wahlkampf", headline: "Dein Plakat gestalten", href: "/wahlkampf/plakat" },
+  { offset: 10, tag: "triell", kicker: "TV-Triell", headline: "Live-Studio — 5 Fragen", href: "/wahlkampf/tv-triell" },
+  { offset: 13, tag: "wahl", kicker: "Wahlsonntag", headline: "Hochrechnung 18:00", href: "/wahlkampf/wahl" },
 ];
 
 function pad(n: number): string {
@@ -63,48 +68,61 @@ function formatDate(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-// Returns 7 stops centred on today: 3 past, today, 3 future.
+// Liefert ~21 Stops: 7 Tage zurück, heute, 14 Tage voraus (inkl. Events).
 export function buildPfadStops(today: Date = new Date()): PfadStop[] {
   const stops: PfadStop[] = [];
 
-  for (let offset = -3; offset <= 3; offset++) {
+  for (let offset = -7; offset <= 14; offset++) {
     const date = addDays(today, offset);
     const dateStr = formatDate(date);
-
-    let kicker: string;
-    let headline: string;
-    let status: PfadStop["status"];
-    let href: string;
-
-    if (offset === 0) {
-      kicker = seedDossier.kicker ?? "Heute";
-      headline = seedDossier.headline;
-      status = "today";
-      href = "/heute";
-    } else if (offset < 0) {
-      const topic = PAST_TOPICS[(PAST_TOPICS.length + offset) % PAST_TOPICS.length];
-      kicker = topic.kicker;
-      headline = topic.headline;
-      status = "done";
-      href = "/heute"; // For now there's only one playable dossier.
-    } else {
-      const topic = FUTURE_TOPICS[(offset - 1) % FUTURE_TOPICS.length];
-      kicker = topic.kicker;
-      headline = topic.headline;
-      status = "locked";
-      href = "#";
-    }
-
-    stops.push({
+    const base = {
       date: dateStr,
       weekdayShort: WEEKDAYS_DE[date.getDay()],
       dayNumber: date.getDate(),
       monthShort: MONTHS_DE[date.getMonth()],
-      kicker,
-      headline,
-      status,
-      href,
-    });
+    };
+
+    // Spezial-Event an diesem Offset?
+    const event = EVENT_SCHEDULE.find((e) => e.offset === offset);
+    if (event) {
+      stops.push({
+        ...base,
+        kicker: event.kicker,
+        headline: event.headline,
+        status: "locked",
+        eventTag: event.tag,
+        href: event.href,
+      });
+      continue;
+    }
+
+    if (offset === 0) {
+      stops.push({
+        ...base,
+        kicker: seedDossier.kicker ?? "Heute",
+        headline: seedDossier.headline,
+        status: "today",
+        href: "/heute",
+      });
+    } else if (offset < 0) {
+      const topic = PAST_TOPICS[(PAST_TOPICS.length + offset) % PAST_TOPICS.length];
+      stops.push({
+        ...base,
+        kicker: topic.kicker,
+        headline: topic.headline,
+        status: "done",
+        href: "/heute",
+      });
+    } else {
+      const topic = FUTURE_TOPICS[(offset - 1) % FUTURE_TOPICS.length];
+      stops.push({
+        ...base,
+        kicker: topic.kicker,
+        headline: topic.headline,
+        status: "locked",
+        href: "#",
+      });
+    }
   }
 
   return stops;

@@ -24,7 +24,16 @@ export default function LandingPage() {
     if (session) setReturning(true);
   }, []);
 
-  function continueAsGuest() {
+  async function continueAsGuest() {
+    // Falls eine alte Supabase-Session vorhanden ist: signOut, damit der
+    // Server-Cookie nicht zurück zum echten Konto routet.
+    try {
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      await supabase.auth.signOut().catch(() => null);
+    } catch {
+      /* Supabase nicht konfiguriert — egal */
+    }
     startGuestSession();
     router.push("/home");
   }

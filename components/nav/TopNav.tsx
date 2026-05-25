@@ -1,67 +1,39 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { Logo } from "@/components/brand/Logo";
-import { Flame, Home, Compass, User } from "lucide-react";
+import { Flame, Zap } from "lucide-react";
 import { useLocalSession } from "@/hooks/useLocalSession";
 
-// Top-Nav iOS-Style:
-// - Logo links (nur Wortmarke)
-// - Streak-Badge wenn > 0
-// - DREI Tabs (Home / Spektrum / Profil) — der aktuelle Tab wird AUSGEBLENDET,
-//   die anderen zwei sind sichtbar. Pfad + Wahlkampf sind keine Top-Tabs mehr,
-//   man kommt da vom Homescreen rein.
-const TABS = [
-  { href: "/home", label: "Start", icon: Home, prefix: ["/home", "/heute", "/pfad", "/wahlkampf"] },
-  { href: "/spektrum", label: "Spektrum", icon: Compass, prefix: ["/spektrum", "/werte-check"] },
-  { href: "/profil", label: "Profil", icon: User, prefix: ["/profil"] },
-] as const;
-
+// Top-Header — nur Logo + 2 Stats-Pills (Streak rot + Briefings gold).
+// Die Tab-Navigation liegt UNTEN (BottomTabBar) — iOS-Style.
 export function TopNav() {
   const { state } = useLocalSession(true);
   const streak = state?.current_streak ?? 0;
-  const pathname = usePathname() ?? "";
-
-  function isActive(prefixes: readonly string[]): boolean {
-    return prefixes.some((p) => pathname === p || pathname.startsWith(p + "/"));
-  }
-
-  // 2 von 3 Tabs anzeigen: der aktive ist versteckt
-  const visibleTabs = TABS.filter((t) => !isActive(t.prefix));
+  const decisions = state?.decisions.length ?? 0;
 
   return (
     <header
-      className="sticky top-0 z-20 w-full border-b border-foreground/8 bg-background/80 backdrop-blur-md"
+      className="sticky top-0 z-20 w-full border-b border-foreground/8 bg-background/85 backdrop-blur-md"
       style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
-      <div className="mx-auto max-w-2xl flex items-center justify-between px-5 h-14">
+      <div className="mx-auto max-w-2xl flex items-center justify-between px-5 h-14 gap-3">
         <Logo size="md" textOnly href="/home" />
-        <nav className="flex items-center gap-1">
-          {streak > 0 && (
-            <span
-              className="inline-flex items-center gap-1 rounded-full bg-pp-red/12 text-pp-red px-2.5 py-1 text-xs font-semibold mr-1"
-              aria-label={`Streak: ${streak} Tage`}
-            >
-              <Flame className="size-3.5" fill="currentColor" />
-              {streak}
-            </span>
-          )}
-          {visibleTabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <Link
-                key={tab.href}
-                href={tab.href}
-                aria-label={tab.label}
-                className="inline-flex items-center gap-1.5 min-h-[44px] px-3 rounded-full text-foreground/80 hover:text-foreground hover:bg-foreground/5 transition-colors text-sm font-medium"
-              >
-                <Icon className="size-4" />
-                <span className="hidden sm:inline">{tab.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
+        <div className="flex items-center gap-2">
+          <span
+            className="inline-flex items-center gap-1 rounded-full bg-pp-red/12 text-pp-red px-2.5 py-1 text-xs font-semibold tabular-nums"
+            aria-label={`Streak: ${streak} Tage`}
+          >
+            <Flame className="size-3.5" fill="currentColor" />
+            {streak}
+          </span>
+          <span
+            className="inline-flex items-center gap-1 rounded-full bg-gold/20 text-gold-ink px-2.5 py-1 text-xs font-semibold tabular-nums"
+            aria-label={`${decisions} gespielte Briefings`}
+          >
+            <Zap className="size-3.5" fill="currentColor" />
+            {decisions}
+          </span>
+        </div>
       </div>
     </header>
   );

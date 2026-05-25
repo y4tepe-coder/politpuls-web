@@ -62,11 +62,16 @@ export function ensureLocalSession(): LocalSession {
   return session;
 }
 
-// 1-Klick-Gast: erstellt anonyme Session mit Default-Namen "Gast".
-// User kann den Namen später im Profil ändern oder zu echtem Konto upgraden.
+// 1-Klick-Gast: setzt alte Session zurück und erstellt eine frische
+// anonyme Gast-Session. Wichtig, wenn der User vom alten Konto wegmöchte —
+// sonst sieht er weiterhin sein altes Konto.
 export function startGuestSession(): LocalSession {
-  const existing = getLocalSession();
-  if (existing) return existing;
+  const storage = safeStorage();
+  // Local cache plattmachen
+  if (storage) {
+    storage.removeItem(KEY);
+    storage.removeItem("politpuls.state.v1");
+  }
   const session: LocalSession = {
     userId: `guest-${randomId()}`,
     displayName: "Gast",
@@ -74,7 +79,6 @@ export function startGuestSession(): LocalSession {
     isRegistered: false,
     createdAt: new Date().toISOString(),
   };
-  const storage = safeStorage();
   if (storage) storage.setItem(KEY, JSON.stringify(session));
   return session;
 }

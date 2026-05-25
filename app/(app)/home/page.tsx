@@ -169,12 +169,42 @@ export default function HomePage() {
  *  zigzag versetzt. Knoten skalieren responsiv (Mobile 64–80 px, Desktop
  *  bis 112 px). Label klein UNTER dem Knoten. Auto-Scroll zu Heute. */
 function ZigzagPath({ stops }: { stops: PfadStop[] }) {
-  useEffect(() => {
+  // Beim Mount: heutigen Knoten exakt in die Viewport-Mitte scrollen.
+  // Plus: kleiner "Heute"-Button blendet sich ein, wenn der User wegscrollt.
+  const [showJump, setShowJump] = useState(false);
+
+  function centerOnToday(smooth = false) {
     const el = document.getElementById("pfad-today");
-    if (el) {
-      const top = el.getBoundingClientRect().top + window.scrollY - 160;
-      window.scrollTo({ top, behavior: "instant" as ScrollBehavior });
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const targetY =
+      rect.top + window.scrollY - window.innerHeight / 2 + rect.height / 2;
+    window.scrollTo({
+      top: Math.max(0, targetY),
+      behavior: smooth ? "smooth" : ("instant" as ScrollBehavior),
+    });
+  }
+
+  useEffect(() => {
+    // Erst rendern lassen, dann scrollen (Layout muss fertig sein)
+    const r = requestAnimationFrame(() => centerOnToday(false));
+
+    // "Heute"-Button zeigen wenn der heutige Knoten nicht mehr im Viewport ist
+    function onScroll() {
+      const el = document.getElementById("pfad-today");
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const offscreen =
+        rect.bottom < 80 || rect.top > window.innerHeight - 80;
+      setShowJump(offscreen);
     }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+
+    return () => {
+      cancelAnimationFrame(r);
+      window.removeEventListener("scroll", onScroll);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -188,15 +218,28 @@ function ZigzagPath({ stops }: { stops: PfadStop[] }) {
   ];
 
   return (
-    <ol className="relative flex flex-col items-center gap-6 sm:gap-8 py-4">
-      {stops.map((stop, i) => (
-        <PfadNode
-          key={stop.date + i}
-          stop={stop}
-          offsetClass={offsets[i % offsets.length]}
-        />
-      ))}
-    </ol>
+    <>
+      <ol className="relative flex flex-col items-center gap-6 sm:gap-8 py-4">
+        {stops.map((stop, i) => (
+          <PfadNode
+            key={stop.date + i}
+            stop={stop}
+            offsetClass={offsets[i % offsets.length]}
+          />
+        ))}
+      </ol>
+      {showJump && (
+        <button
+          type="button"
+          onClick={() => centerOnToday(true)}
+          className="fixed left-1/2 -translate-x-1/2 bottom-6 z-30 inline-flex items-center gap-2 rounded-full bg-gold text-gold-ink px-4 py-2.5 text-sm font-bold shadow-[0_8px_24px_-6px_rgba(0,0,0,0.4)] hover:scale-[1.03] active:scale-[0.97] transition-transform"
+          style={{ bottom: "max(env(safe-area-inset-bottom), 1.5rem)" }}
+        >
+          <Play className="size-3.5" fill="currentColor" />
+          Zurück zu Heute
+        </button>
+      )}
+    </>
   );
 }
 

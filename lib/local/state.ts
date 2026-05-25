@@ -16,6 +16,13 @@ export type LocalDecision = {
 
 export type LocalRole = "kandidat" | "minister" | "kanzler" | "opposition";
 
+export type WahlkampfPlakat = {
+  slogan: string;
+  subline: string;
+  color: "rose" | "sand" | "sky";
+  layout: "classic" | "modern" | "bold";
+};
+
 export type LocalState = {
   spektrum: SpektrumVector;
   current_streak: number;
@@ -25,8 +32,11 @@ export type LocalState = {
   decisions: LocalDecision[];
   role: LocalRole;
   party_id: string | null;
-  // Werte-Check Antworten (id → stance). Leer bis User /werte-check macht.
   positions: Record<string, Stance>;
+  // Wahlkampf-Fortschritt
+  campaign_themen: string[]; // bis zu 3 ids aus WAHLKAMPF_THEMEN
+  campaign_plakat: WahlkampfPlakat | null;
+  campaign_triell_answers: Record<string, string>; // questionId → answerId
 };
 
 const KEY = "politpuls.state.v1";
@@ -41,6 +51,9 @@ const DEFAULT_STATE: LocalState = {
   role: "kandidat",
   party_id: null,
   positions: {},
+  campaign_themen: [],
+  campaign_plakat: null,
+  campaign_triell_answers: {},
 };
 
 function safeStorage(): Storage | null {

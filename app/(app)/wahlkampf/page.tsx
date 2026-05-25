@@ -10,10 +10,9 @@ import {
   Briefcase,
   Megaphone,
   ShieldCheck,
-  Lock,
   CalendarDays,
   Flag,
-  Sparkles,
+  ChevronRight,
 } from "lucide-react";
 
 const ROLES: {
@@ -57,12 +56,25 @@ const ROLES: {
   },
 ];
 
-const PHASES = [
-  { title: "Wahlprogramm schreiben", days: "Tag 26" },
-  { title: "Plakat gestalten", days: "Tag 28" },
-  { title: "TV-Triell führen", days: "Tag 30" },
-  { title: "Wahlsonntag", days: "Tag 31" },
+const PHASES: {
+  id: string;
+  title: string;
+  days: string;
+  href: string;
+  pastel: "sky" | "rose" | "mint" | "peach";
+}[] = [
+  { id: "programm", title: "Wahlprogramm schreiben", days: "Schritt 1", href: "/wahlkampf/programm", pastel: "mint" },
+  { id: "plakat", title: "Plakat gestalten", days: "Schritt 2", href: "/wahlkampf/plakat", pastel: "peach" },
+  { id: "tv-triell", title: "TV-Triell führen", days: "Schritt 3", href: "/wahlkampf/tv-triell", pastel: "sky" },
+  { id: "wahl", title: "Wahlsonntag", days: "Schritt 4", href: "/wahlkampf/wahl", pastel: "rose" },
 ];
+
+const PASTEL_BG = {
+  sky: "bg-pastel-sky text-pastel-sky-ink border-pastel-sky-ink/15",
+  rose: "bg-pastel-rose text-pastel-rose-ink border-pastel-rose-ink/15",
+  mint: "bg-pastel-mint text-pastel-mint-ink border-pastel-mint-ink/15",
+  peach: "bg-pastel-peach text-pastel-peach-ink border-pastel-peach-ink/15",
+} as const;
 
 export default function WahlkampfPage() {
   const [role, setRole] = useState<LocalRole>("kandidat");
@@ -242,40 +254,34 @@ export default function WahlkampfPage() {
         </ul>
       </section>
 
-      {/* Campaign phases */}
+      {/* Campaign phases — anklickbare Schritte */}
       <section className="flex flex-col gap-3">
         <header className="flex flex-col gap-1">
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             Der Wahlkampf-Zyklus
           </h2>
           <p className="text-sm text-muted-foreground">
-            Die letzten Tage vor jeder Wahl sind intensiv. Hier ist, was kommt.
+            Vier Schritte bis zur Wahl. Du kannst jederzeit reinschnuppern.
           </p>
         </header>
         <ol className="flex flex-col gap-2.5">
-          {PHASES.map((phase, i) => (
-            <li
-              key={phase.title}
-              className="rounded-xl border border-border bg-card p-4 flex items-center gap-4 opacity-70"
-            >
-              <span className="font-mono text-xs text-muted-foreground tabular-nums w-12 shrink-0">
-                {phase.days}
-              </span>
-              <span className="font-serif text-base font-semibold flex-1">
-                {phase.title}
-              </span>
-              <Lock className="size-4 text-muted-foreground shrink-0" />
+          {PHASES.map((phase) => (
+            <li key={phase.id}>
+              <Link
+                href={phase.href}
+                className={`group rounded-xl border p-4 flex items-center gap-4 transition-all hover:shadow-md min-h-[64px] ${PASTEL_BG[phase.pastel]}`}
+              >
+                <span className="font-mono text-xs tabular-nums w-16 shrink-0 opacity-80">
+                  {phase.days}
+                </span>
+                <span className="font-serif text-base font-semibold flex-1">
+                  {phase.title}
+                </span>
+                <ChevronRight className="size-5 shrink-0 group-hover:translate-x-0.5 transition-transform opacity-70" />
+              </Link>
             </li>
           ))}
         </ol>
-        <p className="text-xs text-muted-foreground mt-2 flex items-start gap-2">
-          <Sparkles className="size-4 text-accent shrink-0 mt-0.5" />
-          <span>
-            Bis das Wahlkampf-Modul live geht, sammelst du im täglichen
-            Briefing dein politisches Profil. Das ist Grundlage für deinen
-            ersten Wahlkampf.
-          </span>
-        </p>
       </section>
 
       <div className="flex flex-col sm:flex-row gap-3 pt-2">

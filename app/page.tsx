@@ -55,9 +55,10 @@ export default function LandingPage() {
         className="absolute inset-0 w-full h-full object-cover object-center"
       />
 
-      {/* Sanfter dunkler Wash unten für Lesbarkeit der CTAs,
-          oben fast transparent damit Bild atmet */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/15 to-black/55" />
+      {/* Dunkler Wash unten fuer CTA-Lesbarkeit. Im Light-Mode deutlich
+          schwaecher, damit das helle Tagesbild nicht unten verdunkelt
+          wirkt; im Dark-Mode bleibt's tiefer fuer Kontrast. */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/5 to-black/30 dark:from-black/10 dark:via-black/15 dark:to-black/55" />
 
       {/* Gooey Pixel-Trail bleibt — interaktiver Pastell-Vibe */}
       <GooeyFilter id="politpuls-hero-goo" strength={5} />
@@ -80,10 +81,6 @@ export default function LandingPage() {
         transition={{ duration: 0.8, ease: "easeOut" }}
         className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 max-w-2xl pointer-events-none"
       >
-        <span className="inline-flex items-center gap-2 rounded-full bg-white/90 backdrop-blur-sm border border-white/60 px-3 py-1 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-foreground shadow-sm mb-6">
-          Das tägliche Politik-Spiel
-        </span>
-
         <h1 className="font-serif text-6xl sm:text-8xl lg:text-9xl font-semibold leading-[0.95] tracking-tight text-white drop-shadow-[0_6px_30px_rgba(0,0,0,0.55)]">
           Politpuls
         </h1>
@@ -103,7 +100,7 @@ export default function LandingPage() {
         {returning ? (
           <Link
             href="/home"
-            className="block w-full rounded-full bg-white text-foreground font-semibold text-center py-4 text-base shadow-[0_12px_36px_-8px_rgba(0,0,0,0.5)] hover:scale-[1.01] active:scale-[0.99] transition-transform"
+            className="block w-full rounded-full bg-gold text-gold-ink font-bold uppercase tracking-wide text-center py-4 text-base shadow-[0_12px_36px_-8px_rgba(0,0,0,0.5)] hover:scale-[1.01] active:scale-[0.99] transition-transform"
           >
             Weiterspielen
           </Link>

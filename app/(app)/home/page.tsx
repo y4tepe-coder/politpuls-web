@@ -304,18 +304,26 @@ function PfadNode({
     </div>
   );
 
+  // Locked Daily-Stops (keine Wahlkampf-Events) zeigen das Thema NICHT —
+  // die Redaktion entscheidet jeden Morgen neu, darum kein Spoiler.
   const Label = (
     <div className="flex flex-col items-center leading-tight gap-0.5 mt-2 text-center max-w-[160px] sm:max-w-[200px]">
       <span className="text-on-bg text-[10px] font-mono tabular-nums text-foreground/65">
         {stop.weekdayShort}, {stop.dayNumber}. {stop.monthShort}
       </span>
-      <span
-        className={`text-on-bg text-xs sm:text-sm leading-snug ${
-          isToday ? "font-serif font-semibold text-foreground" : "text-foreground/85"
-        } line-clamp-2`}
-      >
-        {stop.headline}
-      </span>
+      {isLocked && !isEvent ? (
+        <span className="text-on-bg text-xs sm:text-sm italic text-foreground/55">
+          Wird freigeschaltet
+        </span>
+      ) : (
+        <span
+          className={`text-on-bg text-xs sm:text-sm leading-snug ${
+            isToday ? "font-serif font-semibold text-foreground" : "text-foreground/85"
+          } line-clamp-2`}
+        >
+          {stop.headline}
+        </span>
+      )}
     </div>
   );
 

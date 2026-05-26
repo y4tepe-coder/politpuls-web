@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { CompassMap } from "@/components/spektrum/CompassMap";
 import { PartyMatches } from "@/components/spektrum/PartyMatches";
+import { IndicatorsCard } from "@/components/spektrum/IndicatorsCard";
+import { aggregateIndicators } from "@/lib/spektrum/indicators";
 import { partyProximity } from "@/lib/spektrum/compute";
 import {
   computeCategoryScores,
@@ -38,16 +40,30 @@ export default function SpektrumPage() {
   if (isLocked) {
     const remaining = MIN_DECISIONS - decisionsCount;
     const pct = Math.round((decisionsCount / MIN_DECISIONS) * 100);
+    const indicators = aggregateIndicators(state.decisions);
     return (
       <main className="flex flex-1 flex-col max-w-2xl mx-auto w-full px-5 py-8 gap-7">
         <header className="flex flex-col gap-1">
-          <span className="text-muted-foreground text-[10px] font-semibold uppercase tracking-[0.22em]">
+          <span className="text-on-bg text-foreground/70 text-[10px] font-semibold uppercase tracking-[0.22em]">
             Dein Spektrum
           </span>
-          <h1 className="font-serif text-3xl sm:text-4xl font-semibold leading-tight">
-            Noch nicht freigeschaltet.
+          <h1 className="text-on-bg font-serif text-3xl sm:text-4xl font-semibold leading-tight">
+            Deine Bilanz als Politiker:in.
           </h1>
+          <p className="text-on-bg text-sm text-foreground/75 leading-relaxed mt-1">
+            Klassische Indikatoren ueber alle Tagesentscheidungen.
+            Das volle Spektrum mit Parteivergleich wird nach{" "}
+            {MIN_DECISIONS} Briefings freigeschaltet.
+          </p>
         </header>
+
+        {/* Indikatoren — sofort sichtbar, akkumuliert aus jeder Decision */}
+        <section className="flex flex-col gap-2">
+          <h2 className="text-on-bg text-[10px] font-semibold uppercase tracking-[0.22em] text-foreground/70">
+            Indikatoren
+          </h2>
+          <IndicatorsCard indicators={indicators} />
+        </section>
 
         <section className="glass-card rounded-3xl p-6 flex flex-col gap-5">
           <div className="flex items-center gap-4">

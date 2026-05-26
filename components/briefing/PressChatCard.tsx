@@ -7,7 +7,7 @@ import type {
   DossierChoice,
   PressPersona,
 } from "@/lib/supabase/types";
-import { ArrowRight, Send } from "lucide-react";
+import { ArrowRight, Send, Phone } from "lucide-react";
 
 type Props = {
   press: PressPersona;
@@ -19,6 +19,10 @@ type Props = {
 // Journalist asks a follow-up about the user's choice. User picks a preset or
 // types their own — either way we just unlock "Weiter". The actual response
 // text doesn't change the spektrum; it's a roleplay beat for engagement.
+//
+// UI = iMessage style. Press-Bubble links auf hellem Card-Hintergrund mit
+// dunklem Text, User-Bubble rechts auf Primary-Blau mit hellem Text.
+// Presets als kleine Chip-Vorschlaege unter der Frage.
 export function PressChatCard({ press, choice, onContinue }: Props) {
   const presets = choice.press_presets ?? [];
   const question = choice.press_question ?? "Was sagen Sie dazu?";
@@ -43,18 +47,19 @@ export function PressChatCard({ press, choice, onContinue }: Props) {
   const gradient = `${press.gradient_from} ${press.gradient_to}`;
 
   return (
-    <article className="flex flex-1 flex-col max-w-xl mx-auto w-full px-5 py-10 gap-6">
-      <header className="flex flex-col gap-2">
-        <span className="text-accent text-[11px] font-semibold uppercase tracking-[0.18em]">
-          Presse-Anruf
+    <article className="flex flex-1 flex-col max-w-xl mx-auto w-full px-5 py-10 gap-5">
+      <header className="flex flex-col gap-1.5">
+        <span className="text-on-bg inline-flex items-center gap-1.5 text-accent text-[11px] font-semibold uppercase tracking-[0.18em]">
+          <Phone className="size-3" />
+          Eingehender Anruf
         </span>
-        <h2 className="font-serif text-2xl sm:text-3xl font-semibold leading-snug">
-          Eine Journalistin will eine Reaktion.
+        <h2 className="text-on-bg font-serif text-2xl sm:text-3xl font-semibold leading-snug">
+          {press.name} ruft an.
         </h2>
       </header>
 
-      {/* Journalist persona */}
-      <div className="flex items-center gap-3 rounded-2xl bg-card border border-border p-4">
+      {/* Persona */}
+      <div className="glass-card flex items-center gap-3 rounded-2xl p-4">
         <span
           className={`inline-flex items-center justify-center size-12 rounded-full bg-gradient-to-br ${gradient} text-white font-semibold shadow-sm`}
           aria-hidden
@@ -63,51 +68,54 @@ export function PressChatCard({ press, choice, onContinue }: Props) {
         </span>
         <div className="flex flex-col min-w-0">
           <span className="font-semibold leading-tight">{press.name}</span>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-foreground/65">
             {press.role} · {press.outlet}
           </span>
         </div>
       </div>
 
-      {/* Incoming question (chat bubble, left aligned) */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="self-start max-w-[85%] rounded-2xl rounded-tl-md bg-muted px-4 py-3 text-sm leading-relaxed"
-      >
-        {question}
-      </motion.div>
-
-      {/* User reply (chat bubble, right aligned) */}
-      {sent && (
+      {/* Chat-Verlauf */}
+      <div className="flex flex-col gap-2.5">
+        {/* Incoming bubble — weisser Card-Hintergrund, dunkler Text */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="self-end max-w-[85%] rounded-2xl rounded-tr-md bg-primary text-primary-foreground px-4 py-3 text-sm leading-relaxed"
+          transition={{ duration: 0.3 }}
+          className="self-start max-w-[85%] rounded-2xl rounded-bl-md bg-card text-card-foreground border border-foreground/10 px-4 py-3 text-[15px] leading-relaxed shadow-sm"
         >
-          {reply}
+          {question}
         </motion.div>
-      )}
+
+        {/* User reply bubble — iMessage-Blau, weisser Text */}
+        {sent && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="self-end max-w-[85%] rounded-2xl rounded-br-md bg-[#0a84ff] text-white px-4 py-3 text-[15px] leading-relaxed shadow-sm"
+          >
+            {reply}
+          </motion.div>
+        )}
+      </div>
 
       {!sent && (
         <>
-          {/* Preset chips */}
+          {/* Preset-Vorschlaege als kleine Chips, unter der Frage */}
           {presets.length > 0 && (
             <div className="flex flex-col gap-2">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Schnelle Antworten
+              <p className="text-on-bg text-[11px] font-semibold uppercase tracking-wide text-foreground/65">
+                Vorgeschlagene Antworten
               </p>
-              <ul className="flex flex-col gap-2">
+              <ul className="flex flex-col gap-1.5">
                 {presets.map((preset, i) => (
-                  <li key={i}>
+                  <li key={i} className="flex justify-end">
                     <button
                       type="button"
                       onClick={() => pick(preset)}
-                      className={`w-full text-left rounded-xl border px-4 py-3 text-sm leading-relaxed transition-colors ${
+                      className={`max-w-[90%] text-right rounded-2xl rounded-br-md px-4 py-2.5 text-[14px] leading-relaxed transition-all ${
                         reply === preset
-                          ? "border-foreground bg-foreground text-background"
-                          : "border-border bg-card hover:bg-muted"
+                          ? "bg-[#0a84ff] text-white shadow-sm"
+                          : "bg-foreground/8 hover:bg-foreground/15 text-foreground border border-foreground/10"
                       }`}
                     >
                       {preset}
@@ -120,23 +128,23 @@ export function PressChatCard({ press, choice, onContinue }: Props) {
 
           <form
             onSubmit={handleSubmit}
-            className="flex items-center gap-2 mt-2"
+            className="flex items-center gap-2 mt-1"
           >
             <input
               ref={inputRef}
               type="text"
               value={reply}
               onChange={(e) => setReply(e.target.value)}
-              placeholder="Oder eigene Antwort tippen …"
-              className="flex-1 h-12 rounded-full bg-card border border-border px-4 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent"
+              placeholder="iMessage …"
+              className="flex-1 h-11 rounded-full bg-card border border-foreground/15 px-4 text-[15px] placeholder:text-foreground/40 focus:outline-none focus:ring-2 focus:ring-[#0a84ff]/40 focus:border-[#0a84ff]/60 shadow-sm"
             />
             <button
               type="submit"
               disabled={!reply.trim()}
               aria-label="Antwort senden"
-              className="inline-flex items-center justify-center size-12 rounded-full bg-primary text-primary-foreground shadow-sm disabled:opacity-40 disabled:pointer-events-none"
+              className="inline-flex items-center justify-center size-11 rounded-full bg-[#0a84ff] text-white shadow-sm disabled:opacity-40 disabled:pointer-events-none transition-opacity"
             >
-              <Send className="size-4" />
+              <Send className="size-4" fill="currentColor" />
             </button>
           </form>
         </>

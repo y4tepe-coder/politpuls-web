@@ -63,6 +63,12 @@ export function BriefingFlow({ dossier }: Props) {
       date: new Date().toISOString(),
       spektrumBefore: before,
       spektrumAfter: after,
+      indicatorDeltas: choice.deltas?.map((d) => ({
+        label: d.label,
+        delta: d.delta,
+        unit: d.unit,
+        good: d.good,
+      })),
     });
     markBriefingDoneLocally();
 

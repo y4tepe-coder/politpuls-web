@@ -12,7 +12,6 @@ import { PartyMatches } from "@/components/spektrum/PartyMatches";
 import {
   CheckCircle2,
   Frown,
-  Sparkles,
   RotateCcw,
   TrendingUp,
   TrendingDown,
@@ -38,20 +37,6 @@ export function ConsequenceCard({
 
   return (
     <article className="flex flex-1 flex-col max-w-xl mx-auto w-full px-5 py-10 gap-6">
-      <div className="glass-card rounded-2xl p-5 flex items-center gap-4">
-        <span className="inline-flex items-center justify-center size-12 rounded-full bg-foreground text-background">
-          <Sparkles className="size-5" />
-        </span>
-        <div className="flex flex-col">
-          <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
-            Entscheidung gefallen
-          </span>
-          <span className="font-serif text-lg font-semibold leading-snug">
-            Du hast Wahl {choice.id} gewählt.
-          </span>
-        </div>
-      </div>
-
       <div className="glass-card rounded-2xl p-5 sm:p-6 flex flex-col gap-3">
         <h2 className="font-serif text-2xl sm:text-3xl font-semibold leading-snug">
           {choice.label}

@@ -6,12 +6,23 @@ import type { Stance } from "@/lib/data/positions-catalogue";
 // Browser-local game state. Mirrors what would live on the Supabase profiles
 // row when the user is signed in. Source of truth when offline.
 
+// IndicatorDelta = die "KPI"-Auswirkungen einer Choice (Beliebtheit,
+// Inflationsrisiko, Investitionsklima ...). Wird ueber alle Decisions
+// aufsummiert und im Spektrum als Politiker-Performance angezeigt.
+export type IndicatorDelta = {
+  label: string;
+  delta: number;
+  unit?: string;
+  good?: boolean;
+};
+
 export type LocalDecision = {
   dossierId: string;
   choiceId: string;
   date: string;
   spektrumBefore: SpektrumVector;
   spektrumAfter: SpektrumVector;
+  indicatorDeltas?: IndicatorDelta[];
 };
 
 export type LocalRole = "kandidat" | "minister" | "kanzler" | "opposition";

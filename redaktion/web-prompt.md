@@ -4,8 +4,9 @@ Erzeuge das Dossier für HEUTE: **{{TODAY}}** (Berliner Zeit).
 ## Aufgabe
 
 1. **Recherchiere** mit WebSearch aktuelle deutsche Bundespolitik der letzten
-   2–3 Tage. Quellen: bundestag.de, tagesschau.de, sueddeutsche.de,
-   faz.net, zeit.de, lto.de, spiegel.de, nadr-online.de.
+   2–3 Tage. **Erlaubte Quelle: ausschließlich `tagesschau.de`** —
+   alle anderen Domains ignorieren. Suchanfragen entsprechend formulieren
+   (z.B. `site:tagesschau.de bundestag mai 2026`).
    Wähle **EIN** entscheidungsrelevantes Thema (Gesetzentwurf, Koalitions-
    Streit, EU-Vorlage, Bundesrat-Sitzung — etwas, wo wirklich Spielraum für
    Pro/Contra besteht).
@@ -19,8 +20,11 @@ Erzeuge das Dossier für HEUTE: **{{TODAY}}** (Berliner Zeit).
    ```
    Wenn das einen Fehler wirft — reparieren und nochmal validieren.
 
-4. **Sources-Regel:** Jede URL in `sources` muss aus einem WebSearch-Ergebnis
-   stammen, keine geraten, keine erfunden. Lieber 2 echte als 4 fake.
+4. **Sources-Regel:** Jede URL in `sources` muss
+   - aus einem WebSearch-Ergebnis stammen (keine geraten, keine erfunden)
+   - **auf `tagesschau.de` gehostet sein** (Host der URL muss exakt
+     `tagesschau.de` oder Subdomain davon sein — sonst Eintrag streichen).
+   Lieber 2 echte tagesschau-URLs als 4 fake.
 
 ## JSON-Schema
 

@@ -60,9 +60,9 @@ export default function SpektrumPage() {
         {/* Indikatoren — sofort sichtbar, akkumuliert aus jeder Decision */}
         <section className="flex flex-col gap-2">
           <h2 className="text-on-bg text-[10px] font-semibold uppercase tracking-[0.22em] text-foreground/70">
-            Indikatoren
+            Indikatoren · Deutschland 2026
           </h2>
-          <IndicatorsCard indicators={indicators} />
+          <IndicatorsCard indicators={indicators} decisions={state.decisions} />
         </section>
 
         <section className="glass-card rounded-3xl p-6 flex flex-col gap-5">

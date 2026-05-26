@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { Logo } from "@/components/brand/Logo";
 import { Flame, Home, Compass, User } from "lucide-react";
 import { useLocalSession } from "@/hooks/useLocalSession";
@@ -20,6 +21,26 @@ export function TopNav() {
   const streak = state?.current_streak ?? 0;
   const pathname = usePathname() ?? "";
 
+  // Hide-on-scroll-down, show-on-scroll-up. Threshold 80 px, damit kleine
+  // Touch-Bounces auf iOS die Nav nicht flackern lassen.
+  const [hidden, setHidden] = useState(false);
+  const lastY = useRef(0);
+  useEffect(() => {
+    function onScroll() {
+      const y = window.scrollY;
+      if (y < 40) {
+        setHidden(false);
+      } else if (y > lastY.current + 4) {
+        setHidden(true);
+      } else if (y < lastY.current - 4) {
+        setHidden(false);
+      }
+      lastY.current = y;
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   function isActive(prefixes: readonly string[]): boolean {
     return prefixes.some((p) => pathname === p || pathname.startsWith(p + "/"));
   }
@@ -28,7 +49,7 @@ export function TopNav() {
 
   return (
     <header
-      className="sticky top-0 z-20 w-full border-b border-foreground/8 bg-background/85 backdrop-blur-md"
+      className={`sticky top-0 z-20 w-full border-b border-foreground/8 bg-background/85 backdrop-blur-md transition-transform duration-300 ${hidden ? "-translate-y-full" : "translate-y-0"}`}
       style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
       <div className="mx-auto max-w-2xl flex items-center justify-between px-5 h-14">

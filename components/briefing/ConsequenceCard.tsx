@@ -6,13 +6,13 @@ import type {
 } from "@/lib/supabase/types";
 import type { SpektrumVector } from "@/lib/spektrum/types";
 import { partyProximity } from "@/lib/spektrum/compute";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { CompassMap } from "@/components/spektrum/CompassMap";
 import { PartyMatches } from "@/components/spektrum/PartyMatches";
 import {
   CheckCircle2,
   Frown,
-  RotateCcw,
+  ArrowRight,
   TrendingUp,
   TrendingDown,
 } from "lucide-react";
@@ -22,7 +22,6 @@ type Props = {
   consequence: DossierConsequence;
   spektrumBefore: SpektrumVector;
   spektrumAfter: SpektrumVector;
-  onRestart: () => void;
 };
 
 export function ConsequenceCard({
@@ -30,7 +29,6 @@ export function ConsequenceCard({
   consequence,
   spektrumBefore,
   spektrumAfter,
-  onRestart,
 }: Props) {
   const matches = partyProximity(spektrumAfter);
   const deltas = choice.deltas ?? [];
@@ -121,16 +119,15 @@ export function ConsequenceCard({
         </div>
       </section>
 
-      <Button
-        variant="outline"
-        onClick={onRestart}
-        className="w-full h-11 group"
+      <Link
+        href="/home"
+        className="inline-flex items-center justify-center w-full h-12 rounded-2xl bg-primary text-primary-foreground font-semibold group hover:bg-primary/90 transition-colors"
       >
-        <RotateCcw className="size-4 mr-2 group-hover:-rotate-12 transition-transform" />
-        Briefing noch einmal
-      </Button>
+        Weiter zum Pfad
+        <ArrowRight className="size-4 ml-2 group-hover:translate-x-0.5 transition-transform" />
+      </Link>
 
-      <p className="text-xs text-center text-muted-foreground">
+      <p className="text-on-bg text-xs text-center text-foreground/65">
         Morgen wartet das nächste Dossier auf dich.
       </p>
     </article>

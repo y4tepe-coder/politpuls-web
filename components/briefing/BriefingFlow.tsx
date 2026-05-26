@@ -111,14 +111,6 @@ export function BriefingFlow({ dossier }: Props) {
     }
   }
 
-  function handleRestart() {
-    setStep("briefing");
-    setChosenId(null);
-    const local = getLocalState();
-    setSpektrumBefore(local.spektrum);
-    setSpektrumAfter(local.spektrum);
-  }
-
   if (step === "briefing") {
     return (
       <BriefingCard
@@ -161,7 +153,6 @@ export function BriefingFlow({ dossier }: Props) {
         consequence={consequence}
         spektrumBefore={spektrumBefore}
         spektrumAfter={spektrumAfter}
-        onRestart={handleRestart}
       />
     );
   }

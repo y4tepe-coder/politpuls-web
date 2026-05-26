@@ -1,0 +1,72 @@
+name: KI-Redaktion
+
+# Taeglich 05:30 UTC = 06:30 CET / 07:30 CEST. Plus manuell triggerbar
+# fuer Tests und Nachgenerierung verpasster Tage.
+on:
+  schedule:
+    - cron: "30 5 * * *"
+  workflow_dispatch:
+    inputs:
+      override_date:
+        description: "Optional: YYYY-MM-DD (Berliner Datum) statt heute"
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Install Supabase client (for upload)
+        run: npm install --no-save @supabase/supabase-js
+
+      - name: Resolve target date
+        id: date
+        run: |
+          if [ -n "${{ inputs.override_date }}" ]; then
+            echo "today=${{ inputs.override_date }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "today=$(TZ=Europe/Berlin date +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Generate dossier with Claude
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          mkdir -p out
+          PROMPT="$(sed "s|{{TODAY}}|${{ steps.date.outputs.today }}|g" redaktion/web-prompt.md)"
+          echo "$PROMPT" | claude -p --dangerously-skip-permissions
+
+      - name: Verify dossier file exists
+        run: |
+          if [ ! -s out/dossier.json ]; then
+            echo "out/dossier.json fehlt oder ist leer — Generation gescheitert"
+            exit 1
+          fi
+          python3 -m json.tool out/dossier.json > /dev/null
+
+      - name: Upload to Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node redaktion/upload.mjs
+
+      - name: Archive generated dossier on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dossier-debug-${{ steps.date.outputs.today }}
+          path: out/
+          retention-days: 14

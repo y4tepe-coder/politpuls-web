@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PolitpulsMark } from "@/components/brand/Logo";
+import { Logo } from "@/components/brand/Logo";
 import {
   ArrowRight,
   ArrowLeft,
@@ -113,9 +113,7 @@ export default function OnboardingPage() {
         <AnimatePresence mode="wait">
           {step === 0 && (
             <StepShell key="0">
-              <div className="glass-card inline-flex items-center justify-center size-14 rounded-2xl">
-                <PolitpulsMark className="size-9 text-foreground" />
-              </div>
+              <Logo size="lg" textOnly href="/" />
               <Hero
                 kicker="Willkommen"
                 title="Wie möchtest du starten?"
@@ -138,7 +136,7 @@ export default function OnboardingPage() {
                     <span className="font-serif font-semibold text-lg leading-tight">
                       Konto erstellen
                     </span>
-                    <span className="text-xs leading-snug text-muted-foreground">
+                    <span className="text-xs leading-snug text-foreground/70">
                       E-Mail + Passwort + Name. Spielstand syncs.
                     </span>
                   </span>
@@ -160,7 +158,7 @@ export default function OnboardingPage() {
                     <span className="font-serif font-semibold text-lg leading-tight">
                       Als Gast spielen
                     </span>
-                    <span className="text-xs leading-snug text-muted-foreground">
+                    <span className="text-xs leading-snug text-foreground/70">
                       Sofort loslegen, läuft auf diesem Gerät.
                     </span>
                   </span>
@@ -170,7 +168,7 @@ export default function OnboardingPage() {
 
               <Link
                 href="/login"
-                className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4 mt-4"
+                className="text-on-bg text-sm text-foreground/85 hover:text-foreground underline underline-offset-4 mt-4 font-medium"
               >
                 Schon ein Konto? Hier einloggen
               </Link>
@@ -383,13 +381,13 @@ function StepShell({ children }: { children: React.ReactNode }) {
 function Hero({ kicker, title, blurb }: { kicker: string; title: string; blurb: string }) {
   return (
     <header className="flex flex-col gap-2 items-center">
-      <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.2em]">
+      <span className="text-on-bg text-foreground/70 text-[11px] font-semibold uppercase tracking-[0.2em]">
         {kicker}
       </span>
-      <h1 className="font-serif text-3xl sm:text-4xl font-semibold leading-tight">
+      <h1 className="text-on-bg font-serif text-3xl sm:text-4xl font-semibold leading-tight">
         {title}
       </h1>
-      <p className="text-sm sm:text-base text-muted-foreground leading-relaxed max-w-sm mt-1">
+      <p className="text-on-bg text-sm sm:text-base text-foreground/80 leading-relaxed max-w-sm mt-1">
         {blurb}
       </p>
     </header>

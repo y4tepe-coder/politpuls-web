@@ -47,12 +47,20 @@ export default function LandingPage() {
         paddingBottom: "env(safe-area-inset-bottom)",
       }}
     >
-      {/* Reichstag-Painting in voller Pracht, perfekt zentriert auf jedem iPhone */}
+      {/* Blur-Fill: geblurrtes, leicht vergroessertes Bild fuellt die Raender,
+          damit kein harter Letterbox-Streifen entsteht. */}
       <img
         src={HERO_BG_URL}
         alt=""
         aria-hidden
-        className="absolute inset-0 w-full h-full object-cover object-center"
+        className="absolute inset-0 w-full h-full object-cover object-center scale-125 blur-3xl"
+      />
+      {/* Scharfes Reichstag-Painting komplett sichtbar, perfekt zentriert. */}
+      <img
+        src={HERO_BG_URL}
+        alt=""
+        aria-hidden
+        className="absolute inset-0 w-full h-full object-contain object-center"
       />
 
       {/* Dunkler Wash unten fuer CTA-Lesbarkeit. Im Light-Mode deutlich

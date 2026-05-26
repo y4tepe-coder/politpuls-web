@@ -115,7 +115,7 @@ export function PressChatCard({ press, choice, onContinue }: Props) {
                       className={`max-w-[90%] text-right rounded-2xl rounded-br-md px-4 py-2.5 text-[14px] leading-relaxed transition-all ${
                         reply === preset
                           ? "bg-[#0a84ff] text-white shadow-sm"
-                          : "bg-foreground/8 hover:bg-foreground/15 text-foreground border border-foreground/10"
+                          : "glass-card hover:bg-foreground/[0.03] text-foreground"
                       }`}
                     >
                       {preset}

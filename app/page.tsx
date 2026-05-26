@@ -47,13 +47,17 @@ export default function LandingPage() {
         paddingBottom: "env(safe-area-inset-bottom)",
       }}
     >
-      {/* 9:16-Portrait → object-cover fuellt den ganzen Screen. */}
-      <img
-        src={HERO_BG_URL}
-        alt=""
-        aria-hidden
-        className="absolute inset-0 w-full h-full object-cover object-center"
-      />
+      {/* Responsive Reichstag: Portrait fuer Mobile, Landscape ab 1024 px.
+          Browser laedt nur das passende Bild via <picture>. */}
+      <picture className="block absolute inset-0">
+        <source media="(min-width: 1024px)" srcSet="/hero-reichstag-landscape.png" />
+        <img
+          src={HERO_BG_URL}
+          alt=""
+          aria-hidden
+          className="w-full h-full object-cover object-center"
+        />
+      </picture>
 
       {/* Dunkler Wash unten fuer CTA-Lesbarkeit. Im Light-Mode deutlich
           schwaecher, damit das helle Tagesbild nicht unten verdunkelt

@@ -41,7 +41,7 @@ export const DEFAULT_INDICATORS: ReadonlyArray<{
     label: "Investitionsklima",
     description: "ifo-Geschäftsklima",
     baseline: 45,
-    unit: "Pkt",
+    unit: "%",
     goodWhenUp: true,
   },
   {
@@ -62,7 +62,7 @@ export const DEFAULT_INDICATORS: ReadonlyArray<{
     label: "Soziale Gerechtigkeit",
     description: "Verteilung von Lasten und Chancen",
     baseline: 50,
-    unit: "Pkt",
+    unit: "%",
     goodWhenUp: true,
   },
   {
@@ -76,7 +76,7 @@ export const DEFAULT_INDICATORS: ReadonlyArray<{
     label: "Standortbewertung",
     description: "Wirtschaftsstandort Deutschland",
     baseline: 48,
-    unit: "Pkt",
+    unit: "%",
     goodWhenUp: true,
   },
 ];

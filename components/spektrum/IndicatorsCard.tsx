@@ -12,16 +12,13 @@ type Props = {
   decisions: LocalDecision[];
 };
 
-// Politiker-Performance auf einen Blick: klassische Indikatoren mit
-// Baseline (echter Stand DE 2026) + Summe aller User-Deltas.
-//
-// Jede Zeile zeigt:
-//   - Label + Beschreibung links
-//   - Mini-Sparkline (Verlauf ueber Decisions) Mitte
-//   - Aktueller Wert (gross) + Delta-Pille rechts
+// Politiker-Performance auf einen Blick. Pro Zeile:
+// links Label/Description, in der Mitte eine grosse Verlaufs-Grafik
+// (Sparkline + Baseline-Referenzlinie + Area-Fill), rechts der
+// aktuelle Wert und die Veraenderung durch User-Entscheidungen.
 export function IndicatorsCard({ indicators, decisions }: Props) {
   return (
-    <ul className="glass-card rounded-2xl p-2 sm:p-3 flex flex-col gap-0.5">
+    <ul className="glass-card rounded-2xl p-3 sm:p-4 flex flex-col gap-1.5">
       {indicators.map((i) => (
         <IndicatorRow key={i.label} indicator={i} decisions={decisions} />
       ))}
@@ -36,11 +33,9 @@ function IndicatorRow({
   indicator: IndicatorValue;
   decisions: LocalDecision[];
 }) {
-  const { label, description, current, userDelta, unit, goodWhenUp, hits } =
+  const { label, description, current, baseline, userDelta, unit, goodWhenUp, hits } =
     indicator;
 
-  // Trend-Klassifikation: ist die User-Veraenderung "gut" oder "schlecht"
-  // bezogen auf den Indikator (Inflation: -ist-gut, BIP: +ist-gut).
   const inactive = hits === 0;
   const isPositive = userDelta > 0;
   const isNegative = userDelta < 0;
@@ -54,30 +49,45 @@ function IndicatorRow({
   const trendColor = inactive
     ? "text-foreground/45 bg-foreground/5 border-foreground/10"
     : isGood
-      ? "text-emerald-700 bg-emerald-500/12 border-emerald-500/25"
+      ? "text-emerald-700 bg-emerald-500/14 border-emerald-500/30"
       : isBad
-        ? "text-rose-700 bg-rose-500/12 border-rose-500/25"
+        ? "text-rose-700 bg-rose-500/14 border-rose-500/30"
         : "text-foreground/55 bg-foreground/5 border-foreground/10";
 
-  // Verlauf der letzten Entscheidungen fuer Sparkline
-  const series = buildSeries(decisions, label, indicator.baseline);
+  const series = buildSeries(decisions, label, baseline);
 
   return (
-    <li className="flex items-center justify-between gap-3 px-2.5 py-2.5 rounded-xl hover:bg-foreground/[0.04] transition-colors">
-      <div className="flex flex-col min-w-0 flex-1">
-        <span className="text-sm font-semibold leading-tight">{label}</span>
+    <li className="flex items-center justify-between gap-3 sm:gap-5 px-2 py-3 rounded-xl hover:bg-foreground/[0.04] transition-colors">
+      {/* Label + Description — feste schmale Spalte */}
+      <div className="flex flex-col min-w-0 w-[42%] sm:w-[38%] shrink-0">
+        <span className="text-sm sm:text-base font-semibold leading-tight">
+          {label}
+        </span>
         {description && (
-          <span className="text-[11px] text-foreground/60 leading-snug">
+          <span className="text-[11px] text-foreground/60 leading-snug mt-0.5">
             {description}
           </span>
         )}
+        <span className="text-[10px] text-foreground/45 mt-1 tabular-nums">
+          Basis DE: {formatIndicator(baseline, unit)}
+        </span>
       </div>
 
-      <Sparkline series={series} isGood={isGood} isBad={isBad} inactive={inactive} />
+      {/* Verlauf — nimmt den maximalen Mittelraum */}
+      <div className="flex-1 min-w-0 flex items-center justify-center">
+        <Sparkline
+          series={series}
+          baseline={baseline}
+          isGood={isGood}
+          isBad={isBad}
+          inactive={inactive}
+        />
+      </div>
 
-      <div className="flex flex-col items-end gap-0.5 shrink-0 min-w-[64px]">
+      {/* Werte rechts — feste schmale Spalte */}
+      <div className="flex flex-col items-end gap-1 shrink-0 w-[68px] sm:w-[80px]">
         <span
-          className={`font-mono tabular-nums text-sm font-semibold leading-tight ${
+          className={`font-mono tabular-nums text-base sm:text-lg font-bold leading-tight ${
             inactive ? "text-foreground/60" : "text-foreground"
           }`}
         >
@@ -94,8 +104,6 @@ function IndicatorRow({
   );
 }
 
-// Baut die Werte-Reihe von baseline → … → current ueber alle Decisions
-// chronologisch. Verwendet fuer die Sparkline.
 function buildSeries(
   decisions: LocalDecision[],
   label: string,
@@ -112,65 +120,117 @@ function buildSeries(
   return values;
 }
 
-// Mini-Sparkline als inline SVG. Faerbt sich gruen/rot/grau je nach Trend.
+// Grosse Sparkline: zeigt Baseline als gestrichelte Referenzlinie, den
+// User-Verlauf als kraeftige Linie mit Area-Fill und einen Punkt am Ende.
 function Sparkline({
   series,
+  baseline,
   isGood,
   isBad,
   inactive,
 }: {
   series: number[];
+  baseline: number;
   isGood: boolean;
   isBad: boolean;
   inactive: boolean;
 }) {
-  const W = 64;
-  const H = 24;
+  const W = 160;
+  const H = 56;
+  const PAD = 4;
+
+  // Wertebereich umfassen: Baseline immer in der Mitte halten, sonst aus den
+  // tatsaechlichen Werten — plus etwas Padding damit nichts an die Kante stoesst.
+  const allValues = [baseline, ...series];
+  let min = Math.min(...allValues);
+  let max = Math.max(...allValues);
+  const span = Math.max(max - min, 4); // mindestens 4 Einheiten Spreizung
+  // Symmetrisches Padding um baseline, damit kleine Bewegungen auch sichtbar werden
+  const halfSpan = Math.max(Math.abs(max - baseline), Math.abs(baseline - min), 2);
+  min = baseline - halfSpan * 1.3;
+  max = baseline + halfSpan * 1.3;
+  void span;
+
+  const yFor = (v: number) =>
+    H - PAD - ((v - min) / (max - min)) * (H - PAD * 2);
+  const baselineY = yFor(baseline);
+
+  const color = inactive
+    ? { stroke: "stroke-foreground/35", fill: "fill-foreground/5", dot: "fill-foreground/30" }
+    : isGood
+      ? { stroke: "stroke-emerald-500", fill: "fill-emerald-500/15", dot: "fill-emerald-500" }
+      : isBad
+        ? { stroke: "stroke-rose-500", fill: "fill-rose-500/15", dot: "fill-rose-500" }
+        : { stroke: "stroke-foreground/50", fill: "fill-foreground/8", dot: "fill-foreground/50" };
 
   if (series.length < 2) {
-    // Nur Baseline-Linie als horizontaler Strich
+    // Noch keine Decisions — nur Baseline-Referenzlinie anzeigen
     return (
-      <svg width={W} height={H} className="shrink-0" aria-hidden>
+      <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden className="max-w-[160px]">
         <line
-          x1={2}
-          y1={H / 2}
-          x2={W - 2}
-          y2={H / 2}
-          stroke="currentColor"
-          strokeWidth={1.5}
-          className="text-foreground/20"
+          x1={PAD}
+          y1={baselineY}
+          x2={W - PAD}
+          y2={baselineY}
+          strokeDasharray="3 3"
+          strokeWidth={1.25}
+          className="stroke-foreground/30"
         />
+        <text
+          x={W - PAD}
+          y={baselineY - 4}
+          textAnchor="end"
+          className="fill-foreground/40 font-mono"
+          style={{ fontSize: 8 }}
+        >
+          Basis
+        </text>
       </svg>
     );
   }
 
-  const min = Math.min(...series);
-  const max = Math.max(...series);
-  const range = max - min || 1;
-  const stepX = (W - 4) / (series.length - 1);
-  const points = series.map((v, i) => {
-    const x = 2 + i * stepX;
-    const y = H - 2 - ((v - min) / range) * (H - 4);
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  });
+  const stepX = (W - PAD * 2) / (series.length - 1);
+  const points = series.map((v, i) => ({
+    x: PAD + i * stepX,
+    y: yFor(v),
+  }));
 
-  const color = inactive
-    ? "stroke-foreground/30"
-    : isGood
-      ? "stroke-emerald-500"
-      : isBad
-        ? "stroke-rose-500"
-        : "stroke-foreground/45";
+  const polyPoints = points.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+  const areaPoints =
+    `${PAD},${H - PAD} ` + polyPoints + ` ${(W - PAD).toFixed(1)},${(H - PAD).toFixed(1)}`;
+  const lastPoint = points[points.length - 1];
 
   return (
-    <svg width={W} height={H} className="shrink-0" aria-hidden>
+    <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden className="max-w-[160px]">
+      {/* Baseline-Referenz (gestrichelt) */}
+      <line
+        x1={PAD}
+        y1={baselineY}
+        x2={W - PAD}
+        y2={baselineY}
+        strokeDasharray="3 3"
+        strokeWidth={1.25}
+        className="stroke-foreground/25"
+      />
+      {/* Area-Fill */}
+      <polygon points={areaPoints} className={color.fill} />
+      {/* Verlaufslinie */}
       <polyline
-        points={points.join(" ")}
+        points={polyPoints}
         fill="none"
-        strokeWidth={1.75}
+        strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
-        className={color}
+        className={color.stroke}
+      />
+      {/* Endpunkt-Dot */}
+      <circle
+        cx={lastPoint.x}
+        cy={lastPoint.y}
+        r={3}
+        className={color.dot}
+        stroke="white"
+        strokeWidth={1.5}
       />
     </svg>
   );

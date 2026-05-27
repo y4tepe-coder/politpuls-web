@@ -49,7 +49,7 @@ export function TopNav() {
 
   return (
     <header
-      className={`sticky top-0 z-20 w-full border-b border-foreground/8 bg-background/85 backdrop-blur-md transition-transform duration-300 ${hidden ? "-translate-y-full" : "translate-y-0"}`}
+      className={`sticky top-0 z-20 w-full bg-background/30 backdrop-blur-xl transition-transform duration-300 ${hidden ? "-translate-y-full" : "translate-y-0"}`}
       style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
       <div className="mx-auto max-w-2xl flex items-center justify-between px-5 h-14">

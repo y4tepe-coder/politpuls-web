@@ -46,7 +46,7 @@ export function ConsequenceCard({
 
       {deltas.length > 0 && (
         <section className="flex flex-col gap-3">
-          <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground px-1">
+          <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground px-1">
             Konkrete Auswirkungen
           </h3>
           <ul className="flex flex-col gap-2">
@@ -103,7 +103,7 @@ export function ConsequenceCard({
 
       <section className="glass-card rounded-2xl p-5 sm:p-6 flex flex-col gap-4">
         <header className="flex flex-col gap-1">
-          <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
+          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.18em]">
             Dein politischer Kompass
           </span>
           <h3 className="font-serif text-xl font-semibold leading-snug">

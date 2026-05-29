@@ -58,16 +58,16 @@ export function CompassMap({ user, previous, size = 280 }: Props) {
       <line x1={mid} y1={pad} x2={mid} y2={pad + inner} className="stroke-foreground/15" strokeWidth={1} />
 
       {/* Axis labels */}
-      <text x={mid} y={pad - 10} className="fill-muted-foreground text-[10px] font-medium" textAnchor="middle">
+      <text x={mid} y={pad - 10} className="fill-muted-foreground text-xs font-medium" textAnchor="middle">
         progressiv
       </text>
-      <text x={mid} y={size - pad + 18} className="fill-muted-foreground text-[10px] font-medium" textAnchor="middle">
+      <text x={mid} y={size - pad + 18} className="fill-muted-foreground text-xs font-medium" textAnchor="middle">
         konservativ
       </text>
-      <text x={pad - 6} y={mid + 4} className="fill-muted-foreground text-[10px] font-medium" textAnchor="end">
+      <text x={pad - 6} y={mid + 4} className="fill-muted-foreground text-xs font-medium" textAnchor="end">
         links
       </text>
-      <text x={pad + inner + 6} y={mid + 4} className="fill-muted-foreground text-[10px] font-medium">
+      <text x={pad + inner + 6} y={mid + 4} className="fill-muted-foreground text-xs font-medium">
         rechts
       </text>
 
@@ -77,7 +77,7 @@ export function CompassMap({ user, previous, size = 280 }: Props) {
         return (
           <g key={party.id}>
             <circle cx={x} cy={y} r={6} fill={party.color} stroke="white" strokeWidth={1.5} />
-            <text x={x + 9} y={y + 3} className="fill-foreground text-[10px] font-semibold">
+            <text x={x + 9} y={y + 3} className="fill-foreground text-xs font-semibold">
               {party.shortName}
             </text>
           </g>

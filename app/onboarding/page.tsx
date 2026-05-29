@@ -7,6 +7,7 @@ import { parties } from "@/lib/spektrum/parties";
 import { registerLocally, ensureLocalSession } from "@/lib/local/session";
 import { updateLocalState } from "@/lib/local/state";
 import { createClient } from "@/lib/supabase/client";
+import { germanAuthError } from "@/lib/auth/errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -69,7 +70,7 @@ export default function OnboardingPage() {
         options: { data: { display_name: name.trim() } },
       });
       if (signUpError) {
-        setError(signUpError.message);
+        setError(germanAuthError(signUpError.message));
         setSubmitting(false);
         return;
       }
@@ -96,7 +97,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <main className="relative flex flex-1 flex-col min-h-screen overflow-hidden">
+    <main className="relative flex flex-1 flex-col min-h-[100dvh] overflow-hidden">
       <header className="relative z-10 mx-auto w-full max-w-md px-5 pt-6 flex items-center justify-between">
         <button
           onClick={back}
@@ -381,7 +382,7 @@ function StepShell({ children }: { children: React.ReactNode }) {
 function Hero({ kicker, title, blurb }: { kicker: string; title: string; blurb: string }) {
   return (
     <header className="flex flex-col gap-2 items-center">
-      <span className="text-on-bg text-foreground/70 text-[11px] font-semibold uppercase tracking-[0.2em]">
+      <span className="text-on-bg text-foreground/70 text-xs font-semibold uppercase tracking-[0.2em]">
         {kicker}
       </span>
       <h1 className="text-on-bg font-serif text-3xl sm:text-4xl font-semibold leading-tight">

@@ -44,7 +44,7 @@ export default function SpektrumPage() {
     return (
       <main className="flex flex-1 flex-col max-w-2xl mx-auto w-full px-5 py-8 gap-7">
         <header className="flex flex-col gap-1">
-          <span className="text-on-bg text-foreground/70 text-[10px] font-semibold uppercase tracking-[0.22em]">
+          <span className="text-on-bg text-foreground/70 text-xs font-semibold uppercase tracking-[0.22em]">
             Dein Spektrum
           </span>
           <h1 className="text-on-bg font-serif text-3xl sm:text-4xl font-semibold leading-tight">
@@ -59,7 +59,7 @@ export default function SpektrumPage() {
 
         {/* Indikatoren — sofort sichtbar, akkumuliert aus jeder Decision */}
         <section className="flex flex-col gap-2">
-          <h2 className="text-on-bg text-[10px] font-semibold uppercase tracking-[0.22em] text-foreground/70">
+          <h2 className="text-on-bg text-xs font-semibold uppercase tracking-[0.22em] text-foreground/70">
             Indikatoren · Deutschland 2026
           </h2>
           <IndicatorsCard indicators={indicators} decisions={state.decisions} />
@@ -71,7 +71,7 @@ export default function SpektrumPage() {
               <Lock className="size-5" />
             </span>
             <div className="flex flex-col">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+              <span className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                 Briefings gespielt
               </span>
               <span className="font-serif text-2xl font-semibold leading-tight">
@@ -87,7 +87,7 @@ export default function SpektrumPage() {
                 style={{ width: `${pct}%` }}
               />
             </div>
-            <span className="text-[11px] text-muted-foreground tabular-nums">
+            <span className="text-xs text-muted-foreground tabular-nums">
               {remaining} {remaining === 1 ? "Briefing" : "Briefings"} bis zur
               Freischaltung
             </span>
@@ -120,7 +120,7 @@ export default function SpektrumPage() {
               <span className="text-sm font-semibold leading-tight">
                 Abkürzung: Werte-Check
               </span>
-              <span className="text-[11px] text-muted-foreground">
+              <span className="text-xs text-muted-foreground">
                 18 Aussagen — sofortiges Partei-Matching
               </span>
             </div>
@@ -144,7 +144,7 @@ export default function SpektrumPage() {
   return (
     <main className="flex flex-1 flex-col max-w-2xl mx-auto w-full px-5 py-8 gap-6">
       <header className="flex flex-col gap-1">
-        <span className="text-muted-foreground text-[10px] font-semibold uppercase tracking-[0.22em]">
+        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.22em]">
           Dein Politik-Spektrum
         </span>
         <h1 className="font-serif text-3xl sm:text-4xl font-semibold leading-tight">
@@ -166,7 +166,7 @@ export default function SpektrumPage() {
             {topAlignedParty.shortName.charAt(0)}
           </span>
           <div className="flex flex-col flex-1 min-w-0">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/55">
+            <span className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
               Beste Übereinstimmung
             </span>
             <span className="font-serif text-2xl font-semibold leading-tight">
@@ -186,7 +186,7 @@ export default function SpektrumPage() {
             <Compass className="size-5 text-foreground" />
           </span>
           <div className="flex flex-col leading-tight">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+            <span className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
               Politischer Kompass
             </span>
             <h2 className="font-serif text-lg font-semibold">
@@ -206,7 +206,7 @@ export default function SpektrumPage() {
       {/* Themenfelder (wenn Werte-Check done) */}
       {categoryScores && (
         <section className="flex flex-col gap-3">
-          <h2 className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+          <h2 className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
             Themenfelder
           </h2>
           <ul className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
@@ -245,7 +245,7 @@ export default function SpektrumPage() {
       {/* Alle 7 Parteien */}
       {alignedRanking && (
         <section className="flex flex-col gap-3">
-          <h2 className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+          <h2 className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
             Alle Parteien
           </h2>
           <ul className="glass-card rounded-2xl p-3 flex flex-col gap-2">
@@ -296,7 +296,7 @@ export default function SpektrumPage() {
             <span className="text-sm font-semibold leading-tight">
               Werte-Check vervollständigen
             </span>
-            <span className="text-[11px] text-muted-foreground">
+            <span className="text-xs text-muted-foreground">
               Für die Themenfelder-Auswertung
             </span>
           </div>

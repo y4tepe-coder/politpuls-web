@@ -1,4 +1,4 @@
-name: KI-Redaktion
+name: Web-Redaktion
 
 # Taeglich 05:30 UTC = 06:30 CET / 07:30 CEST. Plus manuell triggerbar
 # fuer Tests und Nachgenerierung verpasster Tage.

@@ -4,6 +4,7 @@ import { Suspense, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { germanAuthError } from "@/lib/auth/errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,7 +44,7 @@ function LoginPageInner() {
     });
 
     if (signInError) {
-      setError(signInError.message);
+      setError(germanAuthError(signInError.message));
       setSubmitting(false);
       return;
     }
@@ -123,6 +124,9 @@ function LoginPageInner() {
         )}
 
         <div className="flex flex-col gap-1 text-center text-xs text-muted-foreground pt-4 border-t border-foreground/8">
+          <Link href="/passwort-vergessen" className="hover:text-foreground underline underline-offset-4 py-1.5">
+            Passwort vergessen?
+          </Link>
           <Link href="/onboarding" className="hover:text-foreground underline underline-offset-4 py-1.5">
             Noch kein Konto? Hier registrieren
           </Link>

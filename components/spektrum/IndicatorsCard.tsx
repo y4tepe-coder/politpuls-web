@@ -49,7 +49,7 @@ function IndicatorRow({
   const trendColor = inactive
     ? "text-foreground/45 bg-foreground/5 border-foreground/10"
     : isGood
-      ? "text-emerald-700 bg-emerald-500/14 border-emerald-500/30"
+      ? "text-success bg-success/14 border-success/30"
       : isBad
         ? "text-rose-700 bg-rose-500/14 border-rose-500/30"
         : "text-foreground/55 bg-foreground/5 border-foreground/10";
@@ -64,11 +64,11 @@ function IndicatorRow({
           {label}
         </span>
         {description && (
-          <span className="text-[11px] text-foreground/60 leading-snug mt-0.5">
+          <span className="text-xs text-foreground/60 leading-snug mt-0.5">
             {description}
           </span>
         )}
-        <span className="text-[10px] text-foreground/45 mt-1 tabular-nums">
+        <span className="text-xs text-foreground/45 mt-1 tabular-nums">
           Basis DE: {formatIndicator(baseline, unit)}
         </span>
       </div>
@@ -94,7 +94,7 @@ function IndicatorRow({
           {formatIndicator(current, unit)}
         </span>
         <span
-          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-mono tabular-nums font-semibold border ${trendColor}`}
+          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-mono tabular-nums font-semibold border ${trendColor}`}
         >
           <Icon className="size-2.5" strokeWidth={2.5} />
           {inactive ? "—" : (userDelta > 0 ? "+" : "") + userDelta}
@@ -158,7 +158,7 @@ function Sparkline({
   const color = inactive
     ? { stroke: "stroke-foreground/35", fill: "fill-foreground/5", dot: "fill-foreground/30" }
     : isGood
-      ? { stroke: "stroke-emerald-500", fill: "fill-emerald-500/15", dot: "fill-emerald-500" }
+      ? { stroke: "stroke-success", fill: "fill-success/15", dot: "fill-success" }
       : isBad
         ? { stroke: "stroke-rose-500", fill: "fill-rose-500/15", dot: "fill-rose-500" }
         : { stroke: "stroke-foreground/50", fill: "fill-foreground/8", dot: "fill-foreground/50" };

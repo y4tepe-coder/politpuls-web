@@ -97,7 +97,7 @@ export default function ProgrammPage() {
       </header>
 
       <div className="flex flex-col gap-2">
-        <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
+        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.18em]">
           Wahlversprechen
         </span>
         <h1 className="font-serif text-3xl sm:text-4xl font-semibold leading-tight">
@@ -145,7 +145,7 @@ export default function ProgrammPage() {
                   <span className="font-serif font-semibold text-base leading-tight">
                     {thema.label}
                   </span>
-                  <span className={`text-[11px] leading-snug ${isSelected ? "opacity-80" : "text-muted-foreground"}`}>
+                  <span className={`text-xs leading-snug ${isSelected ? "opacity-80" : "text-muted-foreground"}`}>
                     {thema.blurb}
                   </span>
                 </div>

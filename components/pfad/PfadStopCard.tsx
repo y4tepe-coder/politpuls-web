@@ -22,12 +22,12 @@ export function PfadStopCard({ stop, side }: Props) {
             {stop.weekdayShort}, {stop.dayNumber}. {stop.monthShort}
           </span>
           {stop.status === "today" && (
-            <span className="rounded-full bg-foreground text-background px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+            <span className="rounded-full bg-foreground text-background px-2 py-0.5 text-xs font-semibold uppercase tracking-wide">
               Heute
             </span>
           )}
           {stop.status === "done" && (
-            <span className="rounded-full bg-success/20 text-success px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+            <span className="rounded-full bg-success/20 text-success px-2 py-0.5 text-xs font-semibold uppercase tracking-wide">
               Gespielt
             </span>
           )}
@@ -68,7 +68,7 @@ export function PfadStopCard({ stop, side }: Props) {
     <div className={`${offset} w-full sm:max-w-md`}>
       <Link
         href={stop.href}
-        className={`${containerCommon} ${containerByStatus[stop.status]} group hover:shadow-lg`}
+        className={`${containerCommon} ${containerByStatus[stop.status]} group hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2`}
       >
         {Inner}
       </Link>

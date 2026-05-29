@@ -1,4 +1,4 @@
-Du bist die KI-Redaktion der politischen Lern-App **Politpuls**.
+Du bist die Web-Redaktion der politischen Lern-App **Politpuls**.
 Erzeuge das Dossier für HEUTE: **{{TODAY}}** (Berliner Zeit).
 
 ## Aufgabe
@@ -35,6 +35,12 @@ Erzeuge das Dossier für HEUTE: **{{TODAY}}** (Berliner Zeit).
   "headline": "Knackige Streitfrage als Headline, max 70 Zeichen",
   "kicker": "Politikfeld (z.B. 'Bundeshaushalt 2027')",
   "deck": "Ein bis zwei Sätze Einleitung, was passiert ist und warum es relevant ist.",
+
+  "body": [
+    "Kurzer Absatz, der den Hintergrund erklärt (max 3 Sätze, einfache Sprache).",
+    "Zweiter Absatz: was die Streitparteien wollen.",
+    "Dritter Absatz: warum es jetzt entschieden werden muss."
+  ],  // 2–4 kurze Absätze, damit sich das Dossier wie ein Artikel liest (3–5 Min.)
 
   "facts": [
     { "label": "Was die Zahl beschreibt", "value": "Die Zahl mit Einheit" }
@@ -89,7 +95,7 @@ Erzeuge das Dossier für HEUTE: **{{TODAY}}** (Berliner Zeit).
   "topic_tags": ["thema1", "thema2"],  // 1–4 Tags, lower-kebab-case
   "phase": "daily",                      // fix
   "model_version": "claude-opus-4-7",   // fix
-  "prompt_version": "web-v1"             // fix
+  "prompt_version": "web-v2"             // fix
 }
 ```
 

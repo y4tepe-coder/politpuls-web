@@ -65,7 +65,7 @@ export default function ProfilPage() {
   return (
     <main className="flex flex-1 flex-col max-w-2xl mx-auto w-full px-5 py-8 gap-6">
       <header className="flex flex-col gap-1">
-        <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
+        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.18em]">
           Dein Profil
         </span>
         <h1 className="font-serif text-3xl sm:text-4xl font-semibold leading-tight">
@@ -86,7 +86,7 @@ export default function ProfilPage() {
               <Sparkles className="size-5" />
             </span>
             <div className="flex flex-col">
-              <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
+              <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.18em]">
                 Werte-Check
               </span>
               <h2 className="font-serif text-lg font-semibold">
@@ -119,7 +119,7 @@ export default function ProfilPage() {
               {topAlignedParty.shortName.charAt(0)}
             </span>
             <div className="flex flex-col">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                 Beste Übereinstimmung
               </span>
               <h2 className="font-serif text-xl sm:text-2xl font-semibold leading-snug">
@@ -170,7 +170,7 @@ export default function ProfilPage() {
       {/* Category breakdown */}
       {werteCheckStarted && categoryScores && (
         <section className="flex flex-col gap-3">
-          <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             Themenfelder
           </h2>
           <ul className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
@@ -213,7 +213,7 @@ export default function ProfilPage() {
             <Compass className="size-5" />
           </span>
           <div className="flex flex-col">
-            <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
+            <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.18em]">
               Aus deinen Entscheidungen
             </span>
             <h2 className="font-serif text-xl font-semibold">
@@ -246,7 +246,7 @@ export default function ProfilPage() {
 
       {/* Streak */}
       <section className="flex flex-col gap-3">
-        <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+        <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
           Deine Streak
         </h2>
         <div className="grid grid-cols-3 gap-2.5">
@@ -330,7 +330,7 @@ function Stat({
 }) {
   return (
     <div className="glass-card rounded-2xl p-4 flex flex-col gap-2">
-      <span className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+      <span className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         {icon}
         {label}
       </span>

@@ -72,7 +72,7 @@ export const WAHLKAMPF_THEMEN: WahlkampfThema[] = [
     label: "Digitalisierung",
     icon: "Wifi",
     pastel: "lavender",
-    blurb: "Verwaltung, Glasfaser, KI",
+    blurb: "Verwaltung, Glasfaser, Daten",
   },
   {
     id: "mobilitaet",

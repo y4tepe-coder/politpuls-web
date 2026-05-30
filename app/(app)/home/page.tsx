@@ -35,11 +35,24 @@ export default function HomePage() {
   const [state, setState] = useState<LocalState | null>(null);
   const [now, setNow] = useState<Date>(new Date());
   const [hydrated, setHydrated] = useState(false);
+  const [todayInfo, setTodayInfo] = useState<{
+    kicker: string | null;
+    headline: string;
+  } | null>(null);
 
   useEffect(() => {
     setSession(getLocalSession());
     setState(getLocalState());
     setHydrated(true);
+    // Echtes Tages-Dossier laden (für Hero + heutigen Pfad-Knoten) statt Seed.
+    fetch("/api/today")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.headline) {
+          setTodayInfo({ kicker: d.kicker ?? null, headline: d.headline });
+        }
+      })
+      .catch(() => {});
     const t = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(t);
   }, []);
@@ -47,7 +60,7 @@ export default function HomePage() {
   if (!hydrated || !state) return <Skeleton />;
 
   const isGuest = !session?.isRegistered;
-  const stops = buildPfadStops(now);
+  const stops = buildPfadStops(now, todayInfo ?? undefined);
   const todayStop = stops.find((s) => s.status === "today") ?? stops[7];
   const playedToday = !!state.last_briefing_date;
   const party = state.party_id ? getPartyById(state.party_id) : null;

@@ -70,7 +70,12 @@ function formatDate(d: Date): string {
 
 // Liefert 15 Stops: heute + 14 Tage voraus (inkl. Events).
 // Vergangene Tage zeigen wir nicht — pro User-Wunsch.
-export function buildPfadStops(today: Date = new Date()): PfadStop[] {
+// `todayInfo` ist das echte Tages-Dossier (aus Supabase via /api/today); fehlt
+// es, fällt der heutige Stop auf den Seed zurück.
+export function buildPfadStops(
+  today: Date = new Date(),
+  todayInfo?: { kicker: string | null; headline: string },
+): PfadStop[] {
   const stops: PfadStop[] = [];
 
   for (let offset = 0; offset <= 14; offset++) {
@@ -100,8 +105,8 @@ export function buildPfadStops(today: Date = new Date()): PfadStop[] {
     if (offset === 0) {
       stops.push({
         ...base,
-        kicker: seedDossier.kicker ?? "Heute",
-        headline: seedDossier.headline,
+        kicker: todayInfo?.kicker ?? seedDossier.kicker ?? "Heute",
+        headline: todayInfo?.headline ?? seedDossier.headline,
         status: "today",
         href: "/heute",
       });

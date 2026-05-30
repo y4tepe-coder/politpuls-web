@@ -4,9 +4,13 @@ Erzeuge das Dossier für HEUTE: **{{TODAY}}** (Berliner Zeit).
 ## Aufgabe
 
 1. **Recherchiere** mit WebSearch aktuelle deutsche Bundespolitik der letzten
-   2–3 Tage. **Erlaubte Quelle: ausschließlich `tagesschau.de`** —
-   alle anderen Domains ignorieren. Suchanfragen entsprechend formulieren
-   (z.B. `site:tagesschau.de bundestag mai 2026`).
+   2–3 Tage. **Erlaubte Quellen: seriöse deutsche Nachrichten- und offizielle
+   Quellen** — z.B. `zdfheute.de`, `tagesschau.de`, `spiegel.de`, `zeit.de`,
+   `sueddeutsche.de`, `faz.net`, `bundestag.de`, `bundesregierung.de`,
+   `bundesrat.de`. WICHTIG: Manche Domains sind für den WebSearch nicht
+   erreichbar (z.B. liefert `tagesschau.de` oft `domain not accessible`) —
+   nimm dann einfach eine andere Quelle aus der Liste, die echte Treffer
+   liefert. Lass das Dossier deswegen NIE ausfallen.
    Wähle **EIN** entscheidungsrelevantes Thema (Gesetzentwurf, Koalitions-
    Streit, EU-Vorlage, Bundesrat-Sitzung — etwas, wo wirklich Spielraum für
    Pro/Contra besteht).
@@ -21,10 +25,11 @@ Erzeuge das Dossier für HEUTE: **{{TODAY}}** (Berliner Zeit).
    Wenn das einen Fehler wirft — reparieren und nochmal validieren.
 
 4. **Sources-Regel:** Jede URL in `sources` muss
-   - aus einem WebSearch-Ergebnis stammen (keine geraten, keine erfunden)
-   - **auf `tagesschau.de` gehostet sein** (Host der URL muss exakt
-     `tagesschau.de` oder Subdomain davon sein — sonst Eintrag streichen).
-   Lieber 2 echte tagesschau-URLs als 4 fake.
+   - aus einem echten WebSearch-Ergebnis stammen (NIE geraten, NIE erfunden)
+   - auf einer der oben erlaubten seriösen Domains liegen.
+   Ist eine Domain nicht erreichbar, nimm eine andere aus der Liste. Lieber
+   2 echte Quellen als 4 erfundene — mit den erlaubten Domains findest du
+   aber immer mindestens 2 echte.
 
 ## JSON-Schema
 
@@ -89,13 +94,13 @@ Erzeuge das Dossier für HEUTE: **{{TODAY}}** (Berliner Zeit).
   },
 
   "sources": [
-    { "title": "Echter Artikel-Titel", "url": "https://echte-url-aus-websearch", "outlet": "tagesschau.de" }
-  ],  // 2–4 Einträge, alle URLs müssen aus WebSearch kommen
+    { "title": "Echter Artikel-Titel", "url": "https://echte-url-aus-websearch", "outlet": "z.B. ZDFheute, Tagesschau, Bundestag" }
+  ],  // 2–4 Einträge, alle URLs müssen aus echten WebSearch-Treffern kommen
 
   "topic_tags": ["thema1", "thema2"],  // 1–4 Tags, lower-kebab-case
   "phase": "daily",                      // fix
   "model_version": "claude-opus-4-7",   // fix
-  "prompt_version": "web-v2"             // fix
+  "prompt_version": "web-v3-sources"     // fix
 }
 ```
 

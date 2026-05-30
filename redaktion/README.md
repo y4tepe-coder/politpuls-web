@@ -5,18 +5,22 @@ Täglicher Claude-Agent generiert ein Politik-Dossier und lädt es in Supabase.
 ## Architektur
 
 ```
-GitHub Action (cron 05:30 UTC)
+GitHub Action (cron 12:30 UTC = 14:30 CEST, fertig vor der 16-Uhr-Ausgabe)
   ↓
 Claude Code CLI (mit web-prompt.md)
   ↓ WebSearch → JSON
 out/dossier.json
   ↓
-upload.mjs → Supabase REST (upsert)
+upload.mjs → Supabase REST (upsert, per fetch, ohne supabase-js)
   ↓
 public.dossiers Tabelle
   ↓
 Next.js /heute liest mit ISR (30 min)
 ```
+
+`upload.mjs` ruft die Supabase-REST-API direkt per `fetch` auf — keine
+`@supabase/supabase-js`-Dependency. Das ist Absicht: der Client crashte unter
+Node 20 mit „native WebSocket support" und hat den Upload jeden Tag gekillt.
 
 ## Einmaliges Setup: GitHub Secrets
 
@@ -60,4 +64,12 @@ Nächste Stufe (v1.1): Evergreen-Pool. Bei Failure wird stattdessen ein vorgehal
 
 ## Cron-Zeit anpassen
 
-In `.github/workflows/redaktion.yml` → `cron`. **UTC**, nicht Berliner Zeit. Aktuell `30 5 * * *` = 05:30 UTC = 06:30 CET / 07:30 CEST.
+In `.github/workflows/redaktion.yml` → `cron`. **UTC**, nicht Berliner Zeit.
+Aktuell `30 12 * * *` = 12:30 UTC = 14:30 CEST (Sommer) / 13:30 CET (Winter).
+
+Bewusst früher Nachmittag mit Puffer: GitHub kann geplante Läufe um bis zu
+~1–2 h verzögern, der Run dauert ~5 min — so ist das Dossier sicher vor der
+16-Uhr-Ausgabe da. Näher an 16 Uhr (z. B. `30 13 * * *` = 15:30 CEST) geht,
+wird aber riskanter, wenn GitHub mal stärker verzögert. UTC verschiebt sich
+**nicht** mit der Sommerzeit — im Winter ist dieselbe Uhrzeit eine Stunde
+früher in Berlin.

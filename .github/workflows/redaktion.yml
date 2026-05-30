@@ -1,10 +1,15 @@
 name: Web-Redaktion
 
-# Taeglich 05:30 UTC = 06:30 CET / 07:30 CEST. Plus manuell triggerbar
-# fuer Tests und Nachgenerierung verpasster Tage.
+# Taeglich 12:30 UTC. Das ist 14:30 CEST (Sommer) bzw. 13:30 CET (Winter) —
+# also frueher Nachmittag, fertig deutlich VOR der 16-Uhr-Ausgabe in der App.
+# Der Puffer ist Absicht: GitHub kann geplante Laeufe um bis zu ~1-2 h
+# verzoegern, der Run selbst dauert ~5 min. Die Zeit ist UTC, nicht Berliner
+# Zeit — zum Verschieben hier den cron aendern (z. B. "30 13 * * *" = 15:30
+# CEST, dann aber knapper vor 16 Uhr). Plus manuell triggerbar fuer Tests und
+# Nachgenerierung verpasster Tage.
 on:
   schedule:
-    - cron: "30 5 * * *"
+    - cron: "30 12 * * *"
   workflow_dispatch:
     inputs:
       override_date:
@@ -29,9 +34,6 @@ jobs:
       - name: Install Claude Code CLI
         run: npm install -g @anthropic-ai/claude-code
 
-      - name: Install Supabase client (for upload)
-        run: npm install --no-save @supabase/supabase-js
-
       - name: Resolve target date
         id: date
         run: |
@@ -47,7 +49,11 @@ jobs:
         run: |
           mkdir -p out
           PROMPT="$(sed "s|{{TODAY}}|${{ steps.date.outputs.today }}|g" redaktion/web-prompt.md)"
-          echo "$PROMPT" | claude -p --dangerously-skip-permissions
+          # Claude beendet sich gelegentlich mit Exit != 0, obwohl es ein gueltiges
+          # out/dossier.json geschrieben hat. Deshalb hier nicht hart failen — der
+          # naechste Schritt prueft das Artefakt und entscheidet ueber Erfolg.
+          echo "$PROMPT" | claude -p --dangerously-skip-permissions || \
+            echo "Claude exited non-zero — pruefe Artefakt im naechsten Schritt."
 
       - name: Verify dossier file exists
         run: |

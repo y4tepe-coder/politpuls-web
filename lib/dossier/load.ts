@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { seedDossier } from "@/lib/data/seed-dossier";
 import type { Dossier } from "@/lib/supabase/types";
 
@@ -16,7 +16,10 @@ export function todayBerlinISO(): string {
 export async function getTodayDossier(): Promise<Dossier> {
   const date = todayBerlinISO();
   try {
-    const supabase = await createClient();
+    // Service-role am Server: das veröffentlichte Tages-Dossier ist öffentlicher
+    // Inhalt und muss auch für Gäste (anon/lokale Session) sichtbar sein. RLS
+    // wird nur SERVERSEITIG umgangen — der Key erreicht nie den Browser.
+    const supabase = createAdminClient();
     const { data, error } = await supabase
       .from("dossiers")
       .select("*")

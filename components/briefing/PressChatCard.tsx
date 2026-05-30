@@ -49,7 +49,7 @@ export function PressChatCard({ press, choice, onContinue }: Props) {
   return (
     <article className="flex flex-1 flex-col max-w-xl mx-auto w-full px-5 py-10 gap-5">
       <header className="flex flex-col gap-1.5">
-        <span className="text-on-bg inline-flex items-center gap-1.5 text-accent text-[11px] font-semibold uppercase tracking-[0.18em]">
+        <span className="text-on-bg inline-flex items-center gap-1.5 text-accent text-xs font-semibold uppercase tracking-[0.18em]">
           <Phone className="size-3" />
           Eingehender Anruf
         </span>
@@ -91,7 +91,7 @@ export function PressChatCard({ press, choice, onContinue }: Props) {
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="self-end max-w-[85%] rounded-2xl rounded-br-md bg-[#0a84ff] text-white px-4 py-3 text-[15px] leading-relaxed shadow-sm"
+            className="self-end max-w-[85%] rounded-2xl rounded-br-md bg-primary text-white px-4 py-3 text-[15px] leading-relaxed shadow-sm"
           >
             {reply}
           </motion.div>
@@ -103,7 +103,7 @@ export function PressChatCard({ press, choice, onContinue }: Props) {
           {/* Preset-Vorschlaege als kleine Chips, unter der Frage */}
           {presets.length > 0 && (
             <div className="flex flex-col gap-2">
-              <p className="text-on-bg text-[11px] font-semibold uppercase tracking-wide text-foreground/65">
+              <p className="text-on-bg text-xs font-semibold uppercase tracking-wide text-foreground/65">
                 Vorgeschlagene Antworten
               </p>
               <ul className="flex flex-col gap-1.5">
@@ -114,7 +114,7 @@ export function PressChatCard({ press, choice, onContinue }: Props) {
                       onClick={() => pick(preset)}
                       className={`max-w-[90%] text-right rounded-2xl rounded-br-md px-4 py-2.5 text-[14px] leading-relaxed transition-all ${
                         reply === preset
-                          ? "bg-[#0a84ff] text-white shadow-sm"
+                          ? "bg-primary text-white shadow-sm"
                           : "glass-card hover:bg-foreground/[0.03] text-foreground"
                       }`}
                     >
@@ -136,13 +136,13 @@ export function PressChatCard({ press, choice, onContinue }: Props) {
               value={reply}
               onChange={(e) => setReply(e.target.value)}
               placeholder="iMessage …"
-              className="flex-1 h-11 rounded-full bg-card border border-foreground/15 px-4 text-[15px] placeholder:text-foreground/40 focus:outline-none focus:ring-2 focus:ring-[#0a84ff]/40 focus:border-[#0a84ff]/60 shadow-sm"
+              className="flex-1 h-11 rounded-full bg-card border border-foreground/15 px-4 text-[15px] placeholder:text-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/60 shadow-sm"
             />
             <button
               type="submit"
               disabled={!reply.trim()}
               aria-label="Antwort senden"
-              className="inline-flex items-center justify-center size-11 rounded-full bg-[#0a84ff] text-white shadow-sm disabled:opacity-40 disabled:pointer-events-none transition-opacity"
+              className="inline-flex items-center justify-center size-11 rounded-full bg-primary text-white shadow-sm disabled:opacity-40 disabled:pointer-events-none transition-opacity"
             >
               <Send className="size-4" fill="currentColor" />
             </button>

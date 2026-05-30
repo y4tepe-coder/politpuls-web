@@ -181,5 +181,9 @@ export const seedDossier: Dossier = {
   published_at: "2026-05-25T05:00:00Z",
   topic_tags: ["haushalt", "verteidigung", "klima"],
   phase: "daily",
+  // null → the app rotates the pattern by date, so the fallback already shows
+  // all four formats across days (the seed carries press, cheers and bullets).
+  format: null,
+  video: null,
   created_at: "2026-05-25T05:00:00Z",
 };

@@ -87,7 +87,7 @@ export default function WahlPage() {
           <Trophy className="size-10 text-foreground" />
         </motion.div>
         <header className="flex flex-col gap-2">
-          <span className="text-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
+          <span className="text-foreground text-xs font-semibold uppercase tracking-[0.18em]">
             Wahlsonntag
           </span>
           <h1 className="font-serif text-3xl sm:text-4xl font-semibold leading-tight">
@@ -115,7 +115,7 @@ export default function WahlPage() {
     return (
       <main className="flex flex-1 flex-col max-w-2xl mx-auto w-full px-5 py-6 gap-5">
         <header className="flex flex-col gap-2">
-          <span className="text-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
+          <span className="text-foreground text-xs font-semibold uppercase tracking-[0.18em]">
             Hochrechnung 18:00
           </span>
           <h1 className="font-serif text-3xl sm:text-4xl font-semibold leading-tight">
@@ -149,7 +149,7 @@ export default function WahlPage() {
               <span className="flex-1 font-serif font-semibold text-base">
                 {r.party.shortName}
                 {r.mine && (
-                  <span className="ml-2 inline-flex items-center rounded-full bg-foreground text-background px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                  <span className="ml-2 inline-flex items-center rounded-full bg-foreground text-background px-2 py-0.5 text-xs font-semibold uppercase tracking-wide">
                     Du
                   </span>
                 )}
@@ -202,7 +202,7 @@ export default function WahlPage() {
     return (
       <main className="flex flex-1 flex-col max-w-2xl mx-auto w-full px-5 py-6 gap-5">
         <header className="flex flex-col gap-2">
-          <span className="text-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
+          <span className="text-foreground text-xs font-semibold uppercase tracking-[0.18em]">
             Koalition
           </span>
           <h1 className="font-serif text-3xl sm:text-4xl font-semibold leading-tight">
@@ -300,7 +300,7 @@ export default function WahlPage() {
         {roleData.icon}
       </motion.div>
       <header className="flex flex-col gap-2">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+        <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
           Deine neue Rolle
         </span>
         <h1 className="font-serif text-4xl sm:text-5xl font-semibold leading-tight">

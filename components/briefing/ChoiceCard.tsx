@@ -14,7 +14,7 @@ export function ChoiceCard({ streitfrage, choices, onChoose }: Props) {
   return (
     <article className="flex flex-1 flex-col max-w-xl mx-auto w-full px-5 py-10 gap-7">
       <header className="flex flex-col gap-1">
-        <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
+        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.18em]">
           Du sitzt am Tisch
         </span>
         <h2 className="font-serif text-2xl sm:text-3xl font-semibold leading-snug">

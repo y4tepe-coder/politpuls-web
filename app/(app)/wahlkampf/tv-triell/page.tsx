@@ -84,7 +84,7 @@ export default function TvTriellPage() {
           <Trophy className="size-10 text-foreground" />
         </motion.div>
         <header className="flex flex-col gap-2">
-          <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
+          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.18em]">
             TV-Triell beendet
           </span>
           <h1 className="font-serif text-3xl sm:text-4xl font-semibold leading-tight">
@@ -141,7 +141,7 @@ export default function TvTriellPage() {
               transition={{ duration: 0.3 }}
             />
           </div>
-          <span className="text-[10px] font-mono tabular-nums text-muted-foreground">
+          <span className="text-xs font-mono tabular-nums text-muted-foreground">
             Frage {index + 1} / {total}
           </span>
         </div>
@@ -163,7 +163,7 @@ export default function TvTriellPage() {
               <Tv className="size-5 text-foreground" />
             </span>
             <div className="flex flex-col gap-0.5 leading-tight">
-              <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                 {frage.topic} · TV-Studio
               </span>
               <span className="text-sm font-medium text-foreground/70">
@@ -179,7 +179,7 @@ export default function TvTriellPage() {
 
           {/* Was sagen die anderen */}
           <section className="flex flex-col gap-3">
-            <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
               Was sagen die anderen
             </h3>
             <div className="flex flex-col gap-3">
@@ -192,7 +192,7 @@ export default function TvTriellPage() {
           <section className="flex flex-col gap-3 pt-2 border-t border-foreground/8">
             <header className="flex items-center gap-2">
               <CircleUserRound className="size-5 text-foreground" />
-              <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground">
+              <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-foreground">
                 Du bist dran
               </h3>
             </header>
@@ -267,7 +267,7 @@ function OpponentBubble({
           }`}
         >
           <span className="text-sm font-semibold">{name}</span>
-          <span className="text-[11px] text-muted-foreground">{party}</span>
+          <span className="text-xs text-muted-foreground">{party}</span>
         </div>
       </div>
       <div className={`glass-card rounded-2xl ${bubbleCorner} px-4 py-3`}>

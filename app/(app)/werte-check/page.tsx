@@ -119,7 +119,7 @@ export default function WerteCheckPage() {
               transition={{ duration: 0.3 }}
             />
           </div>
-          <div className="flex items-center justify-between text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">
+          <div className="flex items-center justify-between text-xs uppercase tracking-wide text-muted-foreground font-semibold">
             <span>{category?.label}</span>
             <span>
               {index + 1} / {total}
@@ -137,7 +137,7 @@ export default function WerteCheckPage() {
           transition={{ duration: 0.25, ease: "easeOut" }}
           className="flex-1 flex flex-col items-center justify-center gap-7 text-center"
         >
-          <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             Wie stehst du dazu?
           </span>
           <h2 className="font-serif text-2xl sm:text-3xl font-semibold leading-tight max-w-md">

@@ -101,7 +101,7 @@ export default function WahlkampfPage() {
   return (
     <main className="flex flex-1 flex-col max-w-2xl mx-auto w-full px-5 py-8 gap-8">
       <header className="flex flex-col gap-2">
-        <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
+        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.18em]">
           Wahlkampf-Modus
         </span>
         <h1 className="font-serif text-3xl sm:text-4xl font-semibold leading-tight">
@@ -120,7 +120,7 @@ export default function WahlkampfPage() {
           <CalendarDays className="size-6" />
         </span>
         <div className="flex flex-col gap-1.5">
-          <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
+          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.18em]">
             Dein Status
           </span>
           <h2 className="font-serif text-lg sm:text-xl font-semibold leading-snug">
@@ -139,7 +139,7 @@ export default function WahlkampfPage() {
       {/* Party selection */}
       <section className="flex flex-col gap-3">
         <header className="flex flex-col gap-1">
-          <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             Wähle deine Partei
           </h2>
           <p className="text-sm text-muted-foreground">
@@ -201,7 +201,7 @@ export default function WahlkampfPage() {
       {/* Roles */}
       <section className="flex flex-col gap-3">
         <header className="flex flex-col gap-1">
-          <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             Die vier Rollen
           </h2>
           <p className="text-sm text-muted-foreground">
@@ -234,7 +234,7 @@ export default function WahlkampfPage() {
                       {r.title}
                     </h3>
                     {isCurrent && (
-                      <span className="rounded-full bg-accent text-accent-foreground px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                      <span className="rounded-full bg-accent text-accent-foreground px-2 py-0.5 text-xs font-semibold uppercase tracking-wide">
                         Deine Rolle
                       </span>
                     )}
@@ -242,7 +242,7 @@ export default function WahlkampfPage() {
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     {r.blurb}
                   </p>
-                  <span className="text-[11px] text-muted-foreground/70 font-medium uppercase tracking-wide mt-1">
+                  <span className="text-xs text-muted-foreground/70 font-medium uppercase tracking-wide mt-1">
                     {r.unlock}
                   </span>
                 </div>
@@ -255,7 +255,7 @@ export default function WahlkampfPage() {
       {/* Campaign phases — anklickbare Schritte */}
       <section className="flex flex-col gap-3">
         <header className="flex flex-col gap-1">
-          <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             Der Wahlkampf-Zyklus
           </h2>
           <p className="text-sm text-muted-foreground">

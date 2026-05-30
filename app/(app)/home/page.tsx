@@ -67,25 +67,25 @@ export default function HomePage() {
   return (
     <main className="flex flex-1 flex-col max-w-2xl mx-auto w-full px-5 pt-3 pb-12 gap-4">
       {/* Datum */}
-      <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground tabular-nums">
+      <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground tabular-nums">
         {dateLine}
       </span>
 
       {/* Heute-Hero (konkretes Briefing-Thema) */}
       <section className="glass-card rounded-3xl p-5 sm:p-6 flex flex-col gap-4">
         <div className="flex items-center justify-between gap-3">
-          <span className="text-muted-foreground text-[10px] font-semibold uppercase tracking-[0.22em]">
+          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.22em]">
             Heute
           </span>
           {playedToday && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/30 px-2.5 py-0.5 text-[10px] font-semibold">
+            <span className="inline-flex items-center gap-1 rounded-full bg-success/10 text-success border border-success/30 px-2.5 py-0.5 text-xs font-semibold">
               <Check className="size-3" strokeWidth={3} />
               gespielt
             </span>
           )}
         </div>
         <div className="flex flex-col gap-1.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {todayStop.kicker}
           </span>
           <h1 className="font-serif text-2xl sm:text-3xl font-semibold leading-tight">
@@ -111,7 +111,7 @@ export default function HomePage() {
           <Clock className="size-5 text-foreground" />
         </span>
         <div className="flex flex-col flex-1 min-w-0 leading-tight">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+          <span className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
             Redaktion · Nächste Ausgabe
           </span>
           <span className="text-sm font-semibold text-foreground">{editionLabel}</span>
@@ -124,11 +124,11 @@ export default function HomePage() {
       {/* Versetzter, scrollbarer Pfad */}
       <section className="flex flex-col mt-2">
         <header className="flex items-center justify-between mb-3">
-          <h2 className="text-on-bg text-[10px] font-semibold uppercase tracking-[0.22em] text-foreground/70">
+          <h2 className="text-on-bg text-xs font-semibold uppercase tracking-[0.22em] text-foreground/70">
             Dein Pfad
           </h2>
           {party && (
-            <span className="text-on-bg inline-flex items-center gap-1.5 text-[11px] text-foreground/70">
+            <span className="text-on-bg inline-flex items-center gap-1.5 text-xs text-foreground/70">
               <span
                 className="size-2 rounded-full"
                 style={{ backgroundColor: party.color }}
@@ -154,7 +154,7 @@ export default function HomePage() {
             <span className="text-sm font-semibold leading-tight">
               Spielstand sichern
             </span>
-            <span className="text-[11px] text-muted-foreground">
+            <span className="text-xs text-muted-foreground">
               Du spielst als Gast — Konto erstellen für Sync.
             </span>
           </div>
@@ -274,7 +274,7 @@ function PfadNode({
   let iconSize = "size-7 sm:size-9";
   let markerIcon: React.ReactNode = <Lock className={iconSize} />;
   if (isDone) {
-    markerBg = "bg-emerald-500 text-white shadow-[0_6px_0_-2px] shadow-emerald-700/40";
+    markerBg = "bg-success text-white shadow-[0_6px_0_-2px] shadow-success/40";
     markerIcon = <Check className={iconSize} strokeWidth={3} />;
   } else if (isToday) {
     markerBg = "bg-gold text-gold-ink shadow-[0_8px_0_-2px] shadow-yellow-700/40";
@@ -308,7 +308,7 @@ function PfadNode({
   // die Redaktion entscheidet jeden Morgen neu, darum kein Spoiler.
   const Label = (
     <div className="flex flex-col items-center leading-tight gap-0.5 mt-2 text-center max-w-[160px] sm:max-w-[200px]">
-      <span className="text-on-bg text-[10px] font-mono tabular-nums text-foreground/65">
+      <span className="text-on-bg text-xs font-mono tabular-nums text-foreground/65">
         {stop.weekdayShort}, {stop.dayNumber}. {stop.monthShort}
       </span>
       {isLocked && !isEvent ? (

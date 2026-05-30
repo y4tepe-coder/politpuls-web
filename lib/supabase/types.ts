@@ -66,6 +66,21 @@ export type DossierConsequence = {
   summary: string;
 };
 
+// Which interaction pattern the daily article renders. The pipeline rotates
+// this per day so each day differs and the reporter chat is not shown daily.
+export type DossierFormat = "decision" | "reporter-chat" | "koalition" | "plakat";
+
+// Nullable, embeddable clip slot — prepared but unused for now.
+export type DossierVideo = {
+  title: string;
+  url: string | null;
+  channel?: string;
+  ticker?: string;
+  blurb?: string;
+  runtime?: string;
+  time?: string;
+};
+
 export type Dossier = {
   id: string;
   publish_date: string;
@@ -90,6 +105,10 @@ export type Dossier = {
   published_at: string | null;
   topic_tags: string[];
   phase: "daily" | "wahlkampf";
+  // Modular daily format + (future) embeddable video. Nullable so existing
+  // rows + the hand-written seed keep working; resolveFormat() fills the gap.
+  format: DossierFormat | null;
+  video: DossierVideo | null;
   created_at: string;
 };
 

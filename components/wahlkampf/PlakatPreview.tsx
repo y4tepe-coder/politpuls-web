@@ -53,7 +53,7 @@ export function PlakatPreview({ plakat, partyId, themen }: Props) {
       >
         {isBold && (
           <span
-            className="font-mono text-[10px] uppercase tracking-[0.25em] opacity-80"
+            className="font-mono text-xs uppercase tracking-[0.25em] opacity-80"
             style={{ color: colors.accent }}
           >
             {party?.shortName ?? "PARTEI"} · 2027
@@ -93,7 +93,7 @@ export function PlakatPreview({ plakat, partyId, themen }: Props) {
             {themenLabels.map((label) => (
               <li
                 key={label}
-                className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold"
+                className="rounded-full px-2.5 py-0.5 text-xs font-semibold"
                 style={{
                   backgroundColor: colors.accent,
                   color: colors.bg,

@@ -1,26 +1,33 @@
 "use client";
 
-// Fixed, full-bleed Reichstag-Painting. <picture> waehlt intern zwischen
-// Portrait (Mobile) und Landscape (Desktop ab 1024 px) — der Browser laedt
-// nur das passende Bild. Day/Night-Toggle laeuft per CSS-Klasse
-// (app-bg-day/night) in globals.css via prefers-color-scheme.
+// Fixed, full-bleed Reichstag-Hintergrund. Vier Varianten in /public/hintergrund:
+// hell/dunkel × hochkant(Handy)/quer(Laptop ab 1024px). Das <picture> laedt nur
+// das passende Bild; der Hell/Dunkel-Wechsel laeuft per CSS-Klasse
+// (app-bg-day/night) ueber prefers-color-scheme in globals.css.
+// object-cover fuellt immer den ganzen Viewport — am Handy von oben bis unten.
 
 export function AppBackground() {
   return (
     <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-background">
       <picture className="app-bg-day absolute inset-0">
-        <source media="(min-width: 1024px)" srcSet="/hero-reichstag-landscape.png" />
+        <source
+          media="(min-width: 1024px)"
+          srcSet="/hintergrund/reichstag-hell-quer.png"
+        />
         <img
-          src="/hero-reichstag.png"
+          src="/hintergrund/reichstag-hell-hochkant.png"
           alt=""
           aria-hidden
           className="w-full h-full object-cover object-center"
         />
       </picture>
       <picture className="app-bg-night absolute inset-0">
-        <source media="(min-width: 1024px)" srcSet="/hero-reichstag-night.png" />
+        <source
+          media="(min-width: 1024px)"
+          srcSet="/hintergrund/reichstag-dunkel-quer.png"
+        />
         <img
-          src="/hero-reichstag-night.png"
+          src="/hintergrund/reichstag-dunkel-hochkant.png"
           alt=""
           aria-hidden
           className="w-full h-full object-cover object-center"

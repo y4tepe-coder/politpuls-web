@@ -88,7 +88,7 @@ export default function PlakatPage() {
       </header>
 
       <div className="flex flex-col gap-2">
-        <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.18em]">
+        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.18em]">
           Wahlplakat
         </span>
         <h1 className="font-serif text-3xl sm:text-4xl font-semibold leading-tight">

@@ -9,7 +9,7 @@ import { PixelTrail } from "@/components/ui/pixel-trail";
 import { useScreenSize } from "@/hooks/use-screen-size";
 import { getLocalSession, startGuestSession } from "@/lib/local/session";
 
-const HERO_BG_URL = "/hero-reichstag.png";
+const HERO_BG_URL = "/hintergrund/reichstag-hell-hochkant.png";
 
 // Landing — vollflächiges Reichstag-Bild perfekt zentriert (wie früher),
 // weißer "Politpuls"-Schriftzug groß auf dem Bild, Pixel-Trail mit Gooey,
@@ -50,7 +50,7 @@ export default function LandingPage() {
       {/* Responsive Reichstag: Portrait fuer Mobile, Landscape ab 1024 px.
           Browser laedt nur das passende Bild via <picture>. */}
       <picture className="block absolute inset-0">
-        <source media="(min-width: 1024px)" srcSet="/hero-reichstag-landscape.png" />
+        <source media="(min-width: 1024px)" srcSet="/hintergrund/reichstag-hell-quer.png" />
         <img
           src={HERO_BG_URL}
           alt=""
@@ -104,14 +104,14 @@ export default function LandingPage() {
         {returning ? (
           <Link
             href="/home"
-            className="block w-full rounded-full bg-gold text-gold-ink font-bold uppercase tracking-wide text-center py-4 text-base shadow-[0_12px_36px_-8px_rgba(0,0,0,0.5)] hover:scale-[1.01] active:scale-[0.99] transition-transform"
+            className="block w-full rounded-full bg-gold text-gold-ink font-bold uppercase tracking-wide text-center py-4 text-base shadow-[0_12px_36px_-8px_rgba(0,0,0,0.5)] hover:scale-[1.01] active:scale-[0.99] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
           >
             Weiterspielen
           </Link>
         ) : (
           <Link
             href="/onboarding"
-            className="block w-full rounded-full bg-gold text-gold-ink font-bold uppercase tracking-wide text-center py-4 text-base shadow-[0_12px_36px_-8px_rgba(0,0,0,0.5)] hover:scale-[1.01] active:scale-[0.99] transition-transform"
+            className="block w-full rounded-full bg-gold text-gold-ink font-bold uppercase tracking-wide text-center py-4 text-base shadow-[0_12px_36px_-8px_rgba(0,0,0,0.5)] hover:scale-[1.01] active:scale-[0.99] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
           >
             Konto erstellen
           </Link>
@@ -121,7 +121,7 @@ export default function LandingPage() {
           Schon ein Konto?{" "}
           <Link
             href="/login"
-            className="text-gold font-semibold hover:underline underline-offset-4"
+            className="text-gold font-semibold hover:underline underline-offset-4 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
             Anmelden
           </Link>
@@ -130,7 +130,7 @@ export default function LandingPage() {
         <button
           type="button"
           onClick={continueAsGuest}
-          className="text-center text-sm text-white/85 hover:text-white py-2 drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)]"
+          className="text-center text-sm text-white/85 hover:text-white py-2 drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)] rounded focus-visible:outline-none focus-visible:underline"
         >
           Ohne Konto fortfahren
         </button>

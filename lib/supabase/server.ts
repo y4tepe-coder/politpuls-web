@@ -1,15 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
+import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/supabase/config";
+
 // Cookie-aware Supabase client for Server Components, Route Handlers, and Server Actions.
 // In Next.js 16 cookies() is async, so this factory is async too.
 export async function createClient() {
   const cookieStore = await cookies();
 
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
+  return createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       cookies: {
         getAll() {
           return cookieStore.getAll();

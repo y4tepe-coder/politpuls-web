@@ -1,4 +1,5 @@
 import { seedDossier } from "@/lib/data/seed-dossier";
+import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/supabase/config";
 import type { Dossier } from "@/lib/supabase/types";
 
 // Berlin-date in YYYY-MM-DD. Wir nutzen sv-SE als locale, weil das standardmaessig
@@ -33,15 +34,15 @@ export function todayBerlinISO(): string {
 // Dossier spätestens ~14:40 live, lange vor der 16-Uhr-Ausgabe.
 export async function getTodayDossier(): Promise<Dossier> {
   const date = todayBerlinISO();
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !anon) return seedDossier;
 
   try {
     const res = await fetch(
-      `${url}/rest/v1/dossiers?select=*&published=eq.true&publish_date=lte.${date}&order=publish_date.desc&limit=1`,
+      `${SUPABASE_URL}/rest/v1/dossiers?select=*&published=eq.true&publish_date=lte.${date}&order=publish_date.desc&limit=1`,
       {
-        headers: { apikey: anon, Authorization: `Bearer ${anon}` },
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
         next: { revalidate: 600 },
       },
     );

@@ -1,23 +1,17 @@
 // Öffentliche Supabase-Zugangsdaten (Projekt-URL + anon/publishable Key).
 //
-// Beide sind BEWUSST öffentlich: der anon-Key ist dafür gemacht, im Browser
-// ausgeliefert zu werden, und die Row-Level-Security schützt die Daten. Sie
-// stehen ohnehin bereits in HOSTINGER.md im Repo.
+// FEST verdrahtet — bewusst OHNE Env-Variablen. Beide Werte sind öffentlich:
+// der anon-Key ist dafür gemacht, im Browser ausgeliefert zu werden, und die
+// Row-Level-Security schützt die Daten. Sie stehen ohnehin schon in HOSTINGER.md.
 //
-// Hartcodiert als FALLBACK hinter den Env-Variablen: so zeigt die App das echte
-// Tages-Dossier auch dann, wenn die Hosting-Umgebungsvariablen beim Build oder
-// zur Laufzeit mal nicht ankommen. Genau das hatte dazu geführt, dass prod trotz
-// korrektem Code dauerhaft auf den (alten) Seed zurückfiel: `NEXT_PUBLIC_*` war
-// im Build nicht gesetzt, also lief getTodayDossier in den Seed-Fallback.
+// Warum hartcodiert statt aus der Env: Auf dem Hosting kamen die Env-Variablen
+// mal nicht im Build an (→ App fiel auf den Seed zurück) und konnten dann sogar
+// mit einem falschen Wert gesetzt sein (→ App nutzte den falschen Key → 401 →
+// wieder Seed). Mit festen Werten gibt es diese Fehlerquelle nicht mehr: die App
+// nutzt IMMER die korrekten, öffentlichen Lese-Zugangsdaten.
 //
-// Eine gesetzte Env-Variable hat weiterhin Vorrang (z. B. für ein anderes
-// Supabase-Projekt). Der service_role-Key gehört NICHT hierher — der ist geheim,
-// nie im Frontend, und wird ausschließlich serverseitig vom Redaktions-Upload
-// benutzt.
-export const SUPABASE_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ??
-  "https://saylxrzxtezadobaouev.supabase.co";
+// Anderes Supabase-Projekt? Einfach diese zwei Zeilen ändern. Der geheime
+// service_role-Key gehört NICHT hierher (nur serverseitig im Redaktions-Upload).
+export const SUPABASE_URL = "https://saylxrzxtezadobaouev.supabase.co";
 
-export const SUPABASE_ANON_KEY =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
-  "sb_publishable_7F8Fn2nLoc8Lk5cLSJ8u3w_P7F6WzOu";
+export const SUPABASE_ANON_KEY = "sb_publishable_7F8Fn2nLoc8Lk5cLSJ8u3w_P7F6WzOu";

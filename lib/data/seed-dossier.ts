@@ -185,5 +185,6 @@ export const seedDossier: Dossier = {
   // all four formats across days (the seed carries press, cheers and bullets).
   format: null,
   video: null,
+  image: null,
   created_at: "2026-05-25T05:00:00Z",
 };

@@ -6,9 +6,8 @@ import { getLocalSession, type LocalSession } from "@/lib/local/session";
 import { getLocalState, type LocalState } from "@/lib/local/state";
 import { buildPfadStops, type PfadStop } from "@/lib/data/pfad-stops";
 import { getPartyById } from "@/lib/spektrum/parties";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
-  Clock,
   Check,
   Lock,
   Play,
@@ -19,16 +18,11 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-// Clean iOS-Homescreen — minimal, scrollbar:
-// 1. Datum
-// 2. Heute-Hero (konkretes Briefing-Thema, kein "Tages-Entscheidung"-Wording)
-// 3. Redaktion-Banner (Clock + Countdown)
-// 4. Versetzter, scrollbarer Pfad (Vergangenheit oben → Zukunft unten)
-//    inkl. Events (Wahlkampf, Triell, Wahl) zwischen den Tagen
-// 5. Gast-CTA wenn anonym
-
-const WEEKDAYS = ["SONNTAG", "MONTAG", "DIENSTAG", "MITTWOCH", "DONNERSTAG", "FREITAG", "SAMSTAG"];
-const MONTHS = ["JAN", "FEB", "MÄR", "APR", "MAI", "JUN", "JUL", "AUG", "SEP", "OKT", "NOV", "DEZ"];
+// Clean iOS-Homescreen — minimal, scrollbar (Datum liegt jetzt im Balken/TopNav):
+// 1. Heute-Hero (konkretes Briefing-Thema) — gespielt → grüner Fertig-Zustand
+//    statt "nochmal", inkl. Hinweis auf die nächste Ausgabe
+// 2. Versetzter, scrollbarer Pfad (heute → Zukunft) inkl. Events
+// 3. Gast-CTA wenn anonym
 
 export default function HomePage() {
   const [session, setSession] = useState<LocalSession | null>(null);
@@ -65,38 +59,21 @@ export default function HomePage() {
   const playedToday = !!state.last_briefing_date;
   const party = state.party_id ? getPartyById(state.party_id) : null;
 
-  const dateLine = `${WEEKDAYS[now.getDay()]}, ${now.getDate()}. ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
-
-  // Redaktion-Countdown: nächste Ausgabe 15:00 Uhr (nach Schulschluss)
-  const next = new Date(now);
-  next.setHours(15, 0, 0, 0);
-  if (next.getTime() <= now.getTime()) next.setDate(next.getDate() + 1);
-  const tDiff = next.getTime() - now.getTime();
-  const tHours = Math.floor(tDiff / (1000 * 60 * 60));
-  const tMins = Math.floor((tDiff % (1000 * 60 * 60)) / (1000 * 60));
-  const editionLabel = next.getDate() === now.getDate() ? "Heute 15:00 Uhr" : "Morgen 15:00 Uhr";
+  // Nächste Ausgabe 15:00 Uhr (nach Schulschluss). Nur noch als dezenter
+  // Hinweis im Fertig-Zustand — kein eigener Banner/Countdown mehr.
+  const nextEdition = new Date(now);
+  nextEdition.setHours(15, 0, 0, 0);
+  if (nextEdition.getTime() <= now.getTime()) nextEdition.setDate(nextEdition.getDate() + 1);
+  const editionLabel = nextEdition.getDate() === now.getDate() ? "heute 15:00 Uhr" : "morgen 15:00 Uhr";
 
   // Past/Future-Anker: User soll bei Aufruf auf Heute landen, kann hoch+runter
   return (
     <main className="flex flex-1 flex-col max-w-2xl mx-auto w-full px-5 pt-3 pb-12 gap-4">
-      {/* Datum */}
-      <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground tabular-nums">
-        {dateLine}
-      </span>
-
       {/* Heute-Hero (konkretes Briefing-Thema) */}
       <section className="glass-card rounded-3xl p-5 sm:p-6 flex flex-col gap-4">
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.22em]">
-            Heute
-          </span>
-          {playedToday && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-success/10 text-success border border-success/30 px-2.5 py-0.5 text-xs font-semibold">
-              <Check className="size-3" strokeWidth={3} />
-              gespielt
-            </span>
-          )}
-        </div>
+        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.22em]">
+          Heute
+        </span>
         <div className="flex flex-col gap-1.5">
           <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {todayStop.kicker}
@@ -105,34 +82,34 @@ export default function HomePage() {
             {todayStop.headline}
           </h1>
         </div>
-        <Link
-          href="/heute"
-          className={
-            buttonVariants({ size: "lg" }) +
-            " h-12 group self-stretch inline-flex items-center justify-center"
-          }
-        >
-          <Play className="size-4 mr-2" fill="currentColor" />
-          {playedToday ? "Briefing nochmal" : "Jetzt spielen"}
-          <ArrowRight className="size-4 ml-2 group-hover:translate-x-0.5 transition-transform" />
-        </Link>
+        {playedToday ? (
+          // Gespielt: grüner Fertig-Zustand mit Haken statt "nochmal".
+          // Der Countdown wandert als dezenter Hinweis hierher.
+          <div className="rounded-2xl bg-success/10 border border-success/30 px-4 py-3 flex items-center gap-3">
+            <span className="inline-flex items-center justify-center size-9 rounded-full bg-success text-white shrink-0">
+              <Check className="size-5" strokeWidth={3} />
+            </span>
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-semibold text-success">Heute gespielt</span>
+              <span className="text-xs text-muted-foreground">
+                Nächste Ausgabe {editionLabel}
+              </span>
+            </div>
+          </div>
+        ) : (
+          <Link
+            href="/heute"
+            className={
+              buttonVariants({ size: "lg" }) +
+              " h-12 group self-stretch inline-flex items-center justify-center"
+            }
+          >
+            <Play className="size-4 mr-2" fill="currentColor" />
+            Jetzt spielen
+            <ArrowRight className="size-4 ml-2 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+        )}
       </section>
-
-      {/* Redaktion-Banner */}
-      <div className="glass-card rounded-2xl px-4 py-3 flex items-center gap-3">
-        <span className="inline-flex items-center justify-center size-10 rounded-xl bg-foreground/5 shrink-0">
-          <Clock className="size-5 text-foreground" />
-        </span>
-        <div className="flex flex-col flex-1 min-w-0 leading-tight">
-          <span className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
-            Redaktion · Nächste Ausgabe
-          </span>
-          <span className="text-sm font-semibold text-foreground">{editionLabel}</span>
-        </div>
-        <span className="inline-flex items-center rounded-full bg-foreground/5 px-3 py-1 text-xs font-mono tabular-nums text-foreground shrink-0">
-          {tHours}h {tMins}m
-        </span>
-      </div>
 
       {/* Versetzter, scrollbarer Pfad */}
       <section className="flex flex-col mt-2">
@@ -151,7 +128,7 @@ export default function HomePage() {
             </span>
           )}
         </header>
-        <ZigzagPath stops={stops} />
+        <ZigzagPath stops={stops} playedToday={playedToday} />
       </section>
 
       {/* Gast-CTA */}
@@ -181,7 +158,7 @@ export default function HomePage() {
 /** Duolingo-Style-Pfad: grosse Knoten in zentrierter Mittellinie, leicht
  *  zigzag versetzt. Knoten skalieren responsiv (Mobile 64–80 px, Desktop
  *  bis 112 px). Label klein UNTER dem Knoten. Auto-Scroll zu Heute. */
-function ZigzagPath({ stops }: { stops: PfadStop[] }) {
+function ZigzagPath({ stops, playedToday }: { stops: PfadStop[]; playedToday: boolean }) {
   // Beim Mount: heutigen Knoten exakt in die Viewport-Mitte scrollen.
   // Plus: kleiner "Heute"-Button blendet sich ein, wenn der User wegscrollt.
   const [showJump, setShowJump] = useState(false);
@@ -242,6 +219,7 @@ function ZigzagPath({ stops }: { stops: PfadStop[] }) {
             key={stop.date + i}
             stop={stop}
             offsetClass={offsets[i % offsets.length]}
+            playedToday={playedToday}
           />
         ))}
       </ol>
@@ -263,13 +241,17 @@ function ZigzagPath({ stops }: { stops: PfadStop[] }) {
 function PfadNode({
   stop,
   offsetClass,
+  playedToday,
 }: {
   stop: PfadStop;
   offsetClass: string;
+  playedToday: boolean;
 }) {
-  const isDone = stop.status === "done";
-  const isToday = stop.status === "today";
   const isEvent = !!stop.eventTag;
+  // Heute-Knoten gilt nach gespieltem Briefing als erledigt: grün mit Haken
+  // statt goldenem Play. Der Anker (id="pfad-today") bleibt am selben Knoten.
+  const isToday = stop.status === "today";
+  const isDone = stop.status === "done" || (isToday && playedToday);
   const isLocked = stop.status === "locked" && !isEvent;
 
   // Duolingo-mässig grosse Knoten. Mobile 64 px (done/locked) bis 80 px
@@ -288,6 +270,8 @@ function PfadNode({
   let markerIcon: React.ReactNode = <Lock className={iconSize} />;
   if (isDone) {
     markerBg = "bg-success text-white shadow-[0_6px_0_-2px] shadow-success/40";
+    // Der erledigte Heute-Knoten ist gross — Haken mitskalieren.
+    if (isToday) iconSize = "size-9 sm:size-12";
     markerIcon = <Check className={iconSize} strokeWidth={3} />;
   } else if (isToday) {
     markerBg = "bg-gold text-gold-ink shadow-[0_8px_0_-2px] shadow-yellow-700/40";

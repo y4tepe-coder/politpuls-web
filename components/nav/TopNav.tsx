@@ -16,10 +16,23 @@ const TABS = [
   { href: "/profil", label: "Profil", icon: User, prefix: ["/profil"] },
 ] as const;
 
+// Kompaktes Datum für den Balken (nur Startseite). Kurzer Wochentag, damit es
+// neben dem Logo nicht mit den Tabs kollidiert.
+const WEEKDAYS_SHORT = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+const MONTHS = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+
 export function TopNav() {
   const { state } = useLocalSession(true);
   const streak = state?.current_streak ?? 0;
   const pathname = usePathname() ?? "";
+
+  // Datum erst clientseitig setzen (vermeidet Hydration-Mismatch durch TZ).
+  const [dateLine, setDateLine] = useState<string | null>(null);
+  useEffect(() => {
+    const d = new Date();
+    setDateLine(`${WEEKDAYS_SHORT[d.getDay()]}, ${d.getDate()}. ${MONTHS[d.getMonth()]}`);
+  }, []);
+  const onHome = pathname === "/home";
 
   // Hide-on-scroll-down, show-on-scroll-up. Threshold 80 px, damit kleine
   // Touch-Bounces auf iOS die Nav nicht flackern lassen.
@@ -52,9 +65,16 @@ export function TopNav() {
       className={`sticky top-0 z-20 w-full bg-background/30 backdrop-blur-xl transition-transform duration-300 ${hidden ? "-translate-y-full" : "translate-y-0"}`}
       style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
-      <div className="mx-auto max-w-2xl flex items-center justify-between px-5 h-14">
-        <Logo size="md" textOnly href="/home" />
-        <nav className="flex items-center gap-1">
+      <div className="mx-auto max-w-2xl flex items-center justify-between gap-3 px-5 h-14">
+        <div className="flex items-baseline gap-2.5 min-w-0">
+          <Logo size="md" textOnly href="/home" />
+          {onHome && dateLine && (
+            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground tabular-nums truncate">
+              {dateLine}
+            </span>
+          )}
+        </div>
+        <nav className="flex items-center gap-1 shrink-0">
           {streak > 0 && (
             <span
               className="inline-flex items-center gap-1 rounded-full bg-pp-red/12 text-pp-red px-2.5 py-1 text-xs font-semibold mr-1"

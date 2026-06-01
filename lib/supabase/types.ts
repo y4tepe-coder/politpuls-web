@@ -70,7 +70,7 @@ export type DossierConsequence = {
 // this per day so each day differs and the reporter chat is not shown daily.
 export type DossierFormat = "decision" | "reporter-chat" | "koalition" | "plakat";
 
-// Nullable, embeddable clip slot — prepared but unused for now.
+// Nullable, embeddable clip slot — a kurzer "Short" zum Thema (YouTube/Reel-Embed).
 export type DossierVideo = {
   title: string;
   url: string | null;
@@ -79,6 +79,16 @@ export type DossierVideo = {
   blurb?: string;
   runtime?: string;
   time?: string;
+};
+
+// Nullable image slot — ein "Zeitungsartikel"-Bild zum Thema (Vorschaubild einer
+// Quelle / themenbezogenes Pressefoto). Spiegelt DossierVideo: wird nur gezeigt,
+// wenn die Redaktion eine URL liefert.
+export type DossierImage = {
+  url: string;
+  caption?: string; // kurze Bildunterschrift, max ~12 Wörter
+  source?: string; // Bildnachweis / Outlet
+  alt?: string;
 };
 
 export type Dossier = {
@@ -105,10 +115,12 @@ export type Dossier = {
   published_at: string | null;
   topic_tags: string[];
   phase: "daily" | "wahlkampf";
-  // Modular daily format + (future) embeddable video. Nullable so existing
-  // rows + the hand-written seed keep working; resolveFormat() fills the gap.
+  // Modular daily format + embeddable video + Artikel-Bild. Alle nullable, damit
+  // bestehende Rows + der hand-geschriebene Seed weiter funktionieren;
+  // resolveFormat() füllt format, image/video werden nur bei URL angezeigt.
   format: DossierFormat | null;
   video: DossierVideo | null;
+  image: DossierImage | null;
   created_at: string;
 };
 

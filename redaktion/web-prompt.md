@@ -97,10 +97,30 @@ Erzeuge das Dossier für HEUTE: **{{TODAY}}** (Berliner Zeit).
     { "title": "Echter Artikel-Titel", "url": "https://echte-url-aus-websearch", "outlet": "z.B. ZDFheute, Tagesschau, Bundestag" }
   ],  // 2–4 Einträge, alle URLs müssen aus echten WebSearch-Treffern kommen
 
+  "image": {
+    // Ein themenbezogenes Bild für die Bild-Karte im Deck. NUR setzen, wenn du
+    // eine echte, direkt einbettbare Bild-URL hast (z.B. das og:image eines der
+    // zitierten Quell-Artikel). Im Zweifel "image": null.
+    "url": "https://echte-bild-url.jpg",
+    "caption": "Kurze Bildunterschrift, max 12 Wörter",
+    "source": "Bildnachweis / Outlet"
+  },  // ODER  "image": null
+
+  "video": {
+    // Ein kurzer, themenbezogener Erklär-/News-Clip ("Short") für die Short-Karte.
+    // NUR setzen, wenn du einen echten, relevanten YouTube-Clip aus WebSearch hast.
+    // url MUSS die Embed-Form sein: https://www.youtube.com/embed/<VIDEO_ID>
+    // Im Zweifel "video": null.
+    "title": "Titel des Clips",
+    "url": "https://www.youtube.com/embed/VIDEO_ID",
+    "channel": "z.B. ZDFheute Nachrichten",
+    "blurb": "Ein Satz, worum es im Clip geht"
+  },  // ODER  "video": null
+
   "topic_tags": ["thema1", "thema2"],  // 1–4 Tags, lower-kebab-case
   "phase": "daily",                      // fix
   "model_version": "claude-opus-4-7",   // fix
-  "prompt_version": "web-v3-sources"     // fix
+  "prompt_version": "web-v4-media"       // fix
 }
 ```
 
@@ -126,6 +146,16 @@ Erzeuge das Dossier für HEUTE: **{{TODAY}}** (Berliner Zeit).
 
 - **`tone` pro Choice einmalig:** A/B/C/D = jeweils anderer tone aus
   `security|climate|social|growth`.
+
+- **Deck-Format (wichtig):** Die App zeigt das Dossier als Swipe-Deck — eine Info
+  pro Karte. Daraus folgt:
+  - Der **erste `body`-Absatz** muss für sich allein als knappe Lage funktionieren
+    (2–3 Sätze), denn nur er wird auf der Lage-Karte gezeigt.
+  - Es werden nur **`choices` A und B** angezeigt. Mach A und B zum klarsten
+    Gegensatz-Paar (echtes Pro/Contra). C und D weiter ausfüllen (für Statistik),
+    aber nicht entscheidungstragend.
+  - `image` und `video` sind **optional** — lieber `null` als eine geratene/kaputte
+    URL. Eine fehlende Karte ist besser als eine, die nicht lädt.
 
 ## Output
 

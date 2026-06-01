@@ -17,34 +17,46 @@ import {
   ExternalLink,
 } from "lucide-react";
 
-// Swipe-Deck statt langem Scroll-Artikel: eine Info pro Karte, durchwischbar.
-// Reihenfolge: Lage → (Bild) → (Short) → Zahlen → Entscheidung → Folge.
+// Swipe-Deck statt langem Scroll-Artikel: man blättert (rechts→links wischen
+// ODER "Weiter" tippen) in 3–5 Schritten durch, statt zu scrollen. Der VOLLE
+// Artikel-Text bleibt erhalten — nur auf Schritte verteilt, nichts gekürzt.
+// Reihenfolge: Lage → Hintergrund → (Bild) → (Short) → Zahlen → Entscheidung → Folge.
 // Bild/Short erscheinen nur, wenn die Redaktion sie liefert. Die Entscheidung
 // ist gegated (man muss A/B wählen, um zur Folge zu kommen). Partei-Auswahl und
 // politischer Kompass sind hier RAUS — die leben im Spektrum-Tab.
 
-type StepKind = "lage" | "image" | "short" | "facts" | "decision" | "outcome";
+type StepKind =
+  | "lage"
+  | "hintergrund"
+  | "image"
+  | "short"
+  | "facts"
+  | "decision"
+  | "outcome";
 
-function bodyLede(body: Dossier["body"]): string | null {
-  if (!Array.isArray(body)) return null;
-  const first = body.find(
-    (p): p is string => typeof p === "string" && p.trim().length > 0,
-  );
-  return first ?? null;
+function bodyParagraphs(body: Dossier["body"]): string[] {
+  return Array.isArray(body)
+    ? body.filter((p): p is string => typeof p === "string" && p.trim().length > 0)
+    : [];
 }
 
 export function BriefingDeck({ dossier }: { dossier: Dossier }) {
   const { chosen, consequence, choose, submitting } = useDecision(dossier);
 
-  // Welche Karten gibt es heute? Bild/Short nur bei vorhandener URL.
+  const body = useMemo(() => bodyParagraphs(dossier.body), [dossier]);
+  const glossar = useMemo(() => Object.entries(dossier.glossar ?? {}), [dossier]);
+
+  // Welche Karten gibt es heute? Hintergrund nur, wenn es mehr als den ersten
+  // Absatz oder ein Glossar gibt; Bild/Short nur bei vorhandener URL.
   const preSteps = useMemo<StepKind[]>(() => {
     const s: StepKind[] = ["lage"];
+    if (body.length > 1 || glossar.length > 0) s.push("hintergrund");
     if (dossier.image?.url) s.push("image");
     if (dossier.video?.url) s.push("short");
     if (dossier.facts.length > 0) s.push("facts");
     s.push("decision");
     return s;
-  }, [dossier]);
+  }, [dossier, body, glossar]);
 
   // Outcome wird erst nach der Wahl Teil des Decks.
   const steps: StepKind[] = chosen ? [...preSteps, "outcome"] : preSteps;
@@ -117,7 +129,10 @@ export function BriefingDeck({ dossier }: { dossier: Dossier }) {
             onDragEnd={onDragEnd}
             className="absolute inset-0 flex flex-col touch-pan-y"
           >
-            {current === "lage" && <LageCard dossier={dossier} />}
+            {current === "lage" && <LageCard dossier={dossier} lede={body[0] ?? null} />}
+            {current === "hintergrund" && (
+              <HintergrundCard paragraphs={body.slice(1)} glossar={glossar} />
+            )}
             {current === "image" && dossier.image?.url && (
               <ImageCard image={dossier.image} />
             )}
@@ -190,8 +205,7 @@ function CardShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function LageCard({ dossier }: { dossier: Dossier }) {
-  const lede = bodyLede(dossier.body);
+function LageCard({ dossier, lede }: { dossier: Dossier; lede: string | null }) {
   return (
     <CardShell>
       <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-semibold uppercase tracking-wide">
@@ -205,7 +219,47 @@ function LageCard({ dossier }: { dossier: Dossier }) {
         <p className="text-lg text-foreground/85 leading-relaxed">{dossier.deck}</p>
       )}
       {lede && (
-        <p className="text-[15px] text-foreground/70 leading-relaxed">{lede}</p>
+        <p className="text-[15px] text-foreground/75 leading-relaxed">{lede}</p>
+      )}
+    </CardShell>
+  );
+}
+
+// Hintergrund-Karte: der restliche Artikel-Text (volle Absätze, nichts gekürzt)
+// plus "Kurz erklärt"-Glossar — der Lese-Mehrwert pro Tag.
+function HintergrundCard({
+  paragraphs,
+  glossar,
+}: {
+  paragraphs: string[];
+  glossar: [string, string][];
+}) {
+  return (
+    <CardShell>
+      <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.18em]">
+        Hintergrund
+      </span>
+      {paragraphs.length > 0 && (
+        <div className="flex flex-col gap-3 text-[15px] text-foreground/85 leading-relaxed">
+          {paragraphs.map((p, i) => (
+            <p key={i}>{p}</p>
+          ))}
+        </div>
+      )}
+      {glossar.length > 0 && (
+        <div className="flex flex-col gap-2 mt-1 rounded-2xl border border-foreground/10 p-4">
+          <h3 className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.18em]">
+            Kurz erklärt
+          </h3>
+          <dl className="flex flex-col gap-2.5">
+            {glossar.map(([term, def]) => (
+              <div key={term} className="flex flex-col gap-0.5">
+                <dt className="font-semibold text-sm">{term}</dt>
+                <dd className="text-sm text-foreground/75 leading-snug">{def}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
       )}
     </CardShell>
   );

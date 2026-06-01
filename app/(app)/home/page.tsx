@@ -67,14 +67,14 @@ export default function HomePage() {
 
   const dateLine = `${WEEKDAYS[now.getDay()]}, ${now.getDate()}. ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
 
-  // Redaktion-Countdown: nächste Ausgabe 16:00 Uhr
+  // Redaktion-Countdown: nächste Ausgabe 15:00 Uhr (nach Schulschluss)
   const next = new Date(now);
-  next.setHours(16, 0, 0, 0);
+  next.setHours(15, 0, 0, 0);
   if (next.getTime() <= now.getTime()) next.setDate(next.getDate() + 1);
   const tDiff = next.getTime() - now.getTime();
   const tHours = Math.floor(tDiff / (1000 * 60 * 60));
   const tMins = Math.floor((tDiff % (1000 * 60 * 60)) / (1000 * 60));
-  const editionLabel = next.getDate() === now.getDate() ? "Heute 16:00 Uhr" : "Morgen 16:00 Uhr";
+  const editionLabel = next.getDate() === now.getDate() ? "Heute 15:00 Uhr" : "Morgen 15:00 Uhr";
 
   // Past/Future-Anker: User soll bei Aufruf auf Heute landen, kann hoch+runter
   return (

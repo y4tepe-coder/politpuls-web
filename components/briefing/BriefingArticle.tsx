@@ -7,7 +7,6 @@ import type {
   ChoiceId,
   Dossier,
   DossierChoice,
-  DossierFormat,
 } from "@/lib/supabase/types";
 import { resolveFormat } from "@/lib/dossier/format";
 import { useDecision } from "@/lib/briefing/useDecision";
@@ -18,7 +17,6 @@ import { Button } from "@/components/ui/button";
 import {
   Newspaper,
   ArrowRight,
-  Clock,
   CheckCircle2,
   Frown,
   TrendingUp,
@@ -36,28 +34,10 @@ import {
 // dossier data and the shared useDecision() hook — modular by design so new
 // formats (and the larger simulator) can plug in without a rewrite.
 
-const FORMAT_LABEL: Record<DossierFormat, string> = {
-  decision: "Tages-Entscheidung",
-  "reporter-chat": "Reporter-Interview",
-  koalition: "Koalitions-Verhandlung",
-  plakat: "Wahlkampf-Plakat",
-};
-
 function bodyParagraphs(body: Dossier["body"]): string[] {
   return Array.isArray(body)
     ? body.filter((p): p is string => typeof p === "string" && p.trim().length > 0)
     : [];
-}
-
-function readingMinutes(d: Dossier): number {
-  const parts = [
-    d.deck ?? "",
-    ...bodyParagraphs(d.body),
-    ...d.facts.map((f) => `${f.value} ${f.label}`),
-    ...d.choices.flatMap((c) => [c.label, ...c.bullets]),
-  ];
-  const words = parts.join(" ").trim().split(/\s+/).filter(Boolean).length;
-  return Math.max(3, Math.min(6, Math.round(words / 180) || 3));
 }
 
 export function BriefingArticle({ dossier }: { dossier: Dossier }) {
@@ -73,9 +53,10 @@ export function BriefingArticle({ dossier }: { dossier: Dossier }) {
 
   // reporter-chat / koalition / plakat add one beat before the outcome.
   const hasChat = format === "reporter-chat" && !!chosen?.press_question;
-  const needsFollowUp =
-    (hasChat || format === "koalition" || format === "plakat") &&
-    !!chosen;
+  // Phase 1: Format-Beats (Reporter-Chat, Koalition, Plakat) sind im täglichen
+  // Loop deaktiviert — sie wandern in den Wahlkampf (Phase 5). Der Tag endet
+  // direkt nach der Entscheidung mit der Konsequenz.
+  const needsFollowUp: boolean = false;
   const [followUpDone, setFollowUpDone] = useState(false);
   const showOutcome = !!chosen && consequence && (!needsFollowUp || followUpDone);
 
@@ -90,7 +71,6 @@ export function BriefingArticle({ dossier }: { dossier: Dossier }) {
     target?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [chosen, showOutcome]);
 
-  const minutes = readingMinutes(dossier);
   const body = bodyParagraphs(dossier.body);
   const glossar = Object.entries(dossier.glossar ?? {});
 
@@ -103,13 +83,6 @@ export function BriefingArticle({ dossier }: { dossier: Dossier }) {
             <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-semibold uppercase tracking-wide">
               <Newspaper className="size-3.5" />
               {dossier.kicker ?? "Tagesbriefing"}
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-foreground/5 text-foreground/70 px-3 py-1 text-xs font-medium">
-              {FORMAT_LABEL[format]}
-            </span>
-            <span className="inline-flex items-center gap-1 text-foreground/55 text-xs font-medium">
-              <Clock className="size-3.5" />
-              {minutes} Min.
             </span>
           </div>
 
@@ -137,10 +110,11 @@ export function BriefingArticle({ dossier }: { dossier: Dossier }) {
           </figure>
         )}
 
-        {/* Optional long-form body paragraphs */}
+        {/* Phase 1: nur der kurze Aufschlag (deck + erster Absatz) statt
+            langem Briefing — die Lage in wenigen Sätzen. */}
         {body.length > 0 && (
           <div className="flex flex-col gap-4 text-[17px] leading-relaxed text-foreground/90">
-            {body.map((p, i) => (
+            {body.slice(0, 1).map((p, i) => (
               <p key={i}>{p}</p>
             ))}
           </div>
@@ -292,7 +266,7 @@ function DecisionSection({
 
       {!chosen ? (
         <ul className="flex flex-col gap-2.5">
-          {dossier.choices.map((choice) => (
+          {dossier.choices.slice(0, 2).map((choice) => (
             <li key={choice.id}>
               <button
                 type="button"
@@ -642,7 +616,7 @@ function OutcomeSection({
             Konkrete Auswirkungen
           </h3>
           <ul className="flex flex-col gap-2">
-            {deltas.map((d, i) => (
+            {deltas.slice(0, 3).map((d, i) => (
               <li
                 key={i}
                 className="glass-card flex items-center gap-3 rounded-xl px-4 py-3"

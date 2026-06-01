@@ -15,11 +15,11 @@ import { getPartyById } from "@/lib/spektrum/parties";
 import { ALL_POSITIONS } from "@/lib/data/positions-catalogue";
 import { getLocalState, type LocalState } from "@/lib/local/state";
 import { buttonVariants } from "@/components/ui/button";
-import { Lock, Sparkles, Compass } from "lucide-react";
+import { Sparkles, Compass } from "lucide-react";
 
-// Spektrum-Page — wahl-O-mat-mäßiges Ergebnis nach 14 Tagesmissionen.
-// Vorher: Lock-Screen mit Counter.
-const MIN_DECISIONS = 14;
+// Spektrum-Page — Ergebnis ab dem ersten gespielten Briefing.
+// Phase 1: 14er-Sperre entfernt; nur bei 0 Entscheidungen ein kurzer Hinweis.
+const MIN_DECISIONS = 1;
 
 export default function SpektrumPage() {
   const [state, setState] = useState<LocalState | null>(null);
@@ -38,8 +38,6 @@ export default function SpektrumPage() {
   const werteCheckDone = positionsAnswered >= ALL_POSITIONS.length;
 
   if (isLocked) {
-    const remaining = MIN_DECISIONS - decisionsCount;
-    const pct = Math.round((decisionsCount / MIN_DECISIONS) * 100);
     const indicators = aggregateIndicators(state.decisions);
     return (
       <main className="flex flex-1 flex-col max-w-2xl mx-auto w-full px-5 py-8 gap-7">
@@ -51,9 +49,8 @@ export default function SpektrumPage() {
             Deine Bilanz als Politiker:in.
           </h1>
           <p className="text-on-bg text-sm text-foreground/75 leading-relaxed mt-1">
-            Klassische Indikatoren ueber alle Tagesentscheidungen.
-            Das volle Spektrum mit Parteivergleich wird nach{" "}
-            {MIN_DECISIONS} Briefings freigeschaltet.
+            Sobald du dein erstes Briefing gespielt hast, erscheint hier dein
+            volles Spektrum mit Parteivergleich.
           </p>
         </header>
 
@@ -65,45 +62,17 @@ export default function SpektrumPage() {
           <IndicatorsCard indicators={indicators} decisions={state.decisions} />
         </section>
 
-        <section className="glass-card rounded-3xl p-6 flex flex-col gap-5">
-          <div className="flex items-center gap-4">
-            <span className="inline-flex items-center justify-center size-12 rounded-2xl bg-ink text-background shrink-0">
-              <Lock className="size-5" />
-            </span>
-            <div className="flex flex-col">
-              <span className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                Briefings gespielt
-              </span>
-              <span className="font-serif text-2xl font-semibold leading-tight">
-                {decisionsCount} von {MIN_DECISIONS}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <div className="h-2 rounded-full bg-foreground/8 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gold transition-[width] duration-500"
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-            <span className="text-xs text-muted-foreground tabular-nums">
-              {remaining} {remaining === 1 ? "Briefing" : "Briefings"} bis zur
-              Freischaltung
-            </span>
-          </div>
-
+        <section className="glass-card rounded-3xl p-6 flex flex-col gap-4">
           <p className="text-sm text-muted-foreground leading-relaxed">
             Dein politisches Spektrum wird aus deinen Tagesentscheidungen
-            berechnet — genau wie beim Wahl-O-Mat braucht es ein paar
-            Datenpunkte, damit das Ergebnis aussagekräftig wird.
+            berechnet. Spiel dein erstes Briefing — danach siehst du sofort, wo
+            du stehst.
           </p>
-
           <Link
             href="/heute"
-            className={buttonVariants({ size: "lg" }) + " h-12 mt-1"}
+            className={buttonVariants({ size: "lg" }) + " h-12"}
           >
-            Heutiges Briefing spielen
+            Erstes Briefing spielen
           </Link>
         </section>
 

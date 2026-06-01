@@ -12,7 +12,7 @@ export function AppBackground() {
       <picture className="app-bg-day absolute inset-0">
         <source
           media="(min-width: 1024px)"
-          srcSet="/hintergrund/reichstag-hell-quer.png"
+          srcSet="/hintergrund/bundestag-hell-quer.png"
         />
         <img
           src="/hintergrund/reichstag-hell-hochkant.png"
@@ -24,7 +24,7 @@ export function AppBackground() {
       <picture className="app-bg-night absolute inset-0">
         <source
           media="(min-width: 1024px)"
-          srcSet="/hintergrund/reichstag-dunkel-quer.png"
+          srcSet="/hintergrund/bundestag-dunkel-quer.png"
         />
         <img
           src="/hintergrund/reichstag-dunkel-hochkant.png"

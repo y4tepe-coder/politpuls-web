@@ -9,11 +9,9 @@ import { PixelTrail } from "@/components/ui/pixel-trail";
 import { useScreenSize } from "@/hooks/use-screen-size";
 import { getLocalSession, startGuestSession } from "@/lib/local/session";
 
-const HERO_BG_URL = "/hintergrund/reichstag-hell-hochkant.png";
-
-// Landing — vollflächiges Reichstag-Bild perfekt zentriert (wie früher),
-// weißer "Politpuls"-Schriftzug groß auf dem Bild, Pixel-Trail mit Gooey,
-// drei iOS-Style CTAs unten.
+// Landing — der globale <AppBackground/> liefert das Bild (fixed, full-bleed,
+// Tag/Nacht, deckt die Safe-Area ab → keine Ränder am Handy). Hier nur der
+// weiße "Politpuls"-Schriftzug, Pixel-Trail mit Gooey und drei iOS-Style CTAs.
 export default function LandingPage() {
   const router = useRouter();
   const screenSize = useScreenSize();
@@ -47,17 +45,7 @@ export default function LandingPage() {
         paddingBottom: "env(safe-area-inset-bottom)",
       }}
     >
-      {/* Responsive Reichstag: Portrait fuer Mobile, Landscape ab 1024 px.
-          Browser laedt nur das passende Bild via <picture>. */}
-      <picture className="block absolute inset-0">
-        <source media="(min-width: 1024px)" srcSet="/hintergrund/reichstag-hell-quer.png" />
-        <img
-          src={HERO_BG_URL}
-          alt=""
-          aria-hidden
-          className="w-full h-full object-cover object-center"
-        />
-      </picture>
+      {/* Hintergrund: globaler <AppBackground/> (full-bleed, Tag/Nacht, Safe-Area). */}
 
       {/* Dunkler Wash unten fuer CTA-Lesbarkeit. Im Light-Mode deutlich
           schwaecher, damit das helle Tagesbild nicht unten verdunkelt

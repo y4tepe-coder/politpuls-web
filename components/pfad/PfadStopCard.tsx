@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Check, Lock, Play } from "lucide-react";
+import { Check, Lock, Play, X } from "lucide-react";
 import type { PfadStop } from "@/lib/data/pfad-stops";
 
 type Props = {
@@ -11,7 +11,9 @@ type Props = {
 // on a left/right offset, content card next to it. Lines between stops are
 // drawn by the parent (PfadTrail).
 export function PfadStopCard({ stop, side }: Props) {
-  const isLocked = stop.status === "locked";
+  // Locked (Zukunft) und missed (vergangen, nicht gespielt) sind beide
+  // nicht anklickbar — kein Ziel zum Öffnen.
+  const isStatic = stop.status === "locked" || stop.status === "missed";
 
   const Inner = (
     <div className="flex items-center gap-4 w-full">
@@ -31,6 +33,11 @@ export function PfadStopCard({ stop, side }: Props) {
               Gespielt
             </span>
           )}
+          {stop.status === "missed" && (
+            <span className="rounded-full bg-foreground/10 text-muted-foreground px-2 py-0.5 text-xs font-semibold uppercase tracking-wide">
+              Verpasst
+            </span>
+          )}
         </div>
         <h3 className="font-serif text-base sm:text-lg font-semibold leading-snug text-foreground truncate">
           {stop.headline}
@@ -48,16 +55,17 @@ export function PfadStopCard({ stop, side }: Props) {
     today:
       "border-foreground shadow-[0_12px_40px_-12px_rgba(0,0,0,0.4)] ring-2 ring-accent/60",
     done: "border-success/30",
+    missed: "border-border opacity-60",
     locked: "border-border cursor-not-allowed opacity-70",
   } as const;
 
   const offset =
     side === "left" ? "self-start sm:mr-12" : side === "right" ? "self-end sm:ml-12" : "self-center";
 
-  if (isLocked) {
+  if (isStatic) {
     return (
       <div className={`${offset} w-full sm:max-w-md`}>
-        <div className={`${containerCommon} ${containerByStatus.locked}`}>
+        <div className={`${containerCommon} ${containerByStatus[stop.status]}`}>
           {Inner}
         </div>
       </div>
@@ -89,6 +97,13 @@ function StopMarker({ status }: { status: PfadStop["status"] }) {
       <span className="relative inline-flex items-center justify-center size-16 rounded-full bg-foreground text-background shadow-xl shrink-0 ring-4 ring-accent/40">
         <span className="absolute inset-0 rounded-full bg-accent/30 animate-ping" />
         <Play className="size-6 ml-0.5 relative" fill="currentColor" />
+      </span>
+    );
+  }
+  if (status === "missed") {
+    return (
+      <span className="inline-flex items-center justify-center size-14 rounded-full bg-muted text-muted-foreground/60 shrink-0 ring-4 ring-border">
+        <X className="size-5" strokeWidth={2.5} />
       </span>
     );
   }

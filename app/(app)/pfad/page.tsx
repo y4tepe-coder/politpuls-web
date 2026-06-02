@@ -1,11 +1,26 @@
-import { buildPfadStops } from "@/lib/data/pfad-stops";
+"use client";
+
+import { useEffect, useState } from "react";
+import { buildPfadStops, type PfadStop } from "@/lib/data/pfad-stops";
 import { PfadStopCard } from "@/components/pfad/PfadStopCard";
+import { getLocalState } from "@/lib/local/state";
 
 // 7-day snaking path, iOS / Duolingo style. Each day is a big circular stop
 // connected to the next by a dotted vertical line. Today pulses; past days
-// are green-checked; future days are locked and dim.
+// are green-checked (gespielt) oder gedämpft (verpasst); future days are locked.
 export default function PfadPage() {
-  const stops = buildPfadStops();
+  // Spiel-Historie kommt aus dem Browser-State → Client-Komponente.
+  const [stops, setStops] = useState<PfadStop[]>([]);
+
+  useEffect(() => {
+    const state = getLocalState();
+    const playedDates = new Set<string>(
+      state.decisions.map((d) => d.date.slice(0, 10)),
+    );
+    if (state.last_briefing_date) playedDates.add(state.last_briefing_date);
+    setStops(buildPfadStops(new Date(), undefined, playedDates));
+  }, []);
+
   const todayIndex = stops.findIndex((s) => s.status === "today");
 
   // Alternate left / right so the path snakes. Today stays centered for emphasis.

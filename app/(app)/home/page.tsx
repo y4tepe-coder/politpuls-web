@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getLocalSession, type LocalSession } from "@/lib/local/session";
 import { getLocalState, type LocalState } from "@/lib/local/state";
 import { buildPfadStops, type PfadStop } from "@/lib/data/pfad-stops";
@@ -119,7 +119,13 @@ export default function HomePage() {
             </span>
           )}
         </header>
-        <ZigzagPath stops={stops} playedToday={playedToday} />
+        {/* recenterKey = heutige Headline: ändert sich, sobald das echte
+            Dossier nachgeladen ist → Pfad scrollt erneut sauber auf heute. */}
+        <ZigzagPath
+          stops={stops}
+          playedToday={playedToday}
+          recenterKey={todayStop.headline}
+        />
       </section>
 
       {/* Gast-CTA */}
@@ -149,48 +155,81 @@ export default function HomePage() {
 /** Duolingo-Style-Pfad: grosse Knoten in zentrierter Mittellinie, leicht
  *  zigzag versetzt. Knoten skalieren responsiv (Mobile 64–80 px, Desktop
  *  bis 112 px). Label klein UNTER dem Knoten. Auto-Scroll zu Heute. */
-function ZigzagPath({ stops, playedToday }: { stops: PfadStop[]; playedToday: boolean }) {
-  // Beim Mount: heutigen Knoten exakt in die Viewport-Mitte scrollen.
+function ZigzagPath({
+  stops,
+  playedToday,
+  recenterKey,
+}: {
+  stops: PfadStop[];
+  playedToday: boolean;
+  recenterKey: string;
+}) {
+  // Beim Öffnen soll heute OBEN stehen (grüner Haken direkt sichtbar);
+  // vergangene Tage liegen darüber und sind nur per Hochscrollen erreichbar.
   // Plus: kleiner "Heute"-Button blendet sich ein, wenn der User wegscrollt.
   const [showJump, setShowJump] = useState(false);
+  // Sobald der User selbst scrollt/wischt, kein automatisches Zurückspringen
+  // mehr — wir reissen ihn dann nicht aus der Vergangenheit zurück.
+  const userEngaged = useRef(false);
 
-  function centerOnToday(smooth = false) {
+  const centerOnToday = useCallback((smooth: boolean, auto = false) => {
+    if (auto && userEngaged.current) return;
     const el = document.getElementById("pfad-today");
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    // Today landet ~ein Knoten-Plus-Padding unter der TopNav — vergangene
-    // Knoten sind dann aus dem Bild raus, der User sieht heute + Zukunft.
-    const TOP_OFFSET = 96; // px unterhalb der sticky TopNav
+    // Today landet direkt unter der TopNav (h-14 = 56px) — der gestrige Knoten
+    // fällt oben raus, der User sieht heute zuoberst + Zukunft. Vergangenes
+    // erreicht man nur durch Hochscrollen.
+    const TOP_OFFSET = 64; // px unterhalb des Viewport-Anfangs (knapp unter Nav)
     const targetY = rect.top + window.scrollY - TOP_OFFSET;
     window.scrollTo({
       top: Math.max(0, targetY),
       behavior: smooth ? "smooth" : ("instant" as ScrollBehavior),
     });
-  }
+  }, []);
 
+  // Eigene Scroll-/Wisch-Interaktion merken (deaktiviert Auto-Recenter).
   useEffect(() => {
-    // Erst rendern lassen, dann scrollen (Layout muss fertig sein)
-    const r = requestAnimationFrame(() => centerOnToday(false));
+    function markEngaged() {
+      userEngaged.current = true;
+    }
+    const opts = { passive: true } as const;
+    window.addEventListener("wheel", markEngaged, opts);
+    window.addEventListener("touchmove", markEngaged, opts);
+    window.addEventListener("keydown", markEngaged);
+    return () => {
+      window.removeEventListener("wheel", markEngaged);
+      window.removeEventListener("touchmove", markEngaged);
+      window.removeEventListener("keydown", markEngaged);
+    };
+  }, []);
 
-    // "Heute"-Button zeigen wenn der heutige Knoten weit weg ist — sowohl
-    // wenn der User nach oben (Vergangenheit) als auch nach unten (Zukunft)
-    // wegscrollt.
+  // Auto-Scroll auf heute — beim Mount UND erneut, sobald das echte Dossier
+  // geladen ist (recenterKey ändert sich → Hero wird höher → Layout rutscht).
+  // Mehrere Versuche, weil der Layout-Shift nach dem Fetch verzögert kommt.
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => centerOnToday(false, true));
+    const timers = [120, 400, 800].map((ms) =>
+      window.setTimeout(() => centerOnToday(false, true), ms),
+    );
+    return () => {
+      cancelAnimationFrame(raf);
+      timers.forEach((t) => window.clearTimeout(t));
+    };
+  }, [recenterKey, centerOnToday]);
+
+  // "Heute"-Button zeigen, wenn der heutige Knoten weit weg ist (hoch ODER runter).
+  useEffect(() => {
     function onScroll() {
       const el = document.getElementById("pfad-today");
       if (!el) return;
       const rect = el.getBoundingClientRect();
-      const offscreen =
-        rect.bottom < 60 || rect.top > window.innerHeight - 60;
+      const offscreen = rect.bottom < 60 || rect.top > window.innerHeight - 60;
       setShowJump(offscreen);
     }
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
-
-    return () => {
-      cancelAnimationFrame(r);
-      window.removeEventListener("scroll", onScroll);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   // 5 Zigzag-Positionen, damit der Pfad "schlängelt" wie bei Duolingo

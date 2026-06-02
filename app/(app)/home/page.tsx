@@ -16,12 +16,14 @@ import {
   Crown,
   UserPlus,
   ArrowRight,
+  X,
 } from "lucide-react";
 
 // Clean iOS-Homescreen — minimal, scrollbar (Datum liegt jetzt im Balken/TopNav):
-// 1. Heute-Hero (konkretes Briefing-Thema) — gespielt → grüner Fertig-Zustand
-//    statt "nochmal", inkl. Hinweis auf die nächste Ausgabe
-// 2. Versetzter, scrollbarer Pfad (heute → Zukunft) inkl. Events
+// 1. Heute-Hero (konkretes Briefing-Thema) — nur Headline + Spiel-/Öffnen-Button,
+//    KEIN Haken und KEIN Countdown hier (der einzige Haken lebt im Pfad).
+// 2. Versetzter, scrollbarer Pfad: Vergangenheit (oben, gespielt/verpasst) →
+//    heute (zentriert, einziger Haken) → Zukunft (unten) inkl. Events.
 // 3. Gast-CTA wenn anonym
 
 export default function HomePage() {
@@ -54,17 +56,19 @@ export default function HomePage() {
   if (!hydrated || !state) return <Skeleton />;
 
   const isGuest = !session?.isRegistered;
-  const stops = buildPfadStops(now, todayInfo ?? undefined);
-  const todayStop = stops.find((s) => s.status === "today") ?? stops[7];
   const playedToday = !!state.last_briefing_date;
-  const party = state.party_id ? getPartyById(state.party_id) : null;
 
-  // Nächste Ausgabe 15:00 Uhr (nach Schulschluss). Nur noch als dezenter
-  // Hinweis im Fertig-Zustand — kein eigener Banner/Countdown mehr.
-  const nextEdition = new Date(now);
-  nextEdition.setHours(15, 0, 0, 0);
-  if (nextEdition.getTime() <= now.getTime()) nextEdition.setDate(nextEdition.getDate() + 1);
-  const editionLabel = nextEdition.getDate() === now.getDate() ? "heute 15:00 Uhr" : "morgen 15:00 Uhr";
+  // An welchen Tagen wurde wirklich gespielt? Aus den Entscheidungen (volle
+  // ISO-Strings → Tag) plus dem letzten Briefing-Datum. Daraus weiss der Pfad
+  // für jeden vergangenen Tag: gespielt (Haken) oder verpasst.
+  const playedDates = new Set<string>(
+    state.decisions.map((d) => d.date.slice(0, 10)),
+  );
+  if (state.last_briefing_date) playedDates.add(state.last_briefing_date);
+
+  const stops = buildPfadStops(now, todayInfo ?? undefined, playedDates);
+  const todayStop = stops.find((s) => s.status === "today") ?? stops[0];
+  const party = state.party_id ? getPartyById(state.party_id) : null;
 
   // Past/Future-Anker: User soll bei Aufruf auf Heute landen, kann hoch+runter
   return (
@@ -82,33 +86,20 @@ export default function HomePage() {
             {todayStop.headline}
           </h1>
         </div>
-        {playedToday ? (
-          // Gespielt: grüner Fertig-Zustand mit Haken statt "nochmal".
-          // Der Countdown wandert als dezenter Hinweis hierher.
-          <div className="rounded-2xl bg-success/10 border border-success/30 px-4 py-3 flex items-center gap-3">
-            <span className="inline-flex items-center justify-center size-9 rounded-full bg-success text-white shrink-0">
-              <Check className="size-5" strokeWidth={3} />
-            </span>
-            <div className="flex flex-col leading-tight">
-              <span className="text-sm font-semibold text-success">Heute gespielt</span>
-              <span className="text-xs text-muted-foreground">
-                Nächste Ausgabe {editionLabel}
-              </span>
-            </div>
-          </div>
-        ) : (
-          <Link
-            href="/heute"
-            className={
-              buttonVariants({ size: "lg" }) +
-              " h-12 group self-stretch inline-flex items-center justify-center"
-            }
-          >
-            <Play className="size-4 mr-2" fill="currentColor" />
-            Jetzt spielen
-            <ArrowRight className="size-4 ml-2 group-hover:translate-x-0.5 transition-transform" />
-          </Link>
-        )}
+        {/* Nur ein Button — gespielt oder nicht. Der "gespielt"-Haken lebt
+            ausschliesslich im Pfad (heutiger Knoten), nicht hier. Kein
+            Countdown / keine "nächste Ausgabe"-Zeit mehr. */}
+        <Link
+          href="/heute"
+          className={
+            buttonVariants({ size: "lg" }) +
+            " h-12 group self-stretch inline-flex items-center justify-center"
+          }
+        >
+          <Play className="size-4 mr-2" fill="currentColor" />
+          {playedToday ? "Briefing öffnen" : "Jetzt spielen"}
+          <ArrowRight className="size-4 ml-2 group-hover:translate-x-0.5 transition-transform" />
+        </Link>
       </section>
 
       {/* Versetzter, scrollbarer Pfad */}
@@ -218,7 +209,8 @@ function ZigzagPath({ stops, playedToday }: { stops: PfadStop[]; playedToday: bo
           <PfadNode
             key={stop.date + i}
             stop={stop}
-            offsetClass={offsets[i % offsets.length]}
+            // Heute steht mittig ("in der Mitte"), der Rest schlängelt drumherum.
+            offsetClass={stop.status === "today" ? "translate-x-0" : offsets[i % offsets.length]}
             playedToday={playedToday}
           />
         ))}
@@ -252,7 +244,10 @@ function PfadNode({
   // statt goldenem Play. Der Anker (id="pfad-today") bleibt am selben Knoten.
   const isToday = stop.status === "today";
   const isDone = stop.status === "done" || (isToday && playedToday);
+  const isMissed = stop.status === "missed";
   const isLocked = stop.status === "locked" && !isEvent;
+  // Vergangene Tage sind nicht anklickbar (kein Archiv-Ziel) — wie Locked.
+  const isStatic = isLocked || isDone || isMissed;
 
   // Duolingo-mässig grosse Knoten. Mobile 64 px (done/locked) bis 80 px
   // (today), Desktop bis 112 px für Today.
@@ -277,6 +272,12 @@ function PfadNode({
     markerBg = "bg-gold text-gold-ink shadow-[0_8px_0_-2px] shadow-yellow-700/40";
     iconSize = "size-9 sm:size-12";
     markerIcon = <Play className={iconSize + " ml-1"} fill="currentColor" />;
+  } else if (isMissed) {
+    // Verpasst: neutral-gedämpft (kein Rot), schwaches X — klar abgesetzt vom
+    // grünen Haken der gespielten Tage.
+    markerBg =
+      "bg-background/70 border border-foreground/10 backdrop-blur-sm text-foreground/35";
+    markerIcon = <X className={iconSize} strokeWidth={2.5} />;
   } else if (isEvent) {
     markerBg = "bg-pp-red text-white shadow-[0_6px_0_-2px] shadow-red-900/40";
     iconSize = "size-7 sm:size-9";
@@ -289,7 +290,7 @@ function PfadNode({
     <div
       id={isToday ? "pfad-today" : undefined}
       className={`relative ${markerSize} rounded-full flex items-center justify-center shrink-0 transition-transform ${markerBg} ${
-        isLocked ? "" : "hover:scale-105 active:scale-95"
+        isStatic ? "" : "hover:scale-105 active:scale-95"
       }`}
     >
       {markerIcon}
@@ -315,7 +316,11 @@ function PfadNode({
       ) : (
         <span
           className={`text-on-bg text-xs sm:text-sm leading-snug ${
-            isToday ? "font-serif font-semibold text-foreground" : "text-foreground/85"
+            isToday
+              ? "font-serif font-semibold text-foreground"
+              : isMissed
+                ? "text-foreground/45"
+                : "text-foreground/85"
           } line-clamp-2`}
         >
           {stop.headline}
@@ -331,7 +336,7 @@ function PfadNode({
     </div>
   );
 
-  if (isLocked) return <li>{content}</li>;
+  if (isStatic) return <li>{content}</li>;
   return (
     <li>
       <Link href={stop.href} className="block">

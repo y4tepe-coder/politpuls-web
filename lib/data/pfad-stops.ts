@@ -10,7 +10,11 @@ export type PfadStop = {
   monthShort: string;
   kicker: string;
   headline: string;
-  status: "done" | "today" | "locked";
+  // done   = vergangener Tag, gespielt
+  // missed = vergangener Tag, NICHT gespielt
+  // today  = heute
+  // locked = Zukunft (noch nicht freigeschaltet)
+  status: "done" | "missed" | "today" | "locked";
   /** Specialevent-Marker für die Pfad-Knoten (Wahlkampf, Triell etc.). */
   eventTag?: "wahlkampf" | "triell" | "wahl";
   href: string;
@@ -68,17 +72,24 @@ function formatDate(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-// Liefert 15 Stops: heute + 14 Tage voraus (inkl. Events).
-// Vergangene Tage zeigen wir nicht — pro User-Wunsch.
+// Wie viele vergangene Tage der Pfad nach oben zeigt (zum Hochscrollen).
+const PAST_DAYS = 7;
+
+// Liefert Stops: 7 Tage zurück + heute + 14 Tage voraus (inkl. Events).
+// Reihenfolge: ältester Tag oben → Zukunft unten. Heute wird in der UI in den
+// Viewport zentriert; nach OBEN scrollt man in die Vergangenheit.
 // `todayInfo` ist das echte Tages-Dossier (aus Supabase via /api/today); fehlt
 // es, fällt der heutige Stop auf den Seed zurück.
+// `playedDates` = Menge der Tage (YYYY-MM-DD), an denen wirklich gespielt wurde.
+// Daraus ergibt sich für vergangene Tage "done" (gespielt) vs "missed" (nicht).
 export function buildPfadStops(
   today: Date = new Date(),
   todayInfo?: { kicker: string | null; headline: string },
+  playedDates?: Set<string>,
 ): PfadStop[] {
   const stops: PfadStop[] = [];
 
-  for (let offset = 0; offset <= 14; offset++) {
+  for (let offset = -PAST_DAYS; offset <= 14; offset++) {
     const date = addDays(today, offset);
     const dateStr = formatDate(date);
     const base = {
@@ -88,7 +99,21 @@ export function buildPfadStops(
       monthShort: MONTHS_DE[date.getMonth()],
     };
 
-    // Spezial-Event an diesem Offset?
+    // Vergangene Tage: gespielt → done, sonst → missed. Thema aus PAST_TOPICS
+    // (Platzhalter, bis ein echtes Archiv pro Datum existiert).
+    if (offset < 0) {
+      const topic = PAST_TOPICS[(Math.abs(offset) - 1) % PAST_TOPICS.length];
+      stops.push({
+        ...base,
+        kicker: topic.kicker,
+        headline: topic.headline,
+        status: playedDates?.has(dateStr) ? "done" : "missed",
+        href: "#",
+      });
+      continue;
+    }
+
+    // Spezial-Event an diesem (zukünftigen) Offset?
     const event = EVENT_SCHEDULE.find((e) => e.offset === offset);
     if (event) {
       stops.push({
@@ -124,7 +149,3 @@ export function buildPfadStops(
 
   return stops;
 }
-
-// PAST_TOPICS bleibt als Reserve im Datenfile, falls wir spaeter ein
-// "Archiv"-Feature bauen wollen.
-void PAST_TOPICS;

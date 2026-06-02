@@ -1,15 +1,15 @@
 name: Web-Redaktion
 
-# Taeglich 12:30 UTC. Das ist 14:30 CEST (Sommer) bzw. 13:30 CET (Winter) —
-# also frueher Nachmittag, fertig deutlich VOR der 16-Uhr-Ausgabe in der App.
-# Der Puffer ist Absicht: GitHub kann geplante Laeufe um bis zu ~1-2 h
-# verzoegern, der Run selbst dauert ~5 min. Die Zeit ist UTC, nicht Berliner
-# Zeit — zum Verschieben hier den cron aendern (z. B. "30 13 * * *" = 15:30
-# CEST, dann aber knapper vor 16 Uhr). Plus manuell triggerbar fuer Tests und
-# Nachgenerierung verpasster Tage.
+# Taeglich 05:00 UTC. Das ist 07:00 CEST (Sommer) bzw. 06:00 CET (Winter) —
+# also frueher Morgen, fertig deutlich VOR der 10-Uhr-Ausgabe auf politpuls.de.
+# Der grosse Puffer ist Absicht: GitHub kann geplante Laeufe um bis zu ~1-2 h
+# verzoegern, der Run selbst dauert ~5 min. Selbst mit Verspaetung ist die
+# Ausgabe damit sicher vor 10:00 Berliner Zeit fertig. Die Zeit ist UTC, nicht
+# Berliner Zeit — zum Verschieben hier den cron aendern. Plus manuell
+# triggerbar fuer Tests und Nachgenerierung verpasster Tage.
 on:
   schedule:
-    - cron: "30 12 * * *"
+    - cron: "0 5 * * *"
   workflow_dispatch:
     inputs:
       override_date:

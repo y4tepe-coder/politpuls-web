@@ -186,5 +186,43 @@ export const seedDossier: Dossier = {
   format: null,
   video: null,
   image: null,
+  meinung: {
+    frage:
+      "Soll Deutschland mehr fürs Militär ausgeben, auch wenn dafür beim Klima gespart wird?",
+    optionen: [
+      {
+        id: "sicherheit",
+        label: "Ja, Sicherheit zuerst",
+        begruendung:
+          "In einer unsicheren Welt muss der Staat zuerst verteidigungsfähig sein.",
+      },
+      {
+        id: "klima",
+        label: "Nein, Klima zuerst",
+        begruendung:
+          "Die Klimakrise bedroht uns auf Dauer am stärksten — da darf man nicht kürzen.",
+      },
+      {
+        id: "beides",
+        label: "Beides — über neue Einnahmen",
+        begruendung:
+          "Man muss sich nicht entscheiden, wenn man Steuern oder Schulden klug einsetzt.",
+      },
+    ],
+    einordnung:
+      "Dahinter steckt ein echter Zielkonflikt: Geld kann man nur einmal ausgeben. Wer 'Sicherheit' wählt, gewichtet akute Bedrohungen; wer 'Klima' wählt, die langfristigen Risiken. Beide Seiten haben nachvollziehbare Gründe — genau deshalb streiten auch die Parteien darüber.",
+  },
+  faktencheck: {
+    behauptung:
+      "Deutschland gibt inzwischen mehr Geld für die Bundeswehr aus als für Bildung, Gesundheit und Rente zusammen.",
+    praesentation: "Sharepic, das gerade auf Instagram geteilt wird",
+    ist_echt: false,
+    aufloesung:
+      "Das stimmt nicht. Der Verteidigungsetat liegt 2025 bei rund 53 Mrd. Euro. Die Ausgaben für Soziales, Gesundheit und Rente sind ein Vielfaches davon — zusammen mehrere hundert Milliarden.",
+    warum:
+      "Die Behauptung mischt einen wahren Kern (der Wehretat steigt wirklich) mit einem völlig falschen Vergleich. Genau das macht sie gefährlich: Ein bisschen Wahrheit lässt die dramatische Übertreibung glaubwürdig wirken.",
+    tipp:
+      "Stutzig werden bei 'mehr als X, Y und Z zusammen'. Steht keine Quelle und keine konkrete Zahl im Bild, ist das ein Warnsignal — kurz selbst nachschlagen, bevor man es teilt.",
+  },
   created_at: "2026-05-25T05:00:00Z",
 };

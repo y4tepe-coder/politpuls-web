@@ -1,25 +1,29 @@
 import type { DossierFormat } from "@/lib/supabase/types";
 
-// Daily rotation of interaction patterns. `decision` dominates (it's the core
-// learning beat); reporter-chat, koalition and plakat are sprinkled in so each
-// day feels different and the chat is NOT shown every day. Mirrors the idea of
-// iOS `Wahlkampf.dailyFor`. The pipeline normally sets `dossier.format`
-// explicitly; this is the fallback for rows (or the seed) that don't.
+// Daily rotation of interaction patterns. `decision` stays the core learning
+// beat; `meinung` (Was meinst du? + Community-Vergleich) and `faktencheck`
+// (Fake-News erkennen) add variety so each day feels different. reporter-chat,
+// koalition and plakat are reserved for the Wahlkampf phase and are NOT part of
+// the daily rotation. The pipeline normally sets `dossier.format` explicitly;
+// this is the fallback for rows (or the seed) that don't.
 const ROTATION: DossierFormat[] = [
   "decision",
-  "reporter-chat",
+  "meinung",
   "decision",
-  "koalition",
+  "faktencheck",
   "decision",
-  "plakat",
-  "reporter-chat",
+  "meinung",
+  "faktencheck",
 ];
 
+// Alle gültigen Format-Werte (auch die Wahlkampf-Formate) für Validierung.
 export const DOSSIER_FORMATS: DossierFormat[] = [
   "decision",
   "reporter-chat",
   "koalition",
   "plakat",
+  "meinung",
+  "faktencheck",
 ];
 
 export function isDossierFormat(value: unknown): value is DossierFormat {

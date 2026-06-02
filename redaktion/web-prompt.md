@@ -93,6 +93,23 @@ Erzeuge das Dossier für HEUTE: **{{TODAY}}** (Berliner Zeit).
     "D": { "cheers": [], "upset": [], "summary": "" }
   },
 
+  "meinung": {
+    "frage": "Offene Meinungsfrage zum Thema in Du-Form, KEIN Richtig/Falsch. Z.B. 'Findest du, dass ...?'",
+    "optionen": [
+      { "id": "kurz-id", "label": "Position in wenigen Worten", "begruendung": "EIN Satz: stärkstes Argument FÜR diese Seite" }
+    ],  // GENAU 2 oder 3 Optionen, je eine ehrliche, vertretbare Haltung
+    "einordnung": "1-2 Sätze: warum die Meinungen auseinandergehen, überparteilich"
+  },
+
+  "faktencheck": {
+    "behauptung": "Eine echt klingende Aussage/Schlagzeile zum heutigen Thema",
+    "praesentation": "Wie sie kursiert, z.B. 'Sharepic auf Instagram' oder 'Kettennachricht auf WhatsApp'",
+    "ist_echt": false,
+    "aufloesung": "1-2 Sätze: was tatsächlich korrekt ist (deckungsgleich mit den Quellen)",
+    "warum": "1-2 Sätze: warum es irreführend ist (bzw. warum es echt ist, obwohl es überraschend klingt)",
+    "tipp": "Ein übertragbarer Erkennungs-Tipp für solche Inhalte"
+  },
+
   "sources": [
     { "title": "Echter Artikel-Titel", "url": "https://echte-url-aus-websearch", "outlet": "z.B. ZDFheute, Tagesschau, Bundestag" }
   ],  // 2–4 Einträge, alle URLs müssen aus echten WebSearch-Treffern kommen
@@ -120,7 +137,7 @@ Erzeuge das Dossier für HEUTE: **{{TODAY}}** (Berliner Zeit).
   "topic_tags": ["thema1", "thema2"],  // 1–4 Tags, lower-kebab-case
   "phase": "daily",                      // fix
   "model_version": "claude-opus-4-7",   // fix
-  "prompt_version": "web-v4-media"       // fix
+  "prompt_version": "web-v5-formate-media"       // fix
 }
 ```
 
@@ -156,6 +173,24 @@ Erzeuge das Dossier für HEUTE: **{{TODAY}}** (Berliner Zeit).
     aber nicht entscheidungstragend.
   - `image` und `video` sind **optional** — lieber `null` als eine geratene/kaputte
     URL. Eine fehlende Karte ist besser als eine, die nicht lädt.
+
+- **`meinung` (Was meinst du?):** Eine OFFENE Meinungsfrage, kein Faktenquiz.
+  Die 2-3 Optionen müssen ehrliche, vertretbare Haltungen sein — keine
+  Strohmänner, keine offensichtlich "richtige" Antwort. Die `id` ist kurz,
+  ohne Sonderzeichen/Leerzeichen (max 20 Zeichen).
+
+- **`faktencheck` (Fake-News-Training):** Erfinde eine Aussage, die echt
+  aussieht, aber überprüfbar ist. STRIKTE REGELN:
+  - Lege NIEMALS einer real existierenden Person ein wörtliches Zitat in den
+    Mund, das sie so nicht gesagt hat. Keine Rufschädigung, keine erfundenen
+    Skandale über echte Menschen.
+  - Nutze stattdessen typische Desinformations-Muster: verdrehte Statistik,
+    falscher Vergleich, fehlender Kontext, erfundene "eine Studie sagt …",
+    irreführende Überschrift, alter Fakt als neu verkauft.
+  - VARIIERE `ist_echt`: ungefähr jede zweite Behauptung soll WAHR sein
+    (`true`) — sonst lernen Nutzer "alles ist Fake". Mal echt, mal falsch.
+  - `aufloesung` und `warum` müssen zur Faktenlage deiner Quellen passen —
+    nichts dazuerfinden.
 
 ## Output
 

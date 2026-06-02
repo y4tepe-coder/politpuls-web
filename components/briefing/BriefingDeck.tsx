@@ -5,6 +5,9 @@ import Link from "next/link";
 import { AnimatePresence, motion, type PanInfo } from "framer-motion";
 import type { ChoiceId, Dossier, DossierChoice } from "@/lib/supabase/types";
 import { useDecision } from "@/lib/briefing/useDecision";
+import { resolveFormat } from "@/lib/dossier/format";
+import { MeinungSection } from "@/components/briefing/MeinungSection";
+import { FaktencheckSection } from "@/components/briefing/FaktencheckSection";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Newspaper,
@@ -32,6 +35,8 @@ type StepKind =
   | "short"
   | "facts"
   | "decision"
+  | "meinung"
+  | "faktencheck"
   | "outcome";
 
 function bodyParagraphs(body: Dossier["body"]): string[] {
@@ -42,6 +47,19 @@ function bodyParagraphs(body: Dossier["body"]): string[] {
 
 export function BriefingDeck({ dossier }: { dossier: Dossier }) {
   const { chosen, consequence, choose, submitting } = useDecision(dossier);
+
+  const format = resolveFormat(dossier);
+  const isMeinung =
+    format === "meinung" && (dossier.meinung?.optionen?.length ?? 0) >= 2;
+  const isFaktencheck =
+    format === "faktencheck" && !!dossier.faktencheck?.behauptung;
+  // Welche Interaktion ersetzt heute die Entscheidung? (Fallback: decision.)
+  const interaction: StepKind = isFaktencheck
+    ? "faktencheck"
+    : isMeinung
+      ? "meinung"
+      : "decision";
+  const [formatDone, setFormatDone] = useState(false);
 
   const body = useMemo(() => bodyParagraphs(dossier.body), [dossier]);
   const glossar = useMemo(() => Object.entries(dossier.glossar ?? {}), [dossier]);
@@ -54,13 +72,15 @@ export function BriefingDeck({ dossier }: { dossier: Dossier }) {
     if (dossier.image?.url) s.push("image");
     if (dossier.video?.url) s.push("short");
     if (dossier.facts.length > 0) s.push("facts");
-    s.push("decision");
+    s.push(interaction);
     return s;
-  }, [dossier, body, glossar]);
+  }, [dossier, body, glossar, interaction]);
 
   // Outcome wird erst nach der Wahl Teil des Decks.
-  const steps: StepKind[] = chosen ? [...preSteps, "outcome"] : preSteps;
-  const totalDots = preSteps.length + 1; // Outcome immer mitzählen → stabile Anzahl
+  const steps: StepKind[] =
+    interaction === "decision" && chosen ? [...preSteps, "outcome"] : preSteps;
+  // Outcome nur beim Entscheidungs-Format; meinung/faktencheck sind selbst der Schluss.
+  const totalDots = interaction === "decision" ? preSteps.length + 1 : preSteps.length;
 
   const [index, setIndex] = useState(0);
   const [dir, setDir] = useState(1);
@@ -148,6 +168,22 @@ export function BriefingDeck({ dossier }: { dossier: Dossier }) {
                 onChoose={onChoose}
               />
             )}
+            {current === "meinung" && (
+              <CardShell>
+                <MeinungSection
+                  dossier={dossier}
+                  onComplete={() => setFormatDone(true)}
+                />
+              </CardShell>
+            )}
+            {current === "faktencheck" && (
+              <CardShell>
+                <FaktencheckSection
+                  dossier={dossier}
+                  onComplete={() => setFormatDone(true)}
+                />
+              </CardShell>
+            )}
             {current === "outcome" && chosen && consequence && (
               <OutcomeCard
                 choice={chosen}
@@ -173,6 +209,22 @@ export function BriefingDeck({ dossier }: { dossier: Dossier }) {
 
         {current === "decision" ? (
           <span className="text-xs text-muted-foreground">Wähle, um fortzufahren</span>
+        ) : current === "meinung" || current === "faktencheck" ? (
+          formatDone ? (
+            <Link
+              href="/home"
+              className={buttonVariants({ size: "lg" }) + " h-11 group flex-1 max-w-[16rem]"}
+            >
+              Weiter zum Pfad
+              <ArrowRight className="size-4 ml-2 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          ) : (
+            <span className="text-xs text-muted-foreground">
+              {current === "meinung"
+                ? "Stimm ab, um fortzufahren"
+                : "Schätz, um fortzufahren"}
+            </span>
+          )
         ) : current === "outcome" ? (
           <Link
             href="/home"

@@ -68,7 +68,13 @@ export type DossierConsequence = {
 
 // Which interaction pattern the daily article renders. The pipeline rotates
 // this per day so each day differs and the reporter chat is not shown daily.
-export type DossierFormat = "decision" | "reporter-chat" | "koalition" | "plakat";
+export type DossierFormat =
+  | "decision"
+  | "reporter-chat"
+  | "koalition"
+  | "plakat"
+  | "meinung"
+  | "faktencheck";
 
 // Nullable, embeddable clip slot — a kurzer "Short" zum Thema (YouTube/Reel-Embed).
 export type DossierVideo = {
@@ -89,6 +95,32 @@ export type DossierImage = {
   caption?: string; // kurze Bildunterschrift, max ~12 Wörter
   source?: string; // Bildnachweis / Outlet
   alt?: string;
+};
+
+// "Was meinst du?" — kurze Meinungsfrage. Nach dem Abstimmen sieht der Nutzer,
+// wie die Community abgestimmt hat (echte Stimmen via dossier_votes), die
+// Begründung jeder Seite und eine neutrale Einordnung ("Warum").
+export type DossierMeinungOption = {
+  id: string; // kurze id, z.B. "ja" | "nein" | "a" | "b" (max 20 Zeichen)
+  label: string; // die Position in wenigen Worten
+  begruendung: string; // ein Satz: das stärkste Argument FÜR diese Seite
+};
+
+export type DossierMeinung = {
+  frage: string; // Meinungsfrage in Du-Form
+  optionen: DossierMeinungOption[]; // 2–3 Optionen
+  einordnung: string; // "Warum": neutraler Kontext, warum die Meinungen auseinandergehen
+};
+
+// Fake-News-Abhärtung (Prebunking): eine echt aussehende Behauptung, die der
+// Nutzer als echt/fake einschätzt — danach Auflösung + Erkennungs-Tipp.
+export type DossierFaktencheck = {
+  behauptung: string; // die Aussage/Schlagzeile, wie sie kursieren könnte
+  praesentation?: string; // Optik der Verbreitung, z.B. "Sharepic auf Instagram"
+  ist_echt: boolean; // true = stimmt wirklich, false = falsch/irreführend
+  aufloesung: string; // was tatsächlich korrekt ist
+  warum: string; // warum es irreführend ist bzw. (wenn echt) warum es trotzdem stimmt
+  tipp: string; // übertragbarer Medienkompetenz-Tipp ("Woran du sowas erkennst")
 };
 
 export type Dossier = {
@@ -120,6 +152,11 @@ export type Dossier = {
   // resolveFormat() füllt format, image/video werden nur bei URL angezeigt.
   format: DossierFormat | null;
   video: DossierVideo | null;
+  // Format-spezifische Nutzdaten (nullable; resolveFormat fällt sonst auf
+  // decision zurück). Werden täglich mitgeneriert, damit jeder Tag jedes
+  // Format rendern kann.
+  meinung: DossierMeinung | null;
+  faktencheck: DossierFaktencheck | null;
   image: DossierImage | null;
   created_at: string;
 };

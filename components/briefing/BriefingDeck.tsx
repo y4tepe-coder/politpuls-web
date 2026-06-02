@@ -149,7 +149,11 @@ export function BriefingDeck({ dossier }: { dossier: Dossier }) {
               />
             )}
             {current === "outcome" && chosen && consequence && (
-              <OutcomeCard choice={chosen} consequence={consequence} />
+              <OutcomeCard
+                choice={chosen}
+                consequence={consequence}
+                sources={dossier.sources}
+              />
             )}
           </motion.div>
         </AnimatePresence>
@@ -408,9 +412,11 @@ function DecisionCard({
 function OutcomeCard({
   choice,
   consequence,
+  sources,
 }: {
   choice: DossierChoice;
   consequence: NonNullable<Dossier["consequences"][ChoiceId]>;
+  sources: Dossier["sources"];
 }) {
   return (
     <CardShell>
@@ -427,6 +433,30 @@ function OutcomeCard({
         <ReactionTile title="Freuen sich" icon={<CheckCircle2 className="size-4" />} items={consequence.cheers} />
         <ReactionTile title="Enttäuscht" icon={<Frown className="size-4" />} items={consequence.upset} muted />
       </div>
+
+      {sources.length > 0 && (
+        <div className="flex flex-col gap-1.5 mt-1 pt-3 border-t border-foreground/10">
+          <h3 className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.18em]">
+            Quellen
+          </h3>
+          <ul className="flex flex-col gap-1">
+            {sources.map((s, i) => (
+              <li key={i}>
+                <a
+                  href={s.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm text-foreground/70 hover:text-foreground underline underline-offset-4"
+                >
+                  <ExternalLink className="size-3.5 shrink-0" />
+                  <span>{s.title}</span>
+                  {s.outlet && <span className="text-foreground/45">· {s.outlet}</span>}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <p className="text-xs text-center text-foreground/55 mt-1">
         Morgen wartet das nächste Dossier auf dich.
@@ -462,34 +492,5 @@ function ReactionTile({
         ))}
       </ul>
     </div>
-  );
-}
-
-// Quellen separat unter dem Deck (kompakt) — bleibt erreichbar, ohne die Karten
-// zu überladen.
-export function DeckSources({ sources }: { sources: Dossier["sources"] }) {
-  if (sources.length === 0) return null;
-  return (
-    <footer className="w-full max-w-2xl mx-auto px-5 pb-12 flex flex-col gap-2">
-      <h2 className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.18em]">
-        Quellen
-      </h2>
-      <ul className="flex flex-col gap-1.5">
-        {sources.map((s, i) => (
-          <li key={i}>
-            <a
-              href={s.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm text-foreground/70 hover:text-foreground underline underline-offset-4"
-            >
-              <ExternalLink className="size-3.5 shrink-0" />
-              <span>{s.title}</span>
-              {s.outlet && <span className="text-foreground/45">· {s.outlet}</span>}
-            </a>
-          </li>
-        ))}
-      </ul>
-    </footer>
   );
 }

@@ -5,9 +5,10 @@ import { buildPfadStops, type PfadStop } from "@/lib/data/pfad-stops";
 import { PfadStopCard } from "@/components/pfad/PfadStopCard";
 import { getLocalState } from "@/lib/local/state";
 
-// 7-day snaking path, iOS / Duolingo style. Each day is a big circular stop
-// connected to the next by a dotted vertical line. Today pulses; past days
-// are green-checked (gespielt) oder gedämpft (verpasst); future days are locked.
+// Snaking path, iOS / Duolingo style. Heute steht fix an 2. Stelle von oben
+// (gestern darüber), die Zukunft reicht nach unten. Jeder Tag ist ein großer
+// Kreis-Stop, verbunden durch eine gepunktete Linie. Heute pulsiert; gestern
+// ist grün-gecheckt (gespielt) oder gedämpft (verpasst); Zukunft ist gesperrt.
 export default function PfadPage() {
   // Spiel-Historie kommt aus dem Browser-State → Client-Komponente.
   const [stops, setStops] = useState<PfadStop[]>([]);

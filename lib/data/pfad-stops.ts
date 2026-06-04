@@ -72,12 +72,12 @@ function formatDate(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-// Wie viele vergangene Tage der Pfad nach oben zeigt (zum Hochscrollen).
-const PAST_DAYS = 7;
+// Wie viele vergangene Tage der Pfad nach oben zeigt. Genau 1 → "heute" steht
+// fix an 2. Stelle von oben (gestern darüber). Die ältere Historie lebt im Profil.
+const PAST_DAYS = 1;
 
-// Liefert Stops: 7 Tage zurück + heute + 14 Tage voraus (inkl. Events).
-// Reihenfolge: ältester Tag oben → Zukunft unten. Heute wird in der UI in den
-// Viewport zentriert; nach OBEN scrollt man in die Vergangenheit.
+// Liefert Stops: 1 Tag zurück (gestern) + heute + 14 Tage voraus (inkl. Events).
+// Reihenfolge: gestern oben → heute an 2. Stelle → Zukunft unten.
 // `todayInfo` ist das echte Tages-Dossier (aus Supabase via /api/today); fehlt
 // es, fällt der heutige Stop auf den Seed zurück.
 // `playedDates` = Menge der Tage (YYYY-MM-DD), an denen wirklich gespielt wurde.

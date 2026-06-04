@@ -123,15 +123,30 @@ Erzeuge das Dossier für HEUTE: **{{TODAY}}** (Berliner Zeit).
     "source": "Bildnachweis / Outlet"
   },  // ODER  "image": null
 
+  "images": [
+    // OPTIONAL: mehrere themenbezogene Bilder als wischbares Karussell auf der
+    // Bild-Karte. Ideal: die og:image-Bilder der zitierten Quell-Artikel.
+    // NUR echte, direkt einbettbare Bild-URLs — lieber 2 gute als 6 geratene.
+    // Im Zweifel "images": null oder leeres Array.
+    {
+      "url": "https://echte-bild-url-1.jpg",
+      "caption": "Kurze Bildunterschrift, max 12 Wörter",
+      "source": "Bildnachweis / Outlet"
+    }
+  ],  // ODER  "images": null
+
   "video": {
     // Ein kurzer, themenbezogener Erklär-/News-Clip ("Short") für die Short-Karte.
     // NUR setzen, wenn du einen echten, relevanten YouTube-Clip aus WebSearch hast.
     // url MUSS die Embed-Form sein: https://www.youtube.com/embed/<VIDEO_ID>
-    // Im Zweifel "video": null.
+    // HARTE REGEL: der Clip darf MAXIMAL 3:00 Minuten (180 Sek.) lang sein.
+    // "runtime" ist PFLICHT im Format M:SS (z.B. "2:14"). Findest du nur längere
+    // Clips, dann "video": null — lieber kein Video als ein zu langes.
     "title": "Titel des Clips",
     "url": "https://www.youtube.com/embed/VIDEO_ID",
     "channel": "z.B. ZDFheute Nachrichten",
-    "blurb": "Ein Satz, worum es im Clip geht"
+    "blurb": "Ein Satz, worum es im Clip geht",
+    "runtime": "2:14"
   },  // ODER  "video": null
 
   "topic_tags": ["thema1", "thema2"],  // 1–4 Tags, lower-kebab-case
@@ -164,15 +179,21 @@ Erzeuge das Dossier für HEUTE: **{{TODAY}}** (Berliner Zeit).
 - **`tone` pro Choice einmalig:** A/B/C/D = jeweils anderer tone aus
   `security|climate|social|growth`.
 
-- **Deck-Format (wichtig):** Die App zeigt das Dossier als Swipe-Deck — eine Info
-  pro Karte. Daraus folgt:
-  - Der **erste `body`-Absatz** muss für sich allein als knappe Lage funktionieren
-    (2–3 Sätze), denn nur er wird auf der Lage-Karte gezeigt.
+- **Deck-Format (wichtig):** Die App zeigt das Dossier als Swipe-Deck. Daraus folgt:
+  - Der **gesamte `body`-Text** steht zusammen auf EINER Lese-Karte (Lage +
+    Hintergrund zusammengeführt). Schreib also einen durchgehend lesbaren,
+    flüssigen Artikel — erster Absatz als knappe Lage (2–3 Sätze), danach der
+    Hintergrund. Nichts wird abgeschnitten.
+  - **`glossar`-Begriffe werden im Lesetext antippbar** hervorgehoben (Tippen
+    klappt die Erklärung auf). Wähle daher Begriffe, die WÖRTLICH so im `body`
+    oder `deck` vorkommen — dann landen sie als Tipp-Highlight direkt im Text.
+    Begriffe, die nicht im Text stehen, erscheinen als Chips am Kartenende.
   - Es werden nur **`choices` A und B** angezeigt. Mach A und B zum klarsten
     Gegensatz-Paar (echtes Pro/Contra). C und D weiter ausfüllen (für Statistik),
     aber nicht entscheidungstragend.
-  - `image` und `video` sind **optional** — lieber `null` als eine geratene/kaputte
-    URL. Eine fehlende Karte ist besser als eine, die nicht lädt.
+  - `image`, `images` und `video` sind **optional** — lieber `null` als eine
+    geratene/kaputte URL. Eine fehlende Karte ist besser als eine, die nicht lädt.
+  - **Video-Länge: maximal 3:00 Minuten.** `runtime` ist Pflicht (M:SS).
 
 - **`meinung` (Was meinst du?):** Eine OFFENE Meinungsfrage, kein Faktenquiz.
   Die 2-3 Optionen müssen ehrliche, vertretbare Haltungen sein — keine

@@ -1,9 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, type PanInfo } from "framer-motion";
-import type { ChoiceId, Dossier, DossierChoice } from "@/lib/supabase/types";
+import type {
+  ChoiceId,
+  Dossier,
+  DossierChoice,
+  DossierImage,
+} from "@/lib/supabase/types";
 import { useDecision } from "@/lib/briefing/useDecision";
 import { resolveFormat } from "@/lib/dossier/format";
 import { MeinungSection } from "@/components/briefing/MeinungSection";
@@ -18,19 +23,20 @@ import {
   CheckCircle2,
   Frown,
   ExternalLink,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
 } from "lucide-react";
 
 // Swipe-Deck statt langem Scroll-Artikel: man blättert (rechts→links wischen
-// ODER "Weiter" tippen) in 3–5 Schritten durch, statt zu scrollen. Der VOLLE
-// Artikel-Text bleibt erhalten — nur auf Schritte verteilt, nichts gekürzt.
-// Reihenfolge: Lage → Hintergrund → (Bild) → (Short) → Zahlen → Entscheidung → Folge.
-// Bild/Short erscheinen nur, wenn die Redaktion sie liefert. Die Entscheidung
-// ist gegated (man muss A/B wählen, um zur Folge zu kommen). Partei-Auswahl und
-// politischer Kompass sind hier RAUS — die leben im Spektrum-Tab.
+// ODER "Weiter" tippen) durch wenige Schritte. Lage + Hintergrund sind zu EINER
+// Lese-Karte zusammengeführt; Glossar-Begriffe sind direkt im Text antippbar
+// (kein Seitenwechsel). Reihenfolge: Lesen → (Galerie) → (Short ≤3 Min) →
+// Zahlen → Entscheidung → Folge. Bilder/Short erscheinen nur, wenn die Redaktion
+// sie liefert. Die Entscheidung ist gegated (man muss A/B wählen).
 
 type StepKind =
-  | "lage"
-  | "hintergrund"
+  | "lesen"
   | "image"
   | "short"
   | "facts"
@@ -39,10 +45,22 @@ type StepKind =
   | "faktencheck"
   | "outcome";
 
+const MAX_VIDEO_SECONDS = 180; // harte 3-Minuten-Grenze für den Short
+
 function bodyParagraphs(body: Dossier["body"]): string[] {
   return Array.isArray(body)
     ? body.filter((p): p is string => typeof p === "string" && p.trim().length > 0)
     : [];
+}
+
+// "M:SS" oder "H:MM:SS" → Sekunden. Null, wenn nicht parsebar.
+function runtimeSeconds(runtime?: string | null): number | null {
+  if (!runtime) return null;
+  const parts = runtime.trim().split(":").map((p) => Number(p));
+  if (parts.some((n) => !Number.isFinite(n))) return null;
+  if (parts.length === 2) return parts[0] * 60 + parts[1];
+  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  return null;
 }
 
 export function BriefingDeck({ dossier }: { dossier: Dossier }) {
@@ -64,17 +82,34 @@ export function BriefingDeck({ dossier }: { dossier: Dossier }) {
   const body = useMemo(() => bodyParagraphs(dossier.body), [dossier]);
   const glossar = useMemo(() => Object.entries(dossier.glossar ?? {}), [dossier]);
 
-  // Welche Karten gibt es heute? Hintergrund nur, wenn es mehr als den ersten
-  // Absatz oder ein Glossar gibt; Bild/Short nur bei vorhandener URL.
+  // Galerie: explizite images + das einzelne image, nach URL dedupliziert.
+  const gallery = useMemo<DossierImage[]>(() => {
+    const all = [...(dossier.images ?? []), ...(dossier.image ? [dossier.image] : [])];
+    const seen = new Set<string>();
+    return all.filter((img) => {
+      if (!img?.url || seen.has(img.url)) return false;
+      seen.add(img.url);
+      return true;
+    });
+  }, [dossier]);
+
+  // Short nur, wenn URL da UND Länge ≤ 3 Min (oder keine Länge angegeben —
+  // dann verlässt sich die UI auf die Redaktions-Regel). Ein erkennbar zu
+  // langer Clip wird komplett unterdrückt.
+  const videoOk = useMemo(() => {
+    if (!dossier.video?.url) return false;
+    const secs = runtimeSeconds(dossier.video.runtime);
+    return secs === null || secs <= MAX_VIDEO_SECONDS;
+  }, [dossier]);
+
   const preSteps = useMemo<StepKind[]>(() => {
-    const s: StepKind[] = ["lage"];
-    if (body.length > 1 || glossar.length > 0) s.push("hintergrund");
-    if (dossier.image?.url) s.push("image");
-    if (dossier.video?.url) s.push("short");
+    const s: StepKind[] = ["lesen"];
+    if (gallery.length > 0) s.push("image");
+    if (videoOk) s.push("short");
     if (dossier.facts.length > 0) s.push("facts");
     s.push(interaction);
     return s;
-  }, [dossier, body, glossar, interaction]);
+  }, [dossier, gallery, videoOk, interaction]);
 
   // Outcome wird erst nach der Wahl Teil des Decks.
   const steps: StepKind[] =
@@ -149,12 +184,11 @@ export function BriefingDeck({ dossier }: { dossier: Dossier }) {
             onDragEnd={onDragEnd}
             className="absolute inset-0 flex flex-col touch-pan-y"
           >
-            {current === "lage" && <LageCard dossier={dossier} lede={body[0] ?? null} />}
-            {current === "hintergrund" && (
-              <HintergrundCard paragraphs={body.slice(1)} glossar={glossar} />
+            {current === "lesen" && (
+              <LeseCard dossier={dossier} paragraphs={body} glossar={glossar} />
             )}
-            {current === "image" && dossier.image?.url && (
-              <ImageCard image={dossier.image} />
+            {current === "image" && gallery.length > 0 && (
+              <GalleryCard images={gallery} />
             )}
             {current === "short" && dossier.video?.url && (
               <ShortCard video={dossier.video} />
@@ -261,7 +295,18 @@ function CardShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function LageCard({ dossier, lede }: { dossier: Dossier; lede: string | null }) {
+// Eine Lese-Karte: Lage + Hintergrund zusammengeführt. Voller Artikel-Text,
+// nichts gekürzt. Glossar-Begriffe sind im Fließtext antippbar (GlossarText) —
+// so holt man sich Hintergrund auf Tippen, ohne die Karte zu verlassen.
+function LeseCard({
+  dossier,
+  paragraphs,
+  glossar,
+}: {
+  dossier: Dossier;
+  paragraphs: string[];
+  glossar: [string, string][];
+}) {
   return (
     <CardShell>
       <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-semibold uppercase tracking-wide">
@@ -272,77 +317,269 @@ function LageCard({ dossier, lede }: { dossier: Dossier; lede: string | null }) 
         {dossier.headline}
       </h1>
       {dossier.deck && (
-        <p className="text-lg text-foreground/85 leading-relaxed">{dossier.deck}</p>
+        <p className="text-lg text-foreground/85 leading-relaxed">
+          <GlossarText text={dossier.deck} glossar={glossar} />
+        </p>
       )}
-      {lede && (
-        <p className="text-[15px] text-foreground/75 leading-relaxed">{lede}</p>
-      )}
-    </CardShell>
-  );
-}
-
-// Hintergrund-Karte: der restliche Artikel-Text (volle Absätze, nichts gekürzt)
-// plus "Kurz erklärt"-Glossar — der Lese-Mehrwert pro Tag.
-function HintergrundCard({
-  paragraphs,
-  glossar,
-}: {
-  paragraphs: string[];
-  glossar: [string, string][];
-}) {
-  return (
-    <CardShell>
-      <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.18em]">
-        Hintergrund
-      </span>
       {paragraphs.length > 0 && (
-        <div className="flex flex-col gap-3 text-[15px] text-foreground/85 leading-relaxed">
+        <div className="flex flex-col gap-3 text-[15px] text-foreground/80 leading-relaxed">
           {paragraphs.map((p, i) => (
-            <p key={i}>{p}</p>
+            <p key={i}>
+              <GlossarText text={p} glossar={glossar} />
+            </p>
           ))}
         </div>
       )}
-      {glossar.length > 0 && (
-        <div className="flex flex-col gap-2 mt-1 rounded-2xl border border-foreground/10 p-4">
-          <h3 className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.18em]">
-            Kurz erklärt
-          </h3>
-          <dl className="flex flex-col gap-2.5">
-            {glossar.map(([term, def]) => (
-              <div key={term} className="flex flex-col gap-0.5">
-                <dt className="font-semibold text-sm">{term}</dt>
-                <dd className="text-sm text-foreground/75 leading-snug">{def}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-      )}
+      <GlossarChips
+        glossar={glossar}
+        usedIn={[dossier.deck ?? "", ...paragraphs].join("\n")}
+      />
     </CardShell>
   );
 }
 
-function ImageCard({ image }: { image: NonNullable<Dossier["image"]> }) {
+/* --------- Tippbare Glossar-Begriffe --------- */
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Findet Glossar-Begriffe im Text und macht sie antippbar. Tippen klappt die
+// Erklärung direkt unter dem Absatz auf (Toggle). Reiner Lese-Mehrwert, kein
+// neues Datenfeld — nutzt das vorhandene `glossar`.
+function GlossarText({
+  text,
+  glossar,
+}: {
+  text: string;
+  glossar: [string, string][];
+}) {
+  const [open, setOpen] = useState<string | null>(null);
+
+  const { nodes, hasMatch } = useMemo(() => {
+    if (glossar.length === 0)
+      return { nodes: [text] as React.ReactNode[], hasMatch: false };
+    // Längste Begriffe zuerst, damit "Heizungsgesetz" vor "Gesetz" greift.
+    const terms = glossar
+      .map(([t]) => t)
+      .filter((t) => t.trim().length > 1)
+      .sort((a, b) => b.length - a.length);
+    if (terms.length === 0)
+      return { nodes: [text] as React.ReactNode[], hasMatch: false };
+    const re = new RegExp(`(${terms.map(escapeRegExp).join("|")})`, "gi");
+    const defByLower = new Map(glossar.map(([t, d]) => [t.toLowerCase(), d]));
+    const out: React.ReactNode[] = [];
+    let match = false;
+    text.split(re).forEach((chunk, i) => {
+      const def = defByLower.get(chunk.toLowerCase());
+      if (def && i % 2 === 1) {
+        match = true;
+        const isOpen = open?.toLowerCase() === chunk.toLowerCase();
+        out.push(
+          <button
+            key={i}
+            type="button"
+            onPointerDownCapture={(e) => e.stopPropagation()}
+            onClick={() => setOpen(isOpen ? null : chunk)}
+            aria-expanded={isOpen}
+            className={`underline decoration-dotted underline-offset-4 font-medium transition-colors ${
+              isOpen ? "text-accent" : "text-foreground hover:text-accent"
+            }`}
+          >
+            {chunk}
+          </button>,
+        );
+      } else if (chunk) {
+        out.push(chunk);
+      }
+    });
+    return { nodes: out, hasMatch: match };
+  }, [text, glossar, open]);
+
+  const openDef =
+    open != null
+      ? glossar.find(([t]) => t.toLowerCase() === open.toLowerCase())?.[1] ?? null
+      : null;
+
+  return (
+    <>
+      {hasMatch ? nodes : text}
+      <AnimatePresence initial={false}>
+        {open && openDef && (
+          <motion.span
+            key={open}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="block mt-2 rounded-2xl border border-accent/30 bg-accent/5 px-4 py-3 text-sm leading-snug text-foreground/85"
+          >
+            <span className="font-semibold text-foreground">{open}: </span>
+            {openDef}
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
+
+// Begriffe, die im Text nicht vorkommen, als antippbare Chips am Kartenende —
+// so geht keine Erklärung verloren.
+function GlossarChips({
+  glossar,
+  usedIn,
+}: {
+  glossar: [string, string][];
+  usedIn: string;
+}) {
+  const [open, setOpen] = useState<string | null>(null);
+  const haystack = usedIn.toLowerCase();
+  const leftover = glossar.filter(([t]) => !haystack.includes(t.toLowerCase()));
+  if (leftover.length === 0) return null;
+  const openDef =
+    open != null ? leftover.find(([t]) => t === open)?.[1] ?? null : null;
+  return (
+    <div className="mt-1 flex flex-col gap-2 rounded-2xl border border-foreground/10 p-4">
+      <h3 className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.18em]">
+        Kurz erklärt — antippen
+      </h3>
+      <div className="flex flex-wrap gap-2">
+        {leftover.map(([term]) => {
+          const isOpen = open === term;
+          return (
+            <button
+              key={term}
+              type="button"
+              onPointerDownCapture={(e) => e.stopPropagation()}
+              onClick={() => setOpen(isOpen ? null : term)}
+              aria-expanded={isOpen}
+              className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
+                isOpen
+                  ? "bg-accent text-white"
+                  : "bg-foreground/5 text-foreground hover:bg-foreground/10"
+              }`}
+            >
+              {term}
+            </button>
+          );
+        })}
+      </div>
+      <AnimatePresence initial={false}>
+        {open && openDef && (
+          <motion.p
+            key={open}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="text-sm leading-snug text-foreground/85"
+          >
+            <span className="font-semibold text-foreground">{open}: </span>
+            {openDef}
+          </motion.p>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/* --------- Bild-Karussell --------- */
+
+// Wischbares Karussell. Jedes Bild lädt mit onError-Guard; kaputte URLs werden
+// automatisch ausgeblendet.
+function GalleryCard({ images }: { images: DossierImage[] }) {
+  const scroller = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(0);
+  const [broken, setBroken] = useState<Set<string>>(new Set());
+
+  const visible = images.filter((img) => !broken.has(img.url));
+
+  function onScroll() {
+    const el = scroller.current;
+    if (!el) return;
+    const i = Math.round(el.scrollLeft / el.clientWidth);
+    if (i !== active) setActive(i);
+  }
+
+  function scrollTo(i: number) {
+    const el = scroller.current;
+    if (!el) return;
+    el.scrollTo({ left: i * el.clientWidth, behavior: "smooth" });
+  }
+
   return (
     <CardShell>
       <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.18em]">
         Zum Thema
       </span>
-      <figure className="flex flex-col gap-2">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={image.url}
-          alt={image.alt ?? image.caption ?? "Bild zum Thema"}
-          className="w-full rounded-2xl border border-foreground/10 object-cover max-h-[52vh]"
-        />
-        {(image.caption || image.source) && (
-          <figcaption className="text-xs text-muted-foreground leading-snug">
-            {image.caption}
-            {image.source && (
-              <span className="text-foreground/45"> · {image.source}</span>
-            )}
-          </figcaption>
+      <div className="relative">
+        <div
+          ref={scroller}
+          onScroll={onScroll}
+          // Horizontal-Wischen bleibt im Karussell, nicht beim Seiten-Blättern.
+          onPointerDownCapture={(e) => e.stopPropagation()}
+          className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth rounded-2xl [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {visible.map((image) => (
+            <figure
+              key={image.url}
+              className="w-full shrink-0 snap-center flex flex-col gap-2"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={image.url}
+                alt={image.alt ?? image.caption ?? "Bild zum Thema"}
+                onError={() => setBroken((prev) => new Set(prev).add(image.url))}
+                className="w-full rounded-2xl border border-foreground/10 object-cover max-h-[52vh]"
+              />
+              {(image.caption || image.source) && (
+                <figcaption className="text-xs text-muted-foreground leading-snug px-1">
+                  {image.caption}
+                  {image.source && (
+                    <span className="text-foreground/45"> · {image.source}</span>
+                  )}
+                </figcaption>
+              )}
+            </figure>
+          ))}
+        </div>
+
+        {visible.length > 1 && (
+          <>
+            <button
+              type="button"
+              aria-label="Vorheriges Bild"
+              onClick={() => scrollTo(Math.max(0, active - 1))}
+              className="absolute left-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center size-9 rounded-full bg-background/70 backdrop-blur text-foreground hover:bg-background transition-colors disabled:opacity-0"
+              disabled={active === 0}
+            >
+              <ChevronLeft className="size-5" />
+            </button>
+            <button
+              type="button"
+              aria-label="Nächstes Bild"
+              onClick={() => scrollTo(Math.min(visible.length - 1, active + 1))}
+              className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center size-9 rounded-full bg-background/70 backdrop-blur text-foreground hover:bg-background transition-colors disabled:opacity-0"
+              disabled={active >= visible.length - 1}
+            >
+              <ChevronRight className="size-5" />
+            </button>
+          </>
         )}
-      </figure>
+      </div>
+
+      {visible.length > 1 && (
+        <div className="flex items-center justify-center gap-1.5" aria-hidden>
+          {visible.map((img, i) => (
+            <span
+              key={img.url}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                i === active ? "w-5 bg-foreground" : "w-1.5 bg-foreground/25"
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </CardShell>
   );
 }
@@ -350,10 +587,18 @@ function ImageCard({ image }: { image: NonNullable<Dossier["image"]> }) {
 function ShortCard({ video }: { video: NonNullable<Dossier["video"]> }) {
   return (
     <CardShell>
-      <span className="inline-flex w-fit items-center gap-1.5 text-accent text-xs font-semibold uppercase tracking-[0.18em]">
-        <PlayCircle className="size-3.5" />
-        Short ansehen
-      </span>
+      <div className="flex items-center justify-between gap-2">
+        <span className="inline-flex w-fit items-center gap-1.5 text-accent text-xs font-semibold uppercase tracking-[0.18em]">
+          <PlayCircle className="size-3.5" />
+          Short ansehen
+        </span>
+        {video.runtime && (
+          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground tabular-nums">
+            <Clock className="size-3.5" />
+            {video.runtime}
+          </span>
+        )}
+      </div>
       {video.title && (
         <h2 className="font-serif text-xl font-semibold leading-snug">{video.title}</h2>
       )}

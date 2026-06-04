@@ -97,6 +97,12 @@ export type DossierImage = {
   alt?: string;
 };
 
+// Mehrere themenbezogene Bilder als wischbares Karussell auf der Bild-Karte.
+// Abwärtskompatibel zum einzelnen `image`: die UI zeigt [...images, image] und
+// blendet kaputte URLs zur Laufzeit per onError aus. Nur echte, einbettbare
+// URLs (z.B. og:image der zitierten Quellen); im Zweifel leer/weglassen.
+export type DossierGallery = DossierImage[];
+
 // "Was meinst du?" — kurze Meinungsfrage. Nach dem Abstimmen sieht der Nutzer,
 // wie die Community abgestimmt hat (echte Stimmen via dossier_votes), die
 // Begründung jeder Seite und eine neutrale Einordnung ("Warum").
@@ -158,6 +164,7 @@ export type Dossier = {
   meinung: DossierMeinung | null;
   faktencheck: DossierFaktencheck | null;
   image: DossierImage | null;
+  images?: DossierGallery | null; // optionales Bild-Karussell (zusätzlich zu image)
   created_at: string;
 };
 

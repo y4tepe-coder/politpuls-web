@@ -10,17 +10,25 @@ import type { LocalDecision } from "@/lib/local/state";
 type Props = {
   indicators: IndicatorValue[];
   decisions: LocalDecision[];
+  /** Praefix vor dem Basiswert je Zeile. Default "Basis DE" (Deutschland-KPIs);
+   *  fuer persoenliche Werte (z.B. Beliebtheit) z.B. "Start". */
+  baselineLabel?: string;
 };
 
 // Politiker-Performance auf einen Blick. Pro Zeile:
 // links Label/Description, in der Mitte eine grosse Verlaufs-Grafik
 // (Sparkline + Baseline-Referenzlinie + Area-Fill), rechts der
 // aktuelle Wert und die Veraenderung durch User-Entscheidungen.
-export function IndicatorsCard({ indicators, decisions }: Props) {
+export function IndicatorsCard({ indicators, decisions, baselineLabel = "Basis DE" }: Props) {
   return (
     <ul className="glass-card rounded-2xl p-3 sm:p-4 flex flex-col gap-1.5">
       {indicators.map((i) => (
-        <IndicatorRow key={i.label} indicator={i} decisions={decisions} />
+        <IndicatorRow
+          key={i.label}
+          indicator={i}
+          decisions={decisions}
+          baselineLabel={baselineLabel}
+        />
       ))}
     </ul>
   );
@@ -29,9 +37,11 @@ export function IndicatorsCard({ indicators, decisions }: Props) {
 function IndicatorRow({
   indicator,
   decisions,
+  baselineLabel,
 }: {
   indicator: IndicatorValue;
   decisions: LocalDecision[];
+  baselineLabel: string;
 }) {
   const { label, description, current, baseline, userDelta, unit, goodWhenUp, hits } =
     indicator;
@@ -69,7 +79,7 @@ function IndicatorRow({
           </span>
         )}
         <span className="text-xs text-foreground/45 mt-1 tabular-nums">
-          Basis DE: {formatIndicator(baseline, unit)}
+          {baselineLabel}: {formatIndicator(baseline, unit)}
         </span>
       </div>
 

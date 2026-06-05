@@ -47,16 +47,16 @@ export const seedDossier: Dossier = {
         "Signal an Russland",
       ],
       spektrum_delta: { economic: 18, social: -10 },
-      affected_groups: ["CDU/CSU-Wähler:innen", "AfD-Wähler:innen"],
+      affected_groups: ["CDU/CSU-Wähler", "AfD-Wähler"],
       press_question:
-        "Sie kürzen damit faktisch beim Klima. Wie erklären Sie das jungen Wähler:innen?",
+        "Sie kürzen damit faktisch beim Klima. Wie erklären Sie das jungen Wähler?",
       press_presets: [
         "Sicherheit zuerst — Klimaschutz funktioniert nur in einem stabilen Land.",
         "Wir kürzen nicht beim Klima, wir verschieben Prioritäten zeitlich.",
         "Russland zwingt uns dazu. Das ist keine Entscheidung gegen Klima.",
       ],
       deltas: [
-        { label: "Beliebtheit", delta: -4, unit: "%", good: false, note: "Junge Wähler:innen enttäuscht" },
+        { label: "Beliebtheit", delta: -4, unit: "%", good: false, note: "Junge Wähler enttäuscht" },
         { label: "Sicherheitsgefühl", delta: 8, unit: "%", good: true },
         { label: "CO₂-Pfad", delta: -3, unit: "%", good: false, note: "Verzögerung in Energiewende" },
       ],
@@ -71,7 +71,7 @@ export const seedDossier: Dossier = {
         "1,5-Grad-Pfad halten",
       ],
       spektrum_delta: { economic: -12, social: 22 },
-      affected_groups: ["Grüne-Wähler:innen", "SPD-Wähler:innen"],
+      affected_groups: ["Grüne-Wähler", "SPD-Wähler"],
       press_question:
         "Wie wollen Sie das gegenüber der NATO und gegenüber Russland erklären, dass die Bundeswehr leer bleibt?",
       press_presets: [
@@ -95,7 +95,7 @@ export const seedDossier: Dossier = {
         "Erbschaftsteuer-Lücken schließen",
       ],
       spektrum_delta: { economic: -28, social: 12 },
-      affected_groups: ["Linke-Wähler:innen", "SPD-Wähler:innen"],
+      affected_groups: ["Linke-Wähler", "SPD-Wähler"],
       press_question:
         "Der Mittelstand fürchtet, dass das nur der Anfang ist. Was sagen Sie?",
       press_presets: [
@@ -119,7 +119,7 @@ export const seedDossier: Dossier = {
         "Wachstum finanziert Rückzahlung",
       ],
       spektrum_delta: { economic: 8, social: 6 },
-      affected_groups: ["FDP-Wähler:innen", "Wirtschaftsverbände"],
+      affected_groups: ["FDP-Wähler", "Wirtschaftsverbände"],
       press_question:
         "Reformieren Sie die Schuldenbremse — und damit ein verfassungsrechtliches Versprechen. Wo ist die Grenze?",
       press_presets: [
@@ -145,7 +145,7 @@ export const seedDossier: Dossier = {
       cheers: ["Grüne", "SPD-Linke", "Fridays for Future"],
       upset: ["AfD", "Wirtschaftsrat der CDU"],
       summary:
-        "Du priorisierst Klima. Junge Wähler:innen jubeln, Sicherheitspolitiker werfen dir Naivität gegenüber Russland vor.",
+        "Du priorisierst Klima. Junge Wähler jubeln, Sicherheitspolitiker werfen dir Naivität gegenüber Russland vor.",
     },
     C: {
       cheers: ["Linke", "Gewerkschaften", "SPD-Basis"],

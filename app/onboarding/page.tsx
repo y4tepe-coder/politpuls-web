@@ -92,7 +92,15 @@ export default function OnboardingPage() {
 
   async function finish() {
     setSubmitting(true);
-    if (partyId) updateLocalState({ party_id: partyId });
+    if (partyId) {
+      updateLocalState({ party_id: partyId });
+      // Best-effort: gewählte Partei geräteübergreifend sichern.
+      void fetch("/api/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ party_id: partyId }),
+      }).catch(() => null);
+    }
     router.push("/home");
   }
 

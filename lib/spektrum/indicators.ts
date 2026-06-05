@@ -18,7 +18,7 @@ export const DEFAULT_INDICATORS: ReadonlyArray<{
 }> = [
   {
     label: "Beliebtheit",
-    description: "Wie sehen dich die Wähler:innen?",
+    description: "Wie sehen dich die Wähler?",
     baseline: 50,
     unit: "%",
     goodWhenUp: true,

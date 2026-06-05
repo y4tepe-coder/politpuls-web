@@ -12,7 +12,7 @@ import { useLocalSession } from "@/hooks/useLocalSession";
 // wir nicht abgesprochen.
 const TABS = [
   { href: "/home", label: "Start", icon: Home, prefix: ["/home", "/heute", "/pfad", "/wahlkampf"] },
-  { href: "/spektrum", label: "Spektrum", icon: Compass, prefix: ["/spektrum", "/werte-check"] },
+  { href: "/spektrum", label: "Spektrum", icon: Compass, prefix: ["/spektrum"] },
   { href: "/profil", label: "Profil", icon: User, prefix: ["/profil"] },
 ] as const;
 

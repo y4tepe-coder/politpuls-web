@@ -7,11 +7,18 @@ type Props = {
   user: SpektrumVector;
   previous?: SpektrumVector;
   size?: number;
+  /** Parteien-Marker einblenden. Im Spektrum aus — dort zählt nur "wo stehst du". */
+  showParties?: boolean;
 };
 
 // 2-axis political compass. iOS-style: monochrome quadrants, party color dots
 // the only chroma. X = economic (left↔right), Y = social (conservative↔progressive).
-export function CompassMap({ user, previous, size = 280 }: Props) {
+export function CompassMap({
+  user,
+  previous,
+  size = 280,
+  showParties = true,
+}: Props) {
   const pad = 36;
   const inner = size - pad * 2;
   const mid = pad + inner / 2;
@@ -71,18 +78,19 @@ export function CompassMap({ user, previous, size = 280 }: Props) {
         rechts
       </text>
 
-      {/* Party markers */}
-      {parties.map((party) => {
-        const { x, y } = project(party.position);
-        return (
-          <g key={party.id}>
-            <circle cx={x} cy={y} r={6} fill={party.color} stroke="white" strokeWidth={1.5} />
-            <text x={x + 9} y={y + 3} className="fill-foreground text-xs font-semibold">
-              {party.shortName}
-            </text>
-          </g>
-        );
-      })}
+      {/* Party markers — nur wenn explizit gewünscht (Briefing). */}
+      {showParties &&
+        parties.map((party) => {
+          const { x, y } = project(party.position);
+          return (
+            <g key={party.id}>
+              <circle cx={x} cy={y} r={6} fill={party.color} stroke="white" strokeWidth={1.5} />
+              <text x={x + 9} y={y + 3} className="fill-foreground text-xs font-semibold">
+                {party.shortName}
+              </text>
+            </g>
+          );
+        })}
 
       {prevPos && (
         <>

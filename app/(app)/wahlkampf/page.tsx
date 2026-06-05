@@ -24,7 +24,7 @@ const ROLES: {
 }[] = [
   {
     id: "kandidat",
-    title: "Kandidat:in",
+    title: "Kandidat",
     icon: <Flag className="size-5" />,
     blurb:
       "Du startest hier. Jeden Tag eine Entscheidung, jeden Monat eine Wahl — wenn du gut spielst, klettert deine Partei nach oben.",
@@ -32,7 +32,7 @@ const ROLES: {
   },
   {
     id: "minister",
-    title: "Minister:in",
+    title: "Minister",
     icon: <Briefcase className="size-5" />,
     blurb:
       "Wenn deine Partei Platz 2–4 holt und in die Koalition passt, bekommst du ein Ressort. Du verantwortest jetzt ein Themenfeld.",
@@ -40,7 +40,7 @@ const ROLES: {
   },
   {
     id: "kanzler",
-    title: "Bundeskanzler:in",
+    title: "Bundeskanzler",
     icon: <Crown className="size-5" />,
     blurb:
       "Wenn deine Partei Platz 1 holt, übernimmst du die Regierung. Jetzt zählen Außenpolitik, Haushalt, Krisen-Management.",
@@ -105,7 +105,7 @@ export default function WahlkampfPage() {
           Wahlkampf-Modus
         </span>
         <h1 className="font-serif text-3xl sm:text-4xl font-semibold leading-tight">
-          Werde Bundeskanzler:in.
+          Werde Bundeskanzler.
         </h1>
         <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
           Alle 30 Tage wird gewählt. Bis dahin sammelst du im täglichen Briefing

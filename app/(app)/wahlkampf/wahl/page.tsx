@@ -68,6 +68,13 @@ export default function WahlPage() {
     if (!results) return;
     const role = determineRole(results, coalition, myPartyId);
     updateLocalState({ role });
+    // Best-effort: Rolle + Partei geräteübergreifend sichern. Schaltet u.a.
+    // das "Auswirkung auf Deutschland"-Modul im Spektrum frei.
+    void fetch("/api/profile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role, party_id: myPartyId }),
+    }).catch(() => null);
     setPicked(coalition);
     setPhase("role");
   }
@@ -266,14 +273,14 @@ export default function WahlPage() {
   const role = determineRole(results, picked, myPartyId);
   const roleData = {
     kanzler: {
-      title: "Bundeskanzler:in",
+      title: "Bundeskanzler",
       icon: <Crown className="size-10" />,
       blurb:
         "Deine Partei hat die Wahl gewonnen. Du übernimmst die Regierung — Außenpolitik, Haushalt, Krisen-Management liegen jetzt in deiner Hand.",
       tone: "glass-card text-foreground",
     },
     minister: {
-      title: "Minister:in",
+      title: "Minister",
       icon: <Briefcase className="size-10" />,
       blurb: picked
         ? `Du regierst in der ${picked.label}-Koalition mit. Welches Ressort? Das verhandelst du noch.`

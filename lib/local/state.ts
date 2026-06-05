@@ -1,7 +1,6 @@
 "use client";
 
 import type { SpektrumVector } from "@/lib/spektrum/types";
-import type { Stance } from "@/lib/data/positions-catalogue";
 
 // Browser-local game state. Mirrors what would live on the Supabase profiles
 // row when the user is signed in. Source of truth when offline.
@@ -43,7 +42,6 @@ export type LocalState = {
   decisions: LocalDecision[];
   role: LocalRole;
   party_id: string | null;
-  positions: Record<string, Stance>;
   // Wahlkampf-Fortschritt
   campaign_themen: string[]; // bis zu 3 ids aus WAHLKAMPF_THEMEN
   campaign_plakat: WahlkampfPlakat | null;
@@ -61,7 +59,6 @@ const DEFAULT_STATE: LocalState = {
   decisions: [],
   role: "kandidat",
   party_id: null,
-  positions: {},
   campaign_themen: [],
   campaign_plakat: null,
   campaign_triell_answers: {},

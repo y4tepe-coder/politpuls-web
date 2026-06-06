@@ -3,9 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { parties } from "@/lib/spektrum/parties";
+import {
+  parties,
+  CUSTOM_PARTY_ID,
+  CUSTOM_PARTY_COLORS,
+} from "@/lib/spektrum/parties";
 import { registerLocally, ensureLocalSession } from "@/lib/local/session";
 import { updateLocalState } from "@/lib/local/state";
+import { CustomPartyEditor } from "@/components/party/CustomPartyEditor";
 import { createClient } from "@/lib/supabase/client";
 import { germanAuthError } from "@/lib/auth/errors";
 import { Button } from "@/components/ui/button";
@@ -42,8 +47,15 @@ export default function OnboardingPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [partyId, setPartyId] = useState<string | null>(null);
+  const [customName, setCustomName] = useState("");
+  const [customColor, setCustomColor] = useState<string>(CUSTOM_PARTY_COLORS[0]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const isCustom = partyId === CUSTOM_PARTY_ID;
+  const customReady = customName.trim().length > 0;
+  // "Weiter" frei, sobald eine echte Partei ODER eine benannte eigene Partei steht.
+  const partyStepReady = isCustom ? customReady : partyId !== null;
 
   function back() {
     if (step === 0) {
@@ -92,13 +104,26 @@ export default function OnboardingPage() {
 
   async function finish() {
     setSubmitting(true);
-    if (partyId) {
-      updateLocalState({ party_id: partyId });
-      // Best-effort: gewählte Partei geräteübergreifend sichern.
+    if (isCustom && customReady) {
+      updateLocalState({
+        party_id: CUSTOM_PARTY_ID,
+        custom_party: {
+          name: customName.trim(),
+          shortName: customName.trim().slice(0, 6).toUpperCase(),
+          color: customColor,
+        },
+      });
+    } else if (partyId) {
+      updateLocalState({ party_id: partyId, custom_party: null });
+    }
+    // Best-effort: gewählte Partei geräteübergreifend sichern (bei der
+    // eigenen Partei nur die id — die Definition bleibt lokal).
+    const persistedId = isCustom ? (customReady ? CUSTOM_PARTY_ID : null) : partyId;
+    if (persistedId) {
       void fetch("/api/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ party_id: partyId }),
+        body: JSON.stringify({ party_id: persistedId }),
       }).catch(() => null);
     }
     router.push("/home");
@@ -206,7 +231,7 @@ export default function OnboardingPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="E-Mail"
-                    className="pl-9 h-12 text-base"
+                    className="pl-9 h-12 text-base bg-background text-foreground placeholder:text-foreground/45"
                     autoComplete="email"
                     disabled={submitting}
                   />
@@ -223,7 +248,7 @@ export default function OnboardingPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Passwort (min. 6 Zeichen)"
-                    className="pl-9 h-12 text-base"
+                    className="pl-9 h-12 text-base bg-background text-foreground placeholder:text-foreground/45"
                     autoComplete="new-password"
                     disabled={submitting}
                   />
@@ -239,7 +264,7 @@ export default function OnboardingPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Wie sollen wir dich nennen?"
-                    className="pl-9 h-12 text-base"
+                    className="pl-9 h-12 text-base bg-background text-foreground placeholder:text-foreground/45"
                     autoComplete="given-name"
                     disabled={submitting}
                   />
@@ -284,7 +309,7 @@ export default function OnboardingPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="z. B. Yasin"
-                    className="pl-9 h-12 text-base"
+                    className="pl-9 h-12 text-base bg-background text-foreground placeholder:text-foreground/45"
                     autoComplete="given-name"
                   />
                 </div>
@@ -298,11 +323,7 @@ export default function OnboardingPage() {
 
           {step === 2 && (
             <StepShell key="2">
-              <Hero
-                kicker="Schritt 2 von 3"
-                title="Mit welcher Partei trittst du an?"
-                blurb="Deine Heimat im Wahlkampf — kannst du später wechseln."
-              />
+              <Hero kicker="Schritt 2 von 3" title="Deine Partei" />
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5 w-full max-w-md mt-2">
                 {parties.map((party) => {
                   const isSelected = partyId === party.id;
@@ -311,29 +332,61 @@ export default function OnboardingPage() {
                       key={party.id}
                       type="button"
                       onClick={() => setPartyId(party.id)}
-                      className={`relative rounded-2xl p-3 flex flex-col gap-1.5 items-start transition-all text-left min-h-[80px] ${
+                      className={`relative rounded-2xl p-3 flex items-center justify-center transition-all text-center min-h-[64px] border ${
                         isSelected
-                          ? "bg-foreground text-background border border-foreground shadow-md scale-[1.03]"
-                          : "glass-card hover:bg-foreground/5"
+                          ? "bg-foreground/[0.04] shadow-sm scale-[1.02]"
+                          : "glass-card border-transparent hover:bg-foreground/5"
                       }`}
+                      style={
+                        isSelected
+                          ? { borderColor: party.color, boxShadow: `0 0 0 1px ${party.color}` }
+                          : undefined
+                      }
                     >
-                      <span
-                        className="size-5 rounded-full"
-                        style={{ backgroundColor: party.color }}
-                        aria-hidden
-                      />
                       <span className="font-serif font-semibold text-sm">
                         {party.shortName}
                       </span>
                     </button>
                   );
                 })}
+
+                {/* Eigene Partei */}
+                <button
+                  type="button"
+                  onClick={() => setPartyId(CUSTOM_PARTY_ID)}
+                  className={`relative rounded-2xl p-3 flex items-center justify-center transition-all text-center min-h-[64px] border border-dashed ${
+                    isCustom
+                      ? "bg-foreground/[0.04] shadow-sm scale-[1.02]"
+                      : "border-foreground/25 hover:bg-foreground/5"
+                  }`}
+                  style={
+                    isCustom
+                      ? { borderColor: customColor, borderStyle: "solid", boxShadow: `0 0 0 1px ${customColor}` }
+                      : undefined
+                  }
+                >
+                  <span className="font-serif font-semibold text-sm">
+                    Eigene
+                  </span>
+                </button>
               </div>
+
+              {isCustom && (
+                <div className="w-full max-w-md mt-1">
+                  <CustomPartyEditor
+                    name={customName}
+                    color={customColor}
+                    onName={setCustomName}
+                    onColor={setCustomColor}
+                  />
+                </div>
+              )}
+
               <Button
                 onClick={() => setStep(3)}
                 size="lg"
                 className="h-12 group w-full max-w-sm mt-4"
-                disabled={!partyId}
+                disabled={!partyStepReady}
               >
                 Weiter
                 <ArrowRight className="size-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
@@ -387,7 +440,7 @@ function StepShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Hero({ kicker, title, blurb }: { kicker: string; title: string; blurb: string }) {
+function Hero({ kicker, title, blurb }: { kicker: string; title: string; blurb?: string }) {
   return (
     <header className="flex flex-col gap-2 items-center">
       <span className="text-on-bg text-foreground/70 text-xs font-semibold uppercase tracking-[0.2em]">
@@ -396,9 +449,11 @@ function Hero({ kicker, title, blurb }: { kicker: string; title: string; blurb: 
       <h1 className="text-on-bg font-serif text-3xl sm:text-4xl font-semibold leading-tight">
         {title}
       </h1>
-      <p className="text-on-bg text-sm sm:text-base text-foreground/80 leading-relaxed max-w-sm mt-1">
-        {blurb}
-      </p>
+      {blurb && (
+        <p className="text-on-bg text-sm sm:text-base text-foreground/80 leading-relaxed max-w-sm mt-1">
+          {blurb}
+        </p>
+      )}
     </header>
   );
 }

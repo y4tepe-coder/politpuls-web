@@ -33,6 +33,14 @@ export type WahlkampfPlakat = {
   layout: "classic" | "modern" | "bold";
 };
 
+// Selbst angelegte Partei. Wird im ganzen Spiel wie eine echte Partei
+// behandelt, sobald party_id === "custom" ist.
+export type CustomPartyDef = {
+  name: string;
+  shortName: string;
+  color: string;
+};
+
 export type LocalState = {
   spektrum: SpektrumVector;
   current_streak: number;
@@ -42,6 +50,7 @@ export type LocalState = {
   decisions: LocalDecision[];
   role: LocalRole;
   party_id: string | null;
+  custom_party: CustomPartyDef | null;
   // Wahlkampf-Fortschritt
   campaign_themen: string[]; // bis zu 3 ids aus WAHLKAMPF_THEMEN
   campaign_plakat: WahlkampfPlakat | null;
@@ -59,6 +68,7 @@ const DEFAULT_STATE: LocalState = {
   decisions: [],
   role: "kandidat",
   party_id: null,
+  custom_party: null,
   campaign_themen: [],
   campaign_plakat: null,
   campaign_triell_answers: {},
@@ -109,4 +119,11 @@ export function appendLocalDecision(decision: LocalDecision): LocalState {
 export function resetLocalState() {
   const storage = safeStorage();
   if (storage) storage.removeItem(KEY);
+}
+
+// Die eigene Partei aus dem lokalen Spielstand (oder null). Wird vom
+// Parteien-Resolver genutzt, damit party_id === "custom" überall im
+// Spiel die selbst gewählte Partei auflöst.
+export function getLocalCustomParty(): CustomPartyDef | null {
+  return getLocalState().custom_party;
 }

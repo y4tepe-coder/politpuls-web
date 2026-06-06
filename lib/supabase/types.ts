@@ -76,10 +76,16 @@ export type DossierFormat =
   | "meinung"
   | "faktencheck";
 
-// Nullable, embeddable clip slot — a kurzer "Short" zum Thema (YouTube/Reel-Embed).
+// Nullable, embeddable clip slot — entweder ein kurzer YouTube-"Short" zum Thema
+// ODER ein KI-Erklärvideo (Remotion + TTS), das per nativem <video> läuft.
 export type DossierVideo = {
   title: string;
   url: string | null;
+  // "ai-explainer" → eigenes mp4 (Remotion-Pipeline), wird als <video> gespielt
+  // und ist die Hauptkarte des Briefings. "youtube" (Default) → iframe-Embed.
+  // Fehlt das Feld, entscheidet die Dateiendung (.mp4 → nativer Player).
+  kind?: "youtube" | "ai-explainer";
+  poster?: string; // Standbild (echtes Bild) für den nativen Player
   channel?: string;
   ticker?: string;
   blurb?: string;

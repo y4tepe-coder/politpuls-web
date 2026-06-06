@@ -25,9 +25,19 @@ export function useDecision(dossier: Dossier) {
   useEffect(() => {
     ensureLocalSession();
     const local = getLocalState();
-    setSpektrumBefore(local.spektrum);
-    setSpektrumAfter(local.spektrum);
-  }, []);
+    // Bereits getroffene Entscheidung für dieses Dossier vorladen → sperrt die
+    // Wahl (read-only). Ohne das startet jedes Wieder-Öffnen mit chosenId=null,
+    // und man könnte die Entscheidung beliebig oft neu treffen.
+    const prior = local.decisions.find((d) => d.dossierId === dossier.id);
+    if (prior) {
+      setChosenId(prior.choiceId as ChoiceId);
+      setSpektrumBefore(prior.spektrumBefore);
+      setSpektrumAfter(prior.spektrumAfter);
+    } else {
+      setSpektrumBefore(local.spektrum);
+      setSpektrumAfter(local.spektrum);
+    }
+  }, [dossier.id]);
 
   const chosen = chosenId
     ? dossier.choices.find((c) => c.id === chosenId) ?? null

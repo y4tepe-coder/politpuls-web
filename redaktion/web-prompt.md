@@ -127,7 +127,10 @@ Erzeuge das Dossier für HEUTE: **{{TODAY}}** (Berliner Zeit).
     // OPTIONAL: mehrere themenbezogene Bilder als wischbares Karussell auf der
     // Bild-Karte. Ideal: die og:image-Bilder der zitierten Quell-Artikel.
     // NUR echte, direkt einbettbare Bild-URLs — lieber 2 gute als 6 geratene.
-    // Im Zweifel "images": null oder leeres Array.
+    // HINWEIS: Lässt du "images": null, füllt ein automatischer Schritt nach der
+    // Generierung (enrich-images.mjs) die Bilder aus den og:image deiner sources.
+    // Du musst also keine Bild-URLs raten — wähle lieber Quellen mit gutem
+    // Artikelbild. Im Zweifel "images": null.
     {
       "url": "https://echte-bild-url-1.jpg",
       "caption": "Kurze Bildunterschrift, max 12 Wörter",

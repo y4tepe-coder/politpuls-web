@@ -26,6 +26,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  X,
 } from "lucide-react";
 
 // Swipe-Deck statt langem Scroll-Artikel: man blättert (rechts→links wischen
@@ -660,75 +661,91 @@ function ExplainerCard({
   const [showText, setShowText] = useState(false);
   const video = dossier.video!;
   return (
-    <CardShell>
-      <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-semibold uppercase tracking-wide">
-        <PlayCircle className="size-3.5" />
-        {dossier.kicker ?? "Tagesbriefing"}
-      </span>
-      <h1 className="font-serif text-2xl sm:text-3xl font-semibold leading-tight text-foreground">
-        {dossier.headline}
-      </h1>
-      <div className="rounded-2xl border border-foreground/10 bg-black overflow-hidden">
-        {/* object-contain + max-h: passt sich an 9:16 ODER 16:9 an, ohne zu beschneiden. */}
-        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-        <video
-          src={video.url ?? undefined}
-          poster={video.poster}
-          controls
-          playsInline
-          preload="metadata"
-          className="w-full max-h-[60vh] object-contain bg-black"
-        />
-      </div>
-      {video.blurb && (
-        <p className="text-sm text-foreground/70 leading-relaxed">{video.blurb}</p>
-      )}
-
-      <button
-        type="button"
-        onClick={() => setShowText((v) => !v)}
+    <div className="relative h-full w-full overflow-hidden rounded-3xl bg-black flex flex-col">
+      {/* Vollflächiges Video — Social-Media-Optik, füllt die ganze Karte. */}
+      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+      <video
+        src={video.url ?? undefined}
+        poster={video.poster}
+        controls
+        playsInline
+        preload="metadata"
+        // Eigene Steuerung (Play/Scrub) soll nicht das Karten-Wischen auslösen.
         onPointerDownCapture={(e) => e.stopPropagation()}
-        aria-expanded={showText}
-        className="inline-flex w-fit items-center gap-2 rounded-full bg-foreground/5 hover:bg-foreground/10 px-4 py-2 text-sm font-medium text-foreground transition-colors"
-      >
-        <Newspaper className="size-4" />
-        {showText ? "Text schließen" : "Text öffnen"}
-        <ChevronRight
-          className={`size-4 transition-transform ${showText ? "rotate-90" : ""}`}
-        />
-      </button>
+        className="absolute inset-0 h-full w-full object-contain bg-black"
+      />
 
-      <AnimatePresence initial={false}>
+      {/* Top-Leiste über sanftem Verlauf: Kicker links, "Text öffnen" rechts.
+          Bewusst OBEN, damit nichts die nativen Video-Steuerungen (unten)
+          überdeckt. */}
+      <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 bg-gradient-to-b from-black/60 via-black/20 to-transparent px-4 pt-4 pb-12">
+        <span className="pointer-events-none inline-flex min-w-0 items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white backdrop-blur-sm">
+          <PlayCircle className="size-3.5 shrink-0" />
+          <span className="truncate">{dossier.kicker ?? "Tagesbriefing"}</span>
+        </span>
+        <button
+          type="button"
+          onClick={() => setShowText(true)}
+          onPointerDownCapture={(e) => e.stopPropagation()}
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3.5 py-1.5 text-xs font-semibold text-ink shadow backdrop-blur transition-transform hover:scale-105 active:scale-95"
+        >
+          <Newspaper className="size-3.5" />
+          Text öffnen
+        </button>
+      </div>
+
+      {/* Text als hochschiebendes Sheet (Social-Media-Style). */}
+      <AnimatePresence>
         {showText && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.25 }}
-            className="overflow-hidden flex flex-col gap-3"
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            onPointerDownCapture={(e) => e.stopPropagation()}
+            className="absolute inset-0 z-20 flex flex-col bg-background"
           >
-            {dossier.deck && (
-              <p className="text-lg text-foreground/85 leading-relaxed pt-1">
-                <GlossarText text={dossier.deck} glossar={glossar} />
-              </p>
-            )}
-            {paragraphs.length > 0 && (
-              <div className="flex flex-col gap-3 text-[15px] text-foreground/80 leading-relaxed">
-                {paragraphs.map((p, i) => (
-                  <p key={i}>
-                    <GlossarText text={p} glossar={glossar} />
-                  </p>
-                ))}
-              </div>
-            )}
-            <GlossarChips
-              glossar={glossar}
-              usedIn={[dossier.deck ?? "", ...paragraphs].join("\n")}
-            />
+            <div className="flex items-center justify-between border-b border-foreground/10 px-5 py-3">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
+                <Newspaper className="size-3.5" />
+                {dossier.kicker ?? "Zum Thema"}
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowText(false)}
+                aria-label="Schließen"
+                className="inline-flex size-9 items-center justify-center rounded-full text-foreground hover:bg-foreground/5"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">
+              <h1 className="font-serif text-2xl font-semibold leading-tight text-foreground">
+                {dossier.headline}
+              </h1>
+              {dossier.deck && (
+                <p className="text-lg text-foreground/85 leading-relaxed">
+                  <GlossarText text={dossier.deck} glossar={glossar} />
+                </p>
+              )}
+              {paragraphs.length > 0 && (
+                <div className="flex flex-col gap-3 text-[15px] text-foreground/80 leading-relaxed">
+                  {paragraphs.map((p, i) => (
+                    <p key={i}>
+                      <GlossarText text={p} glossar={glossar} />
+                    </p>
+                  ))}
+                </div>
+              )}
+              <GlossarChips
+                glossar={glossar}
+                usedIn={[dossier.deck ?? "", ...paragraphs].join("\n")}
+              />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </CardShell>
+    </div>
   );
 }
 
@@ -855,22 +872,30 @@ function OutcomeCard({
       </div>
 
       {sources.length > 0 && (
-        <div className="flex flex-col gap-1.5 mt-1 pt-3 border-t border-foreground/10">
-          <h3 className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.18em]">
+        <div className="flex flex-col gap-1 mt-1 pt-3 border-t border-foreground/10">
+          <h3 className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.18em] mb-1">
             Quellen
           </h3>
-          <ul className="flex flex-col gap-1">
+          <ul className="flex flex-col">
             {sources.map((s, i) => (
               <li key={i}>
+                {/* Aufgeräumt: Icon + Titel auf EINER Zeile (gekürzt) + Outlet
+                    klein darunter — kein wirres Umbrechen mehr. */}
                 <a
                   href={s.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-sm text-foreground/70 hover:text-foreground underline underline-offset-4"
+                  className="group flex items-center gap-2.5 rounded-xl -mx-2 px-2 py-2 hover:bg-foreground/5 transition-colors"
                 >
-                  <ExternalLink className="size-3.5 shrink-0" />
-                  <span>{s.title}</span>
-                  {s.outlet && <span className="text-foreground/45">· {s.outlet}</span>}
+                  <ExternalLink className="size-4 shrink-0 text-foreground/35 group-hover:text-foreground/60" />
+                  <span className="flex flex-col min-w-0">
+                    <span className="text-sm text-foreground/80 leading-snug line-clamp-1">
+                      {s.title}
+                    </span>
+                    {s.outlet && (
+                      <span className="text-xs text-foreground/45">{s.outlet}</span>
+                    )}
+                  </span>
                 </a>
               </li>
             ))}

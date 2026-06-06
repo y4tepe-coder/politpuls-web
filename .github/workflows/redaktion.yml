@@ -63,6 +63,11 @@ jobs:
           fi
           python3 -m json.tool out/dossier.json > /dev/null
 
+      - name: Enrich with real press images (og:image)
+        # Füllt images[] aus den og:image der Quellen. Soft-Fail: scheitert das,
+        # bleibt images leer und das Dossier wird trotzdem hochgeladen.
+        run: node redaktion/enrich-images.mjs || echo "enrich-images übersprungen"
+
       - name: Upload to Supabase
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

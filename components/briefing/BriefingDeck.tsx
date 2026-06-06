@@ -93,23 +93,44 @@ export function BriefingDeck({ dossier }: { dossier: Dossier }) {
     });
   }, [dossier]);
 
-  // Short nur, wenn URL da UND Länge ≤ 3 Min (oder keine Länge angegeben —
-  // dann verlässt sich die UI auf die Redaktions-Regel). Ein erkennbar zu
-  // langer Clip wird komplett unterdrückt.
-  const videoOk = useMemo(() => {
-    if (!dossier.video?.url) return false;
-    const secs = runtimeSeconds(dossier.video.runtime);
-    return secs === null || secs <= MAX_VIDEO_SECONDS;
+  // KI-Erklärvideo (eigenes mp4 aus der Remotion-Pipeline) vs. klassischer
+  // YouTube-Short. Erkennung: explizit per kind ODER an der Dateiendung.
+  const isExplainer = useMemo(() => {
+    const v = dossier.video;
+    if (!v?.url) return false;
+    return v.kind === "ai-explainer" || /\.mp4(\?|#|$)/i.test(v.url);
   }, [dossier]);
 
+  // Short nur, wenn URL da UND Länge ≤ 3 Min (oder keine Länge angegeben —
+  // dann verlässt sich die UI auf die Redaktions-Regel). Ein erkennbar zu
+  // langer Clip wird komplett unterdrückt. Das eigene Erklärvideo kontrollieren
+  // wir selbst → keine harte Längen-Grenze.
+  const videoOk = useMemo(() => {
+    if (!dossier.video?.url) return false;
+    if (isExplainer) return true;
+    const secs = runtimeSeconds(dossier.video.runtime);
+    return secs === null || secs <= MAX_VIDEO_SECONDS;
+  }, [dossier, isExplainer]);
+
   const preSteps = useMemo<StepKind[]>(() => {
-    const s: StepKind[] = ["lesen"];
-    if (gallery.length > 0) s.push("image");
-    if (videoOk) s.push("short");
-    if (dossier.facts.length > 0) s.push("facts");
+    const s: StepKind[] = [];
+    if (isExplainer && videoOk) {
+      // Video-First: das Erklärvideo ist die Hauptkarte. Der volle Artikeltext
+      // steckt als optionaler "Text öffnen"-Toggle IN der Video-Karte — also
+      // kein eigener "lesen"-Schritt mehr.
+      s.push("short");
+      if (gallery.length > 0) s.push("image");
+      if (dossier.facts.length > 0) s.push("facts");
+    } else {
+      // Klassisch: Lesen zuerst, optionaler YouTube-Short dazwischen.
+      s.push("lesen");
+      if (gallery.length > 0) s.push("image");
+      if (videoOk) s.push("short");
+      if (dossier.facts.length > 0) s.push("facts");
+    }
     s.push(interaction);
     return s;
-  }, [dossier, gallery, videoOk, interaction]);
+  }, [isExplainer, gallery, videoOk, dossier.facts.length, interaction]);
 
   // Outcome wird erst nach der Wahl Teil des Decks.
   const steps: StepKind[] =
@@ -122,13 +143,15 @@ export function BriefingDeck({ dossier }: { dossier: Dossier }) {
   const current = steps[Math.min(index, steps.length - 1)];
 
   const atFirst = index === 0;
-  // Vor der Entscheidung frei vor/zurück; auf der Entscheidung nur per Wahl weiter.
-  const canNext = current !== "decision" && index < steps.length - 1;
+  // Vor der Entscheidung frei vor/zurück; auf der Entscheidung nur weiter, wenn
+  // schon gewählt — dann zum Outcome (Nachlesen), die Wahl selbst ist gesperrt.
+  const canNext =
+    (current !== "decision" || !!chosen) && index < steps.length - 1;
 
   function paginate(next: number) {
     const target = index + next;
     if (target < 0 || target > steps.length - 1) return;
-    if (next > 0 && current === "decision") return; // Gate
+    if (next > 0 && current === "decision" && !chosen) return; // Gate: erst wählen
     setDir(next);
     setIndex(target);
   }
@@ -190,9 +213,17 @@ export function BriefingDeck({ dossier }: { dossier: Dossier }) {
             {current === "image" && gallery.length > 0 && (
               <GalleryCard images={gallery} />
             )}
-            {current === "short" && dossier.video?.url && (
-              <ShortCard video={dossier.video} />
-            )}
+            {current === "short" &&
+              dossier.video?.url &&
+              (isExplainer ? (
+                <ExplainerCard
+                  dossier={dossier}
+                  paragraphs={body}
+                  glossar={glossar}
+                />
+              ) : (
+                <ShortCard video={dossier.video} />
+              ))}
             {current === "facts" && <FactsCard facts={dossier.facts} />}
             {current === "decision" && (
               <DecisionCard
@@ -241,7 +272,7 @@ export function BriefingDeck({ dossier }: { dossier: Dossier }) {
           <ArrowLeft className="size-5" />
         </button>
 
-        {current === "decision" ? (
+        {current === "decision" && !chosen ? (
           <span className="text-xs text-muted-foreground">Wähle, um fortzufahren</span>
         ) : current === "meinung" || current === "faktencheck" ? (
           formatDone ? (
@@ -354,7 +385,10 @@ function GlossarText({
   text: string;
   glossar: [string, string][];
 }) {
-  const [open, setOpen] = useState<string | null>(null);
+  // Offenes Vorkommen per Split-Index (nicht per Begriff): so klappt genau das
+  // GETIPPTE Vorkommen auf und die Erklärung sitzt direkt darunter — nicht am
+  // Absatzende, und nicht alle gleichen Begriffe gleichzeitig.
+  const [openIdx, setOpenIdx] = useState<number | null>(null);
 
   const { nodes, hasMatch } = useMemo(() => {
     if (glossar.length === 0)
@@ -374,13 +408,13 @@ function GlossarText({
       const def = defByLower.get(chunk.toLowerCase());
       if (def && i % 2 === 1) {
         match = true;
-        const isOpen = open?.toLowerCase() === chunk.toLowerCase();
+        const isOpen = openIdx === i;
         out.push(
           <button
-            key={i}
+            key={`t-${i}`}
             type="button"
             onPointerDownCapture={(e) => e.stopPropagation()}
-            onClick={() => setOpen(isOpen ? null : chunk)}
+            onClick={() => setOpenIdx(isOpen ? null : i)}
             aria-expanded={isOpen}
             className={`underline decoration-dotted underline-offset-4 font-medium transition-colors ${
               isOpen ? "text-accent" : "text-foreground hover:text-accent"
@@ -389,38 +423,30 @@ function GlossarText({
             {chunk}
           </button>,
         );
+        if (isOpen) {
+          // Block-level → bricht den Inline-Fluss, sitzt also unmittelbar unter
+          // dem Begriff; der restliche Absatz fließt darunter weiter.
+          out.push(
+            <motion.span
+              key={`d-${i}`}
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              transition={{ duration: 0.2 }}
+              className="block my-2 rounded-2xl border border-accent/30 bg-accent/5 px-4 py-3 text-sm leading-snug text-foreground/85"
+            >
+              <span className="font-semibold text-foreground">{chunk}: </span>
+              {def}
+            </motion.span>,
+          );
+        }
       } else if (chunk) {
         out.push(chunk);
       }
     });
     return { nodes: out, hasMatch: match };
-  }, [text, glossar, open]);
+  }, [text, glossar, openIdx]);
 
-  const openDef =
-    open != null
-      ? glossar.find(([t]) => t.toLowerCase() === open.toLowerCase())?.[1] ?? null
-      : null;
-
-  return (
-    <>
-      {hasMatch ? nodes : text}
-      <AnimatePresence initial={false}>
-        {open && openDef && (
-          <motion.span
-            key={open}
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-            className="block mt-2 rounded-2xl border border-accent/30 bg-accent/5 px-4 py-3 text-sm leading-snug text-foreground/85"
-          >
-            <span className="font-semibold text-foreground">{open}: </span>
-            {openDef}
-          </motion.span>
-        )}
-      </AnimatePresence>
-    </>
-  );
+  return <>{hasMatch ? nodes : text}</>;
 }
 
 // Begriffe, die im Text nicht vorkommen, als antippbare Chips am Kartenende —
@@ -621,6 +647,93 @@ function ShortCard({ video }: { video: NonNullable<Dossier["video"]> }) {
   );
 }
 
+// Video-First-Hauptkarte: das KI-Erklärvideo läuft als nativer <video>-Player,
+// der volle Artikeltext (mit antippbarem Glossar) steckt darunter hinter einem
+// optionalen "Text öffnen"-Schalter — Standard ist zu.
+function ExplainerCard({
+  dossier,
+  paragraphs,
+  glossar,
+}: {
+  dossier: Dossier;
+  paragraphs: string[];
+  glossar: [string, string][];
+}) {
+  const [showText, setShowText] = useState(false);
+  const video = dossier.video!;
+  return (
+    <CardShell>
+      <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-semibold uppercase tracking-wide">
+        <PlayCircle className="size-3.5" />
+        {dossier.kicker ?? "Tagesbriefing"}
+      </span>
+      <h1 className="font-serif text-2xl sm:text-3xl font-semibold leading-tight text-foreground">
+        {dossier.headline}
+      </h1>
+      <div className="rounded-2xl border border-foreground/10 bg-black overflow-hidden">
+        {/* object-contain + max-h: passt sich an 9:16 ODER 16:9 an, ohne zu beschneiden. */}
+        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+        <video
+          src={video.url ?? undefined}
+          poster={video.poster}
+          controls
+          playsInline
+          preload="metadata"
+          className="w-full max-h-[60vh] object-contain bg-black"
+        />
+      </div>
+      {video.blurb && (
+        <p className="text-sm text-foreground/70 leading-relaxed">{video.blurb}</p>
+      )}
+
+      <button
+        type="button"
+        onClick={() => setShowText((v) => !v)}
+        onPointerDownCapture={(e) => e.stopPropagation()}
+        aria-expanded={showText}
+        className="inline-flex w-fit items-center gap-2 rounded-full bg-foreground/5 hover:bg-foreground/10 px-4 py-2 text-sm font-medium text-foreground transition-colors"
+      >
+        <Newspaper className="size-4" />
+        {showText ? "Text schließen" : "Text öffnen"}
+        <ChevronRight
+          className={`size-4 transition-transform ${showText ? "rotate-90" : ""}`}
+        />
+      </button>
+
+      <AnimatePresence initial={false}>
+        {showText && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25 }}
+            className="overflow-hidden flex flex-col gap-3"
+          >
+            {dossier.deck && (
+              <p className="text-lg text-foreground/85 leading-relaxed pt-1">
+                <GlossarText text={dossier.deck} glossar={glossar} />
+              </p>
+            )}
+            {paragraphs.length > 0 && (
+              <div className="flex flex-col gap-3 text-[15px] text-foreground/80 leading-relaxed">
+                {paragraphs.map((p, i) => (
+                  <p key={i}>
+                    <GlossarText text={p} glossar={glossar} />
+                  </p>
+                ))}
+              </div>
+            )}
+            <GlossarChips
+              glossar={glossar}
+              usedIn={[dossier.deck ?? "", ...paragraphs].join("\n")}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </CardShell>
+  );
+}
+
 function FactsCard({ facts }: { facts: Dossier["facts"] }) {
   return (
     <CardShell>
@@ -629,11 +742,18 @@ function FactsCard({ facts }: { facts: Dossier["facts"] }) {
       </span>
       <ul className="flex flex-col gap-3">
         {facts.slice(0, 3).map((fact, i) => (
-          <li key={`${fact.label}-${i}`} className="flex items-baseline gap-4">
-            <span className="font-serif text-3xl font-semibold leading-none tabular-nums whitespace-nowrap text-foreground">
+          <li
+            key={`${fact.label}-${i}`}
+            className="rounded-2xl border border-foreground/10 bg-foreground/[0.03] px-4 py-3"
+          >
+            {/* Wert über Label gestapelt + umbruchfähig: lange Text-Werte
+                ("rund ein Drittel") laufen nicht mehr seitlich aus dem Bild. */}
+            <p className="font-serif text-2xl sm:text-[1.75rem] font-semibold leading-tight text-balance text-foreground">
               {fact.value}
-            </span>
-            <span className="text-sm text-foreground/75 leading-snug">{fact.label}</span>
+            </p>
+            <p className="text-sm text-foreground/70 leading-snug mt-1">
+              {fact.label}
+            </p>
           </li>
         ))}
       </ul>
@@ -702,6 +822,12 @@ function DecisionCard({
           );
         })}
       </ul>
+      {chosen && (
+        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
+          <Check className="size-3.5 text-success" strokeWidth={3} />
+          Du hast dich entschieden — diese Wahl ist endgültig.
+        </p>
+      )}
     </CardShell>
   );
 }

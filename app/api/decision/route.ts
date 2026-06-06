@@ -31,11 +31,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "invalid_json" }, { status: 400 });
   }
 
+  // Number.isFinite schliesst auch NaN/Infinity aus — typeof === "number" wuerde
+  // NaN durchlassen und die eigene Spektrum-Mathematik korrumpieren (-> null in DB).
   if (
     !body.dossierId ||
+    typeof body.dossierId !== "string" ||
     !["A", "B", "C", "D"].includes(body.choiceId) ||
-    typeof body.delta?.economic !== "number" ||
-    typeof body.delta?.social !== "number"
+    !Number.isFinite(body.delta?.economic) ||
+    !Number.isFinite(body.delta?.social)
   ) {
     return NextResponse.json({ error: "invalid_body" }, { status: 400 });
   }
@@ -68,10 +71,8 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (profileError) {
-    return NextResponse.json(
-      { error: "profile_unavailable", detail: profileError.message },
-      { status: 500 },
-    );
+    console.error("decision: Profil laden fehlgeschlagen:", profileError.message);
+    return NextResponse.json({ error: "profile_unavailable" }, { status: 500 });
   }
 
   const before = profile.spektrum as SpektrumVector;
@@ -86,11 +87,17 @@ export async function POST(request: NextRequest) {
     spektrum_after: after,
   });
 
-  if (decisionError && !decisionError.message.includes("duplicate")) {
-    return NextResponse.json(
-      { error: "decision_write_failed", detail: decisionError.message },
-      { status: 500 },
-    );
+  const isDuplicate = !!decisionError?.message.includes("duplicate");
+  if (decisionError && !isDuplicate) {
+    console.error("decision: Schreiben fehlgeschlagen:", decisionError.message);
+    return NextResponse.json({ error: "decision_write_failed" }, { status: 500 });
+  }
+
+  // Schon entschieden (Wahl ist endgültig): Spektrum NICHT erneut anwenden —
+  // sonst würde das Delta bei jedem erneuten Öffnen doppelt aufaddiert. Das
+  // Profil spiegelt die Erst-Entscheidung bereits, also unverändert zurück.
+  if (isDuplicate) {
+    return NextResponse.json({ before, after: before, persisted: true });
   }
 
   const { error: updateError } = await supabase
@@ -99,10 +106,8 @@ export async function POST(request: NextRequest) {
     .eq("user_id", user.id);
 
   if (updateError) {
-    return NextResponse.json(
-      { error: "profile_update_failed", detail: updateError.message },
-      { status: 500 },
-    );
+    console.error("decision: Profil-Update fehlgeschlagen:", updateError.message);
+    return NextResponse.json({ error: "profile_update_failed" }, { status: 500 });
   }
 
   return NextResponse.json({ before, after, persisted: true });

@@ -273,7 +273,9 @@ export function BriefingDeck({ dossier }: { dossier: Dossier }) {
         </button>
 
         {current === "decision" && !chosen ? (
-          <span className="text-xs text-muted-foreground">Wähle, um fortzufahren</span>
+          // Kein "Wähle, um fortzufahren"-Hinweis mehr — die Auswahl-Karten sind
+          // selbsterklärend. Leerer Platzhalter hält das Footer-Layout balanciert.
+          <span aria-hidden />
         ) : current === "meinung" || current === "faktencheck" ? (
           formatDone ? (
             <Link
@@ -284,11 +286,7 @@ export function BriefingDeck({ dossier }: { dossier: Dossier }) {
               <ArrowRight className="size-4 ml-2 group-hover:translate-x-0.5 transition-transform" />
             </Link>
           ) : (
-            <span className="text-xs text-muted-foreground">
-              {current === "meinung"
-                ? "Stimm ab, um fortzufahren"
-                : "Schätz, um fortzufahren"}
-            </span>
+            <span aria-hidden />
           )
         ) : current === "outcome" ? (
           <Link
@@ -467,7 +465,7 @@ function GlossarChips({
   return (
     <div className="mt-1 flex flex-col gap-2 rounded-2xl border border-foreground/10 p-4">
       <h3 className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.18em]">
-        Kurz erklärt — antippen
+        Kurz erklärt
       </h3>
       <div className="flex flex-wrap gap-2">
         {leftover.map(([term]) => {
@@ -774,9 +772,8 @@ function DecisionCard({
 }) {
   return (
     <CardShell>
-      <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.18em]">
-        Du sitzt am Tisch
-      </span>
+      {/* Kicker "Du sitzt am Tisch" entfernt — die Streitfrage ("Du sitzt im
+          Kabinett …") sagt dasselbe; doppelter Text raus. */}
       <h2 className="font-serif text-2xl font-semibold leading-snug">
         {dossier.streitfrage ?? "Wofür entscheidest du dich?"}
       </h2>
@@ -880,10 +877,6 @@ function OutcomeCard({
           </ul>
         </div>
       )}
-
-      <p className="text-xs text-center text-foreground/55 mt-1">
-        Morgen wartet das nächste Dossier auf dich.
-      </p>
     </CardShell>
   );
 }

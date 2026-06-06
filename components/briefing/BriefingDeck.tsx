@@ -664,16 +664,22 @@ function ExplainerCard({
   const videoRef = useRef<HTMLVideoElement>(null);
   const video = dossier.video!;
 
-  // Auto-Start wie bei Social Media: Browser erlauben das nur STUMM. Die
-  // Untertitel sind eingebrannt → der Inhalt kommt trotzdem rüber; ein Tipp
-  // schaltet den Ton dazu. Ref stellt sicher, dass muted gesetzt ist, bevor
-  // play() läuft (sonst blockt iOS den Auto-Start).
+  // Auto-Start: ERST MIT Ton versuchen (klappt, wenn der Browser die frische
+  // Geste vom "Briefing öffnen"-Tap durchlässt — Android/Desktop). Blockt der
+  // Browser (oft iOS Safari — Apple-Policy), automatisch auf STUMM + "Tippen für
+  // Ton" zurückfallen. Untertitel sind eingebrannt → Inhalt kommt eh rüber.
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
-    v.muted = true;
-    const p = v.play();
-    if (p) p.catch(() => {});
+    v.muted = false;
+    v.play().then(
+      () => setMuted(false),
+      () => {
+        v.muted = true;
+        setMuted(true);
+        v.play().catch(() => {});
+      },
+    );
   }, []);
 
   function unmute() {
@@ -694,7 +700,6 @@ function ExplainerCard({
         ref={videoRef}
         src={video.url ?? undefined}
         poster={video.poster}
-        autoPlay
         muted={muted}
         loop
         playsInline
@@ -702,7 +707,8 @@ function ExplainerCard({
         controls
         // Eigene Steuerung (Play/Scrub) soll nicht das Karten-Wischen auslösen.
         onPointerDownCapture={(e) => e.stopPropagation()}
-        className="absolute inset-0 h-full w-full object-contain bg-black"
+        // object-cover = füllt die Karte randlos (keine schwarzen Balken).
+        className="absolute inset-0 h-full w-full object-cover bg-black"
       />
 
       {/* Solange stumm: ganzflächiger "Tippen für Ton"-Layer (über dem Video,

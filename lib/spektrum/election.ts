@@ -17,15 +17,17 @@ const BASE_VOTES: Record<PartyId, number> = {
   linke: 4,
 };
 
+// partyId ist string (nicht PartyId), weil die selbst angelegte Partei
+// ("custom") als zusätzlicher Contender mitspielen kann.
 export type ElectionResult = {
-  partyId: PartyId;
+  partyId: string;
   party: Party;
   percent: number; // 0..100
   mine: boolean;
 };
 
 export type Coalition = {
-  partyIds: PartyId[];
+  partyIds: string[];
   sumPercent: number;
   // Label wie "Schwarz-Rot", "Ampel", "Jamaika"
   label: string;
@@ -63,14 +65,17 @@ const BASE_BIAS_WEIGHT = 0.45;  // <1 = Base-Bias dämpfen
 const USER_PERF_WEIGHT = 0.5;   // wie stark Performance den eigenen Score boostet
 
 export function computeElectionResult(
-  myPartyId: PartyId | null,
+  myPartyId: string | null,
   score: number,
   seed: string,
+  // Wenn der Spieler eine eigene Partei führt, tritt sie als zusätzlicher
+  // Contender an — mit einer durchschnittlichen Basis-Stimme.
+  customParty?: Party,
 ): ElectionResult[] {
   const rng = seededRandom(seed);
   const myScoreBonus = score * USER_PERF_WEIGHT; // -25..+25
 
-  const raw: Array<{ id: PartyId; percent: number }> = (Object.keys(BASE_VOTES) as PartyId[]).map(
+  const raw: Array<{ id: string; percent: number }> = (Object.keys(BASE_VOTES) as PartyId[]).map(
     (id) => {
       const baseBiased =
         EQUAL_SHARE + (BASE_VOTES[id] - EQUAL_SHARE) * BASE_BIAS_WEIGHT;
@@ -82,6 +87,17 @@ export function computeElectionResult(
     },
   );
 
+  // Eigene Partei als 8. Contender: startet beim Gleichgewicht plus dem
+  // vollen Performance-Bonus, damit gute Spieler auch mit ihr gewinnen.
+  if (customParty && myPartyId === customParty.id) {
+    const pct = EQUAL_SHARE + myScoreBonus + (rng() - 0.5) * 4;
+    raw.push({ id: customParty.id, percent: Math.max(0.5, pct) });
+  }
+
+  // Lookup, das auch die eigene Partei auflöst.
+  const resolve = (id: string): Party =>
+    id === customParty?.id ? customParty : parties.find((p) => p.id === id)!;
+
   // Normalisieren auf 100 %
   const sum = raw.reduce((a, b) => a + b.percent, 0);
   const normalised = raw.map((r) => ({
@@ -90,15 +106,12 @@ export function computeElectionResult(
   }));
 
   return normalised
-    .map(({ id, percent }) => {
-      const party = parties.find((p) => p.id === id)!;
-      return {
-        partyId: id,
-        party,
-        percent: Math.round(percent * 10) / 10,
-        mine: id === myPartyId,
-      };
-    })
+    .map(({ id, percent }) => ({
+      partyId: id,
+      party: resolve(id),
+      percent: Math.round(percent * 10) / 10,
+      mine: id === myPartyId,
+    }))
     .sort((a, b) => b.percent - a.percent);
 }
 
@@ -128,7 +141,7 @@ const COALITION_LABELS: Record<string, string> = {
   "cdu+bsw": "CDU-BSW",
 };
 
-function coalitionLabel(ids: PartyId[]): string {
+function coalitionLabel(ids: string[]): string {
   const key = [...ids].sort().join("+");
   return (
     COALITION_LABELS[key] ??
@@ -150,7 +163,7 @@ function combinations<T>(arr: T[], k: number): T[][] {
 export function possibleCoalitions(results: ElectionResult[]): Coalition[] {
   // Top 5 Parteien betrachten, AfD raus
   const candidates = results
-    .filter((r) => !UNCOALITABLE.includes(r.partyId))
+    .filter((r) => !UNCOALITABLE.includes(r.partyId as PartyId))
     .slice(0, 6);
 
   const coalitions: Coalition[] = [];
@@ -193,7 +206,7 @@ export function possibleCoalitions(results: ElectionResult[]): Coalition[] {
 export function determineRole(
   results: ElectionResult[],
   pickedCoalition: Coalition | null,
-  myPartyId: PartyId | null,
+  myPartyId: string | null,
 ): ElectionRole {
   if (!myPartyId) return "opposition";
   if (results[0]?.partyId === myPartyId) return "kanzler";

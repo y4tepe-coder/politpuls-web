@@ -1,4 +1,21 @@
 import type { Party } from "./types";
+import { getLocalCustomParty } from "@/lib/local/state";
+
+// Sentinel-Id für die selbst angelegte Partei.
+export const CUSTOM_PARTY_ID = "custom";
+
+// Kuratierte Farb-Palette für die eigene Partei. Bewusst keine
+// Schwarz-Rot-Gold-Kombi — kräftige, klar unterscheidbare Töne.
+export const CUSTOM_PARTY_COLORS = [
+  "#2563EB", // Blau
+  "#0EA5A4", // Petrol
+  "#16A34A", // Grün
+  "#65A30D", // Oliv
+  "#EA580C", // Orange
+  "#DB2777", // Pink
+  "#9333EA", // Violett
+  "#475569", // Schiefer
+] as const;
 
 // Initial positions for the 7 German Bundestag-relevant parties on the
 // 2-axis political compass. Numbers are an approximation synthesised from
@@ -60,6 +77,23 @@ export const parties: Party[] = [
   },
 ];
 
+// Baut aus dem lokalen Spielstand ein vollwertiges Party-Objekt für die
+// eigene Partei. Position bleibt neutral (Mitte) — sie ist rein kosmetisch.
+export function customPartyToParty(): Party | undefined {
+  const custom = getLocalCustomParty();
+  if (!custom) return undefined;
+  // "custom" liegt bewusst außerhalb der PartyId-Union — die eigene Partei
+  // ist ein zusätzlicher Contender, daher der Cast über unknown.
+  return {
+    id: CUSTOM_PARTY_ID,
+    name: custom.name,
+    shortName: custom.shortName,
+    color: custom.color,
+    position: { economic: 0, social: 0 },
+  } as unknown as Party;
+}
+
 export function getPartyById(id: string): Party | undefined {
+  if (id === CUSTOM_PARTY_ID) return customPartyToParty();
   return parties.find((p) => p.id === id);
 }

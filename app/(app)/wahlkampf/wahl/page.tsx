@@ -12,7 +12,7 @@ import {
 } from "@/lib/spektrum/election";
 import { TV_TRIELL_FRAGEN } from "@/lib/data/tv-triell";
 import { getLocalState, updateLocalState } from "@/lib/local/state";
-import type { PartyId } from "@/lib/spektrum/types";
+import { CUSTOM_PARTY_ID, customPartyToParty } from "@/lib/spektrum/parties";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   ArrowLeft,
@@ -37,12 +37,14 @@ export default function WahlPage() {
   const [results, setResults] = useState<ElectionResult[] | null>(null);
   const [coalitions, setCoalitions] = useState<Coalition[]>([]);
   const [picked, setPicked] = useState<Coalition | null>(null);
-  const [myPartyId, setMyPartyId] = useState<PartyId | null>(null);
+  const [myPartyId, setMyPartyId] = useState<string | null>(null);
 
   useEffect(() => {
     const local = getLocalState();
-    const partyId = (local.party_id as PartyId | null) ?? null;
+    const partyId = local.party_id ?? null;
     setMyPartyId(partyId);
+    const customParty =
+      partyId === CUSTOM_PARTY_ID ? customPartyToParty() : undefined;
 
     // Score: Triell (sum popularity) + Programm-Themen (3 = max +6) + Plakat (vorhanden = +4)
     const triellScore = TV_TRIELL_FRAGEN.reduce((sum, f) => {
@@ -58,7 +60,7 @@ export default function WahlPage() {
     const weekId = Math.floor(Date.now() / (1000 * 60 * 60 * 24 * 7));
     const seed = `${partyId ?? "none"}-${weekId}`;
 
-    const r = computeElectionResult(partyId, score, seed);
+    const r = computeElectionResult(partyId, score, seed, customParty);
     setResults(r);
     setCoalitions(possibleCoalitions(r));
     setHydrated(true);

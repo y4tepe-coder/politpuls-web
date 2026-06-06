@@ -2,8 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { parties } from "@/lib/spektrum/parties";
+import {
+  parties,
+  getPartyById,
+  CUSTOM_PARTY_ID,
+  CUSTOM_PARTY_COLORS,
+} from "@/lib/spektrum/parties";
 import { getLocalState, updateLocalState, type LocalRole } from "@/lib/local/state";
+import { CustomPartyEditor } from "@/components/party/CustomPartyEditor";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Crown,
@@ -77,6 +83,8 @@ const PHASE_CARD =
 export default function WahlkampfPage() {
   const [role, setRole] = useState<LocalRole>("kandidat");
   const [partyId, setPartyId] = useState<string | null>(null);
+  const [customName, setCustomName] = useState("");
+  const [customColor, setCustomColor] = useState<string>(CUSTOM_PARTY_COLORS[0]);
   const [hydrated, setHydrated] = useState(false);
   const [streak, setStreak] = useState(0);
 
@@ -84,19 +92,40 @@ export default function WahlkampfPage() {
     const local = getLocalState();
     setRole(local.role);
     setPartyId(local.party_id);
+    if (local.custom_party) {
+      setCustomName(local.custom_party.name);
+      setCustomColor(local.custom_party.color);
+    }
     setStreak(local.current_streak);
     setHydrated(true);
   }, []);
 
+  const isCustom = partyId === CUSTOM_PARTY_ID;
+
   function handleSelectParty(pid: string) {
     setPartyId(pid);
-    updateLocalState({ party_id: pid });
+    updateLocalState({ party_id: pid, custom_party: null });
+  }
+
+  function selectCustomParty() {
+    setPartyId(CUSTOM_PARTY_ID);
+    persistCustom(customName, customColor);
+  }
+
+  function persistCustom(name: string, color: string) {
+    setCustomName(name);
+    setCustomColor(color);
+    const trimmed = name.trim();
+    updateLocalState({
+      party_id: CUSTOM_PARTY_ID,
+      custom_party: trimmed
+        ? { name: trimmed, shortName: trimmed.slice(0, 6).toUpperCase(), color }
+        : { name: "", shortName: "PARTEI", color },
+    });
   }
 
   const daysUntilCampaign = Math.max(0, 14 - streak);
-  const selectedParty = partyId
-    ? parties.find((p) => p.id === partyId)
-    : null;
+  const selectedParty = partyId ? getPartyById(partyId) : null;
 
   return (
     <main className="flex flex-1 flex-col max-w-2xl mx-auto w-full px-5 py-8 gap-8">
@@ -154,44 +183,55 @@ export default function WahlkampfPage() {
                 key={party.id}
                 type="button"
                 onClick={() => handleSelectParty(party.id)}
-                className={`relative rounded-xl border-2 p-3 flex flex-col gap-1 items-start transition-all text-left ${
+                className={`relative rounded-xl border p-3 flex items-center justify-center min-h-[56px] transition-all text-center ${
                   isSelected
-                    ? "border-foreground bg-card shadow-md"
-                    : "border-border bg-card hover:border-foreground/30"
+                    ? "bg-card shadow-sm scale-[1.02]"
+                    : "border-border bg-card hover:bg-foreground/5"
                 }`}
                 style={
                   isSelected
-                    ? { borderColor: party.color }
+                    ? { borderColor: party.color, boxShadow: `0 0 0 1px ${party.color}` }
                     : undefined
                 }
               >
-                <span
-                  className="size-5 rounded-full shrink-0"
-                  style={{ backgroundColor: party.color }}
-                  aria-hidden
-                />
                 <span className="font-serif font-semibold text-sm">
                   {party.shortName}
                 </span>
-                {isSelected && (
-                  <span className="absolute top-2 right-2 inline-flex items-center justify-center size-5 rounded-full bg-success text-success-foreground">
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="size-3.5"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={4}
-                      aria-hidden
-                    >
-                      <path d="M5 13l4 4L19 7" />
-                    </svg>
-                  </span>
-                )}
               </button>
             );
           })}
+
+          {/* Eigene Partei */}
+          <button
+            type="button"
+            onClick={selectCustomParty}
+            className={`relative rounded-xl border border-dashed p-3 flex items-center justify-center min-h-[56px] transition-all text-center ${
+              isCustom
+                ? "bg-card shadow-sm scale-[1.02]"
+                : "border-foreground/25 hover:bg-foreground/5"
+            }`}
+            style={
+              isCustom
+                ? { borderColor: customColor, borderStyle: "solid", boxShadow: `0 0 0 1px ${customColor}` }
+                : undefined
+            }
+          >
+            <span className="font-serif font-semibold text-sm">Eigene</span>
+          </button>
         </div>
-        {selectedParty && (
+
+        {isCustom && (
+          <div className="mt-1">
+            <CustomPartyEditor
+              name={customName}
+              color={customColor}
+              onName={(v) => persistCustom(v, customColor)}
+              onColor={(v) => persistCustom(customName, v)}
+            />
+          </div>
+        )}
+
+        {selectedParty && selectedParty.name.trim() && (
           <p className="text-xs text-muted-foreground mt-1">
             Du trittst als <span className="font-medium text-foreground">{selectedParty.name}</span> an.
           </p>

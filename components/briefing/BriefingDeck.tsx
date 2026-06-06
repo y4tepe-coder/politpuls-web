@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, type PanInfo } from "framer-motion";
 import type {
@@ -27,6 +27,7 @@ import {
   ChevronRight,
   Clock,
   X,
+  Volume2,
 } from "lucide-react";
 
 // Swipe-Deck statt langem Scroll-Artikel: man blättert (rechts→links wischen
@@ -659,21 +660,68 @@ function ExplainerCard({
   glossar: [string, string][];
 }) {
   const [showText, setShowText] = useState(false);
+  const [muted, setMuted] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const video = dossier.video!;
+
+  // Auto-Start wie bei Social Media: Browser erlauben das nur STUMM. Die
+  // Untertitel sind eingebrannt → der Inhalt kommt trotzdem rüber; ein Tipp
+  // schaltet den Ton dazu. Ref stellt sicher, dass muted gesetzt ist, bevor
+  // play() läuft (sonst blockt iOS den Auto-Start).
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = true;
+    const p = v.play();
+    if (p) p.catch(() => {});
+  }, []);
+
+  function unmute() {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = false;
+    setMuted(false);
+    const p = v.play();
+    if (p) p.catch(() => {});
+  }
+
   return (
     <div className="relative h-full w-full overflow-hidden rounded-3xl bg-black flex flex-col">
-      {/* Vollflächiges Video — Social-Media-Optik, füllt die ganze Karte. */}
+      {/* Vollflächiges Video — Social-Media-Optik. Startet automatisch (stumm) +
+          Loop; "Tippen für Ton" schaltet den Ton zu. */}
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
       <video
+        ref={videoRef}
         src={video.url ?? undefined}
         poster={video.poster}
-        controls
+        autoPlay
+        muted={muted}
+        loop
         playsInline
-        preload="metadata"
+        preload="auto"
+        controls
         // Eigene Steuerung (Play/Scrub) soll nicht das Karten-Wischen auslösen.
         onPointerDownCapture={(e) => e.stopPropagation()}
         className="absolute inset-0 h-full w-full object-contain bg-black"
       />
+
+      {/* Solange stumm: ganzflächiger "Tippen für Ton"-Layer (über dem Video,
+          unter Top-Leiste/Text-Sheet). Nach dem Ton-Einschalten verschwindet er
+          und die nativen Controls sind frei. */}
+      {muted && (
+        <button
+          type="button"
+          onClick={unmute}
+          onPointerDownCapture={(e) => e.stopPropagation()}
+          aria-label="Ton einschalten"
+          className="absolute inset-0 z-10 flex items-end justify-center pb-24"
+        >
+          <span className="inline-flex items-center gap-2 rounded-full bg-black/60 px-4 py-2 text-sm font-semibold text-white shadow-lg backdrop-blur">
+            <Volume2 className="size-4" />
+            Tippen für Ton
+          </span>
+        </button>
+      )}
 
       {/* Top-Leiste über sanftem Verlauf: Kicker links, "Text öffnen" rechts.
           Bewusst OBEN, damit nichts die nativen Video-Steuerungen (unten)

@@ -159,10 +159,10 @@ export default function TvTriellPage() {
         >
           {/* Topic + Moderator (klein, zweizeilig oben) */}
           <div className="flex items-start gap-3">
-            <span className="inline-flex items-center justify-center size-10 rounded-xl bg-foreground/5 border border-foreground/10 shrink-0">
+            <span className="inline-flex items-center justify-center size-10 rounded-xl glass-card shrink-0">
               <Tv className="size-5 text-foreground" />
             </span>
-            <div className="flex flex-col gap-0.5 leading-tight">
+            <div className="flex flex-col gap-0.5 leading-tight text-on-bg">
               <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                 {frage.topic} · TV-Studio
               </span>
@@ -173,18 +173,19 @@ export default function TvTriellPage() {
           </div>
 
           {/* Hauptfrage */}
-          <h2 className="font-serif text-2xl sm:text-3xl font-semibold leading-snug">
+          <h2 className="font-serif text-2xl sm:text-3xl font-semibold leading-snug text-on-bg">
             {frage.question}
           </h2>
 
-          {/* Was sagen die anderen */}
+          {/* Was sagen die anderen — beide Gegner als einheitliche Karten
+              (kein Chat-Links/Rechts-Spiel mehr → übersichtlicher). */}
           <section className="flex flex-col gap-3">
-            <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground text-on-bg">
               Was sagen die anderen
             </h3>
             <div className="flex flex-col gap-3">
-              <OpponentBubble {...frage.opponentA} side="left" />
-              <OpponentBubble {...frage.opponentB} side="right" />
+              <OpponentBubble {...frage.opponentA} />
+              <OpponentBubble {...frage.opponentB} />
             </div>
           </section>
 
@@ -226,16 +227,16 @@ export default function TvTriellPage() {
   );
 }
 
+// Einheitliche, links ausgerichtete Gegner-Karte (beide gleich) — statt
+// Chat-Blasen links/rechts, die nur Unruhe ohne Mehrwert brachten.
 function OpponentBubble({
   name,
   party,
   statement,
-  side,
 }: {
   name: string;
   party: string;
   statement: string;
-  side: "left" | "right";
 }) {
   const initials = name
     .split(" ")
@@ -243,38 +244,19 @@ function OpponentBubble({
     .join("")
     .toUpperCase()
     .slice(0, 2);
-  const align = side === "left" ? "self-start" : "self-end";
-  const bubbleCorner =
-    side === "left" ? "rounded-tl-md" : "rounded-tr-md";
 
   return (
-    <div
-      className={`${align} max-w-[88%] sm:max-w-[78%] flex flex-col gap-2 ${
-        side === "right" ? "items-end" : "items-start"
-      }`}
-    >
-      <div
-        className={`flex items-center gap-2 ${
-          side === "right" ? "flex-row-reverse" : ""
-        }`}
-      >
+    <div className="glass-card rounded-2xl p-4 flex flex-col gap-2">
+      <div className="flex items-center gap-2.5">
         <span className="inline-flex items-center justify-center size-8 rounded-full bg-foreground text-background font-mono text-xs font-bold shrink-0">
           {initials}
         </span>
-        <div
-          className={`flex flex-col leading-tight ${
-            side === "right" ? "items-end" : ""
-          }`}
-        >
+        <div className="flex flex-col leading-tight">
           <span className="text-sm font-semibold">{name}</span>
           <span className="text-xs text-muted-foreground">{party}</span>
         </div>
       </div>
-      <div className={`glass-card rounded-2xl ${bubbleCorner} px-4 py-3`}>
-        <p className="text-sm leading-snug text-foreground/85">
-          „{statement}"
-        </p>
-      </div>
+      <p className="text-[15px] leading-snug text-foreground">{`„${statement}“`}</p>
     </div>
   );
 }

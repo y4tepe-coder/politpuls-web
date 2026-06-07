@@ -6,15 +6,18 @@ import type { Party, PartyId } from "./types";
 // Inputs: User-Partei, Score (aus Programm + Plakat + Triell), deterministic seed
 // Output: sortierte Ergebnisse (Partei + %), mögliche Koalitionen, User-Rolle
 
-// Basis-Stimmen aus typischen DE-Umfragen 2025. Summe ~95%, Rest = sonstige.
+// Basis-Stimmen = realistische DE-Sonntagsfrage (Stand 2025/26, Aggregat aus
+// wahlrecht.de / DAWUM / politpro): AfD knapp vor CDU, SPD & Grüne mittig, Linke
+// über der 5%-Hürde, FDP + BSW klein/unter 5%. Summe ~94,5% (Rest = Sonstige,
+// nicht dargestellt; unten wird auf 100% normalisiert).
 const BASE_VOTES: Record<PartyId, number> = {
-  cdu: 30,
-  afd: 18,
-  spd: 15,
-  gruene: 11,
-  bsw: 7,
-  fdp: 5,
-  linke: 4,
+  afd: 27.5,
+  cdu: 23,
+  gruene: 14,
+  spd: 12.5,
+  linke: 10.5,
+  fdp: 4,
+  bsw: 3,
 };
 
 // partyId ist string (nicht PartyId), weil die selbst angelegte Partei
@@ -51,18 +54,30 @@ function seededRandom(seed: string): () => number {
 }
 
 /**
- * Berechnet die Wahl. Score ist die User-Performance (-50..+50), Seed
- * sollte stabil pro Wahl-Zyklus sein (z.B. user_id + week).
+ * Berechnet die Wahl. `score` = User-Kampagnen-Performance (aus Programm +
+ * Plakat + Triell, grob -10..+37), `seed` stabil pro Wahl-Zyklus.
  *
- * Game-Balance: Wir dämpfen die Base-Votes-Bias (CDU 30 % vs Linke 4 %)
- * gegen ein 14,3 %-Gleichgewicht — sonst kann eine schwache Partei nie
- * Kanzler werden. Plus: starker Performance-Bonus für die User-Partei
- * (bis ±24 %), damit gute Spieler:innen mit Linke/BSW/FDP genauso
- * gewinnen wie mit CDU.
+ * Realismus zuerst: Die GEGNER-Werte bleiben auf ihrer realistischen Basis
+ * (kein Einebnen mehr) — AfD ≳ CDU, FDP klein, Linke > FDP. Der Wahlkampf
+ * verschiebt NUR die eigene Partei, gedeckelt auf ~ -3..+5 Punkte mit harter
+ * Obergrenze. So kann eine kleine Partei mit starkem Wahlkampf die 5%-Hürde
+ * knacken (= Erfolg), aber es entsteht nie eine 20%-FDP.
  */
-const EQUAL_SHARE = 100 / 7; // 14.28
-const BASE_BIAS_WEIGHT = 0.45;  // <1 = Base-Bias dämpfen
-const USER_PERF_WEIGHT = 0.5;   // wie stark Performance den eigenen Score boostet
+const SCORE_SCALE = 0.15; // Performance → Prozent-Swing
+const BONUS_MIN = -3; // schwache Kampagne
+const BONUS_MAX = 5; // exzellente Kampagne
+const SMALL_CAP = 9; // FDP/BSW/eigene Neupartei nie über ~9%
+const CUSTOM_BASE = 3; // frisch gegründete Partei startet klein
+
+const clampPct = (x: number, lo: number, hi: number) =>
+  Math.max(lo, Math.min(hi, x));
+
+// Gedeckelter Kampagnen-Wert der EIGENEN Partei.
+function boostedPct(base: number, score: number, jitter: number): number {
+  const bonus = clampPct(score * SCORE_SCALE, BONUS_MIN, BONUS_MAX);
+  const ceiling = base <= 6 ? SMALL_CAP : base + 6;
+  return clampPct(base + bonus + jitter, 2, ceiling);
+}
 
 export function computeElectionResult(
   myPartyId: string | null,
@@ -73,25 +88,23 @@ export function computeElectionResult(
   customParty?: Party,
 ): ElectionResult[] {
   const rng = seededRandom(seed);
-  const myScoreBonus = score * USER_PERF_WEIGHT; // -25..+25
+  // Jitter ±1,5 — innerhalb der echten Umfrage-Streuung der Institute.
+  const jitter = () => (rng() - 0.5) * 3;
 
   const raw: Array<{ id: string; percent: number }> = (Object.keys(BASE_VOTES) as PartyId[]).map(
     (id) => {
-      const baseBiased =
-        EQUAL_SHARE + (BASE_VOTES[id] - EQUAL_SHARE) * BASE_BIAS_WEIGHT;
-      let pct = baseBiased;
-      if (id === myPartyId) pct += myScoreBonus;
-      // Jitter ±2 für alle
-      pct += (rng() - 0.5) * 4;
+      const pct =
+        id === myPartyId
+          ? boostedPct(BASE_VOTES[id], score, jitter())
+          : BASE_VOTES[id] + jitter();
       return { id, percent: Math.max(0.5, pct) };
     },
   );
 
-  // Eigene Partei als 8. Contender: startet beim Gleichgewicht plus dem
-  // vollen Performance-Bonus, damit gute Spieler auch mit ihr gewinnen.
+  // Eigene (selbst gegründete) Partei: startet klein wie eine Neupartei; ein
+  // starker Wahlkampf kann sie über die 5%-Hürde tragen — aber nicht ins Absurde.
   if (customParty && myPartyId === customParty.id) {
-    const pct = EQUAL_SHARE + myScoreBonus + (rng() - 0.5) * 4;
-    raw.push({ id: customParty.id, percent: Math.max(0.5, pct) });
+    raw.push({ id: customParty.id, percent: boostedPct(CUSTOM_BASE, score, jitter()) });
   }
 
   // Lookup, das auch die eigene Partei auflöst.

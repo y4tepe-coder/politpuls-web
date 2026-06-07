@@ -223,12 +223,14 @@ h1, h2, h3, .font-serif {
   display: none;
 }
 .app-bg-wash {
-  background-color: oklch(0.985 0.006 85 / 0.12);
+  background-color: oklch(0.985 0.006 85 / 0.18);
 }
 @media (prefers-color-scheme: dark) {
   .app-bg-day { display: none; }
   .app-bg-night { display: block; }
-  .app-bg-wash { background-color: transparent; }
+  /* Dark-Mode hatte zuvor 0% Schleier → freistehender Text soff komplett ab.
+     Moderater dunkler Scrim: Gemälde bleibt sichtbar, Text wird lesbar. */
+  .app-bg-wash { background-color: oklch(0.16 0.02 260 / 0.4); }
 }
 
 /* Cards — semi-transparent so the Reichstag painting peeks through,

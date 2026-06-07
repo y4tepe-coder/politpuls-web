@@ -1,0 +1,9 @@
+node_modules/
+out/
+# Lokale Secrets (ElevenLabs-/OpenAI-Key) — NIE committen:
+.env
+.env.*
+# Generierte Laufzeit-Artefakte der Pipeline (Audio, heruntergeladene Bilder, Props):
+public/audio/
+public/img/
+props/

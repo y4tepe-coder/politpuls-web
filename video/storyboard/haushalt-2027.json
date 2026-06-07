@@ -1,0 +1,61 @@
+{
+  "topic": "Haushalt 2027 — Untertitel-Stil, locker für Jugendliche (07.06.)",
+  "beats": [
+    {
+      "narration": "Okay, kurz und ehrlich: Deutschland fehlt richtig viel Geld — und wer das am Ende zahlt, betrifft auch dich.",
+      "scene": {
+        "type": "image",
+        "src": "img/reichstag-berlin.jpg",
+        "motion": "zoomIn",
+        "kicker": "Bundeshaushalt 2027",
+        "credit": "Foto: Ansgar Koreng · CC BY-SA 3.0"
+      }
+    },
+    {
+      "narration": "Bis 2030 fehlen dem Bund rund 140 Milliarden Euro. Diese Riesen-Lücke muss jetzt irgendwie gestopft werden.",
+      "scene": {
+        "type": "image",
+        "src": "img/bundeskanzleramt-berlin.jpg",
+        "motion": "panRight",
+        "credit": "Foto: Diego Delso · CC BY-SA 4.0"
+      }
+    },
+    {
+      "narration": "Dafür gibt's zwei Wege: entweder höhere Steuern — oder der Staat kürzt bei den Sozialausgaben.",
+      "scene": {
+        "type": "image",
+        "src": "img/geldscheine-euro.jpg",
+        "motion": "zoomInPanLeft",
+        "credit": "Foto: kartenetui.info · CC BY 4.0"
+      }
+    },
+    {
+      "narration": "Genau da krachen SPD und Union zusammen: Die einen wollen Reiche stärker besteuern, die anderen lieber sparen.",
+      "scene": {
+        "type": "image",
+        "src": "img/bundestag-abstimmung.jpg",
+        "motion": "zoomIn",
+        "credit": "Foto: Olaf Kosinsky · CC BY-SA 3.0"
+      }
+    },
+    {
+      "narration": "Zur Einordnung: 2027 gibt der Bund über 543 Milliarden Euro aus — und macht dabei fast 111 Milliarden neue Schulden.",
+      "scene": {
+        "type": "image",
+        "src": "img/plenarsaal-bundestag.jpg",
+        "motion": "zoomInPanUp",
+        "credit": "Foto: Chaddy · CC BY-SA 4.0"
+      }
+    },
+    {
+      "narration": "Und jetzt du: Du bist Finanzminister. Höhere Steuern, oder bei Sozialem kürzen? Wie entscheidest du?",
+      "scene": {
+        "type": "image",
+        "src": "img/reichstag-berlin.jpg",
+        "motion": "zoomInPanLeft",
+        "kicker": "Du entscheidest",
+        "credit": "Foto: Ansgar Koreng · CC BY-SA 3.0"
+      }
+    }
+  ]
+}

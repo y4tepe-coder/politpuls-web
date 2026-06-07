@@ -1,0 +1,61 @@
+{
+  "topic": "Heizungsgesetz — Untertitel-Stil (vollflächige animierte Bilder + wortsynchrone Untertitel), locker für Jugendliche",
+  "beats": [
+    {
+      "narration": "Okay, mal kurz und ehrlich: Deutschlands großes Heizungs-Drama geht in die nächste Runde — und am Ende betrifft das auch deine Bude.",
+      "scene": {
+        "type": "image",
+        "src": "img/reichstag-berlin.jpg",
+        "motion": "zoomIn",
+        "kicker": "Energie- & Klimapolitik",
+        "credit": "Foto: Ansgar Koreng · CC BY-SA 3.0"
+      }
+    },
+    {
+      "narration": "Bisher gilt: Jede neue Heizung muss zu mindestens 65 Prozent mit erneuerbarer Energie laufen. Genau die Regel will die Regierung jetzt kippen.",
+      "scene": {
+        "type": "image",
+        "src": "img/photovoltaik-hausdach.jpg",
+        "motion": "panRight",
+        "credit": "Foto: High Contrast · CC BY 3.0"
+      }
+    },
+    {
+      "narration": "Warum das Ganze wichtig ist? Gebäude pusten rund ein Drittel vom deutschen CO2 in die Luft — größtenteils durchs Heizen.",
+      "scene": {
+        "type": "image",
+        "src": "img/wohnhauser-fassade-stadt.jpg",
+        "motion": "zoomInPanUp",
+        "credit": "Foto: Zinnmann · CC BY-SA 3.0"
+      }
+    },
+    {
+      "narration": "Jetzt prallen zwei Lager aufeinander: Die einen wollen freie Heizungswahl und weniger Vorschriften. Die anderen sagen: ohne Pflicht reißen wir die Klimaziele.",
+      "scene": {
+        "type": "image",
+        "src": "img/windpark-windrader.jpg",
+        "motion": "zoomOut",
+        "credit": "Foto: Kora27 · CC BY-SA 4.0"
+      }
+    },
+    {
+      "narration": "Im Bundestag finden Union und Teile der Wirtschaft die alten Regeln zu bürokratisch — Klimaschützer wollen sie unbedingt behalten.",
+      "scene": {
+        "type": "image",
+        "src": "img/plenarsaal-bundestag.jpg",
+        "motion": "zoomInPanLeft",
+        "credit": "Foto: Chaddy · CC BY-SA 4.0"
+      }
+    },
+    {
+      "narration": "Und jetzt kommst du: Freie Heizungswahl, oder Klimapflicht? Wie würdest du abstimmen?",
+      "scene": {
+        "type": "image",
+        "src": "img/reichstag-berlin.jpg",
+        "motion": "zoomIn",
+        "kicker": "Du entscheidest",
+        "credit": "Foto: Ansgar Koreng · CC BY-SA 3.0"
+      }
+    }
+  ]
+}

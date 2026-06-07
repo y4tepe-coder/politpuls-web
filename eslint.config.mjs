@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Eigenständiges Remotion-Paket (eigene deps/node_modules, wird in CI
+    // separat gebaut – nicht von Next/ESLint mitkompilieren):
+    "video/**",
   ]),
 ]);
 

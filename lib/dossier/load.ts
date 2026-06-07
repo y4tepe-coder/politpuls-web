@@ -56,9 +56,9 @@ function releasedMaxBerlinDate(): string {
 //      Seite trotz vorhandenem Dossier immer auf das (alte) seedDossier
 //      zurückfiel. fetch hat diese Abhängigkeit nicht und läuft auf jeder
 //      Node-Version gleich.
-// `next.revalidate` cached das Ergebnis 10 min. Hinweis: dadurch kann die um
-// 10:00 freigeschaltete Ausgabe bis zu ~10 min später live gehen (bis der Cache
-// dreht) — bewusst in Kauf genommen für die Entlastung von Supabase.
+// `next.revalidate` cached das Ergebnis 60 s — frisch publizierte Ausgaben und
+// nachträglich gesetzte Videos sind so nach ~1 Min live, ohne jeden Request auf
+// Supabase durchzureichen.
 export async function getTodayDossier(): Promise<Dossier> {
   const date = releasedMaxBerlinDate();
 
@@ -70,7 +70,7 @@ export async function getTodayDossier(): Promise<Dossier> {
           apikey: SUPABASE_ANON_KEY,
           Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
         },
-        next: { revalidate: 600 },
+        next: { revalidate: 60 },
       },
     );
     if (!res.ok) return seedDossier;

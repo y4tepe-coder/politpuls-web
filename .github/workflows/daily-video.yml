@@ -7,7 +7,9 @@ name: Tages-Video
 # das (separat erzeugte) Text-Dossier unangetastet live.
 on:
   schedule:
-    - cron: "0 9 * * *" # 09:00 UTC = 11:00 CEST (Sommer), sicher nach 10:00 Berlin
+    - cron: "30 9 * * *" # 09:30 UTC → 11:30 Berlin (Sommer) / 10:30 (Winter):
+      # ganzjährig SICHER nach der 10:00-Berlin-Dossier-Freischaltung (keine Race-
+      # Condition im Winter, wenn 09:00 UTC = 10:00 Berlin wäre).
   workflow_dispatch:
     inputs:
       date:

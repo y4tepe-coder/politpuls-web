@@ -69,6 +69,15 @@ jobs:
           PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
         run: node auto-source.mjs out/video-storyboard.json out/storyboard-auto.json
 
+      - name: QA-Gate (Vision) — schlechte/irrelevante Medien ersetzen
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+        # Schaut sich jedes Bild/jeden Clip-Frame mit einem Vision-Modell an und
+        # ersetzt dunkle/unscharfe/themenfremde Medien (z.B. Weihnachtsmarkt fürs
+        # Heizungsgesetz). Fail-open: schlägt die QA fehl, bleibt das Original.
+        run: node qa-media.mjs out/storyboard-auto.json || echo "QA übersprungen (fail-open)"
+
       - name: Video rendern (Remotion + ElevenLabs)
         env:
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}

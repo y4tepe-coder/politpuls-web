@@ -366,7 +366,8 @@ async function pixabayPhoto(query) {
           image_type: "photo",
           safesearch: "true",
           orientation: "horizontal",
-          min_width: "1280",
+          order: "popular",
+          min_width: "1600",
           per_page: "20",
         });
       const data = await getJson(url);

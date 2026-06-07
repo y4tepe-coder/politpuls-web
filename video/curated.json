@@ -1,0 +1,19 @@
+[
+  { "file": "warmepumpe.jpg", "tags": ["warmepumpe", "wärmepumpe", "heizung", "erneuerbar", "heat", "pump", "klima"] },
+  { "file": "heat-pump-house.jpg", "tags": ["warmepumpe", "wärmepumpe", "einfamilienhaus", "haus", "heizung", "wohnhaus", "eigentumer"] },
+  { "file": "luftwarmepumpe.jpg", "tags": ["warmepumpe", "wärmepumpe", "heizung", "luft", "erneuerbar"] },
+  { "file": "gasheizung-heizungskeller.jpg", "tags": ["gasheizung", "heizung", "keller", "heizraum", "gas", "kessel", "brennwert", "fossil", "ol"] },
+  { "file": "heizkorper-thermostat.jpg", "tags": ["heizkorper", "heizkörper", "thermostat", "heizung", "mieter", "wohnung", "warme"] },
+  { "file": "mehrfamilienhaus-wohngebaude.jpg", "tags": ["mehrfamilienhaus", "mietshaus", "wohngebaude", "mieter", "fassade", "wohnen", "stadt", "umlage"] },
+  { "file": "wohnhauser-fassade-stadt.jpg", "tags": ["wohnhaus", "mietshaus", "fassade", "stadt", "wohnen", "eigentumer", "haus"] },
+  { "file": "photovoltaik-hausdach.jpg", "tags": ["photovoltaik", "solar", "dach", "erneuerbar", "klima", "energie", "okologie"] },
+  { "file": "windpark-windrader.jpg", "tags": ["windkraft", "windrad", "erneuerbar", "klima", "energie", "co2", "klimaschutz"] },
+  { "file": "windkraftanlage-feld.jpg", "tags": ["windkraft", "windrad", "klima", "energie", "co2", "klimaschutz"] },
+  { "file": "plenarsaal-bundestag.jpg", "tags": ["bundestag", "plenarsaal", "parlament", "debatte", "abstimmung", "lesung", "gesetz", "beraten"] },
+  { "file": "bundestag-abstimmung.jpg", "tags": ["bundestag", "abstimmung", "parlament", "gesetz", "lesung", "beraten", "mehrheit"] },
+  { "file": "reichstag-berlin.jpg", "tags": ["reichstag", "bundestag", "berlin", "politik", "parlament"] },
+  { "file": "bundeskanzleramt-berlin.jpg", "tags": ["kanzleramt", "regierung", "berlin", "kanzler", "koalition"] },
+  { "file": "bundesfinanzministerium-berlin.jpg", "tags": ["ministerium", "finanzen", "regierung", "minister", "haushalt", "etat"] },
+  { "file": "geldscheine-euro.jpg", "tags": ["euro", "geld", "kosten", "finanzen", "preis", "umlage", "forderung", "subvention"] },
+  { "file": "euro-banknoten.jpg", "tags": ["euro", "geld", "kosten", "finanzen", "preis", "steuer"] }
+]

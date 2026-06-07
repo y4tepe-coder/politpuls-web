@@ -64,7 +64,9 @@ jobs:
             || echo "Claude exit != 0 — pruefe out/video-storyboard.json"
           test -s out/video-storyboard.json
 
-      - name: Bilder bei Wikimedia Commons suchen
+      - name: Bilder (Wikimedia) + Clips (Pixabay) suchen
+        env:
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
         run: node auto-source.mjs out/video-storyboard.json out/storyboard-auto.json
 
       - name: Video rendern (Remotion + ElevenLabs)

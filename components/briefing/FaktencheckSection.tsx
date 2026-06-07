@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   ShieldQuestion,
@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { Dossier } from "@/lib/supabase/types";
 import { markBriefingDoneLocally } from "@/lib/local/streak";
+import { appendLocalFaktencheck, getLocalFaktencheck } from "@/lib/local/state";
 
 // Fake-News-Abhärtung: Der Nutzer schätzt eine echt aussehende Behauptung als
 // echt oder fake ein und bekommt danach die Auflösung samt Erkennungs-Tipp.
@@ -29,6 +30,19 @@ export function FaktencheckSection({
   const fc = dossier.faktencheck!;
   const [guess, setGuess] = useState<"echt" | "fake" | null>(null);
 
+  // Schon beantwortet? Beim Öffnen sofort die Auflösung read-only zeigen und den
+  // Deck-Footer freischalten — die Antwort ist endgültig, kein erneutes Raten.
+  // (Bewusst per Effect statt Lazy-Init: das Server-Render kennt localStorage
+  // nicht — so bleibt die Hydration konsistent; identisches Muster wie der
+  // Entscheidungs-Lock in useDecision.)
+  useEffect(() => {
+    const prev = getLocalFaktencheck(dossier.id);
+    if (prev) {
+      setGuess(prev);
+      onComplete?.();
+    }
+  }, [dossier.id, onComplete]);
+
   const revealed = guess !== null;
   const correctAnswer: "echt" | "fake" = fc.ist_echt ? "echt" : "fake";
   const wasRight = guess === correctAnswer;
@@ -36,6 +50,7 @@ export function FaktencheckSection({
   function judge(value: "echt" | "fake") {
     if (revealed) return;
     setGuess(value);
+    appendLocalFaktencheck(dossier.id, value); // endgültig speichern (gesperrt)
     markBriefingDoneLocally();
     onComplete?.();
   }

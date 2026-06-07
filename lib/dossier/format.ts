@@ -1,4 +1,8 @@
-import type { DossierFormat } from "@/lib/supabase/types";
+import type {
+  DossierFormat,
+  DossierRole,
+  DossierRoleVariants,
+} from "@/lib/supabase/types";
 
 // Daily rotation of interaction patterns. `decision` stays the core learning
 // beat; `meinung` (Was meinst du? + Community-Vergleich) and `faktencheck`
@@ -42,10 +46,24 @@ export function formatForDate(isoDate: string): DossierFormat {
   return ROTATION[idx];
 }
 
-// Resolve the format to actually render: explicit column wins, else rotate.
-export function resolveFormat(dossier: {
-  format: DossierFormat | null;
-  publish_date: string;
-}): DossierFormat {
+// Resolve the format to actually render. Order of precedence:
+//   1. role variant (V3): if a role-specific task exists for this role, its
+//      format wins (e.g. opposition → meinung) — rollenabhängige Tagesaufgabe.
+//   2. explicit dossier.format column.
+//   3. date rotation fallback.
+// `role` is optional + backward-compatible: callers without a role behave as
+// before (role variants are only consulted when a role is passed).
+export function resolveFormat(
+  dossier: {
+    format: DossierFormat | null;
+    publish_date: string;
+    role_variants?: DossierRoleVariants | null;
+  },
+  role?: DossierRole | null,
+): DossierFormat {
+  if (role) {
+    const variantFormat = dossier.role_variants?.[role]?.format;
+    if (variantFormat) return variantFormat;
+  }
   return dossier.format ?? formatForDate(dossier.publish_date);
 }

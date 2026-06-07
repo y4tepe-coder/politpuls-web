@@ -135,6 +135,30 @@ export type DossierFaktencheck = {
   tipp: string; // übertragbarer Medienkompetenz-Tipp ("Woran du sowas erkennst")
 };
 
+// Politische Rolle des Spielers. Spiegelt LocalRole (lib/local/state.ts) —
+// hier dupliziert, damit die geteilten DB-Typen nicht aus einem "use client"-
+// Modul importieren müssen.
+export type DossierRole = "kandidat" | "minister" | "kanzler" | "opposition";
+
+// V3 — rollenabhängige Tagesaufgabe: pro Rolle eine eigene, zur Rolle passende
+// Interaktion (Opposition kontrolliert die Regierung, Minister verteidigt sein
+// Ressort, Kanzler setzt die Richtlinie …). Überschreibt für die jeweilige
+// Rolle Format + Interaktions-Nutzdaten des Dossiers. I.d.R. format "meinung"
+// (offene Rollen-Reflexion ohne Spektrum-Verschiebung).
+export type DossierRoleVariant = {
+  format: DossierFormat;
+  streitfrage?: string | null;
+  meinung?: DossierMeinung | null;
+  faktencheck?: DossierFaktencheck | null;
+  choices?: DossierChoice[]; // nur falls format === "decision"
+  consequences?: Record<ChoiceId, DossierConsequence>;
+};
+
+// Keyed nach Rolle; "kandidat" wird in der App auf "opposition" gemappt, daher
+// reicht es, opposition/minister/kanzler zu liefern. Fehlt eine Rolle (oder das
+// ganze Feld), greift die Basis-Interaktion des Dossiers.
+export type DossierRoleVariants = Partial<Record<DossierRole, DossierRoleVariant>>;
+
 export type Dossier = {
   id: string;
   publish_date: string;
@@ -171,6 +195,9 @@ export type Dossier = {
   faktencheck: DossierFaktencheck | null;
   image: DossierImage | null;
   images?: DossierGallery | null; // optionales Bild-Karussell (zusätzlich zu image)
+  // V3: rollenabhängige Tagesaufgaben (nullable, abwärtskompatibel). Greift nur,
+  // wenn für die Rolle des Nutzers ein Eintrag existiert; sonst Basis-Aufgabe.
+  role_variants?: DossierRoleVariants | null;
   created_at: string;
 };
 

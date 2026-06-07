@@ -39,7 +39,7 @@ const fileArg = (() => {
 
 const EL_KEY = process.env.ELEVENLABS_API_KEY;
 const EL_VOICE = process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM"; // multilingual
-const EL_SPEED = Number(process.env.ELEVENLABS_SPEED || 1.12); // 0.7–1.2; >1 = schneller
+const EL_SPEED = Number(process.env.ELEVENLABS_SPEED || 1.0); // 0.7–1.2; >1 = schneller. Default 1.0 = natürliches Tempo.
 const OA_KEY = process.env.OPENAI_API_KEY;
 const provider = EL_KEY ? "elevenlabs" : OA_KEY ? "openai" : "say";
 

@@ -1,9 +1,12 @@
 node_modules/
 out/
-# Lokale Secrets (ElevenLabs-/OpenAI-Key) — NIE committen:
+# Lokale Secrets (ElevenLabs-/OpenAI-/Pixabay-Key) — NIE committen:
 .env
 .env.*
-# Generierte Laufzeit-Artefakte der Pipeline (Audio, heruntergeladene Bilder, Props):
+# … aber die Platzhalter-Vorlage gehört ins Repo:
+!.env.example
+# Generierte Laufzeit-Artefakte der Pipeline (Audio, heruntergeladene Bilder/Clips, Props):
 public/audio/
 public/img/
+public/clips/
 props/

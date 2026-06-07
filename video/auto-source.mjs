@@ -243,8 +243,8 @@ async function commonsFileInfo(filename, nameHint) {
   return pickBest(data, nameHint);
 }
 
-// Freie Volltextsuche im File-Namespace (Szenen-Beats).
-async function commonsSearchBest(term, nameHint) {
+// Eine Commons-Volltextsuche (File-Namespace) für genau einen Query-String.
+async function commonsSearchOnce(term, nameHint) {
   const url =
     "https://commons.wikimedia.org/w/api.php?" +
     new URLSearchParams({
@@ -254,13 +254,41 @@ async function commonsSearchBest(term, nameHint) {
       generator: "search",
       gsrnamespace: "6",
       gsrsearch: term,
-      gsrlimit: "20",
+      gsrlimit: "30",
       prop: "imageinfo",
       iiprop: "url|extmetadata|mime|size|mediatype",
       iiurlwidth: String(WIDTH),
     });
   const data = await getJson(url);
   return pickBest(data, nameHint);
+}
+
+// Mehrwort-Szenenbegriffe ("Gasheizung Heizkessel Keller") sind als UND-Suche
+// auf Commons oft leer → von spezifisch nach breit KASKADIEREN: ganzer Begriff,
+// erste zwei Wörter, ohne letztes Wort, längstes Einzelwort (meist das
+// Hauptmotiv), erstes Wort. Erster Treffer gewinnt.
+function queryVariants(term) {
+  const words = String(term || "").split(/\s+/).filter((w) => w.length > 2);
+  const variants = new Set();
+  if (words.length) variants.add(words.join(" "));
+  if (words.length > 2) variants.add(words.slice(0, 2).join(" "));
+  if (words.length > 1) variants.add(words.slice(0, -1).join(" "));
+  const longest = [...words].sort((a, b) => b.length - a.length)[0];
+  if (longest) variants.add(longest);
+  if (words[0]) variants.add(words[0]);
+  return [...variants];
+}
+
+async function commonsSearchBest(term, nameHint) {
+  for (const q of queryVariants(term)) {
+    try {
+      const hit = await commonsSearchOnce(q, nameHint);
+      if (hit) return hit;
+    } catch {
+      /* nächste Variante */
+    }
+  }
+  return null;
 }
 
 // Aus einer Commons-API-Antwort den besten gefilterten Treffer wählen.
@@ -319,6 +347,53 @@ async function pixabayClip(query) {
     console.log(`  Pixabay-Fehler: ${e.message} → Bild-Fallback`);
     return null;
   }
+}
+
+// Pixabay-FOTO als Szenen-Fallback, wenn Commons nichts Passendes liefert.
+// Pixabay Content License: kommerziell ohne Attribution. Riesiger Bestand an
+// generischen, themenpassenden Motiven (Wärmepumpe, Heizung, Demo, Häuser …).
+// Gibt dasselbe Shape wie pickBest zurück ({thumb, width, height, title, credit}).
+const usedPixabayPhotoIds = new Set();
+async function pixabayPhoto(query) {
+  if (!PIXABAY_KEY) return null;
+  for (const q of queryVariants(query)) {
+    try {
+      const url =
+        "https://pixabay.com/api/?" +
+        new URLSearchParams({
+          key: PIXABAY_KEY,
+          q,
+          image_type: "photo",
+          safesearch: "true",
+          orientation: "horizontal",
+          min_width: "1280",
+          per_page: "20",
+        });
+      const data = await getJson(url);
+      const hits = (data?.hits || []).filter((h) => !usedPixabayPhotoIds.has(h.id));
+      if (!hits.length) continue;
+      const top = hits[0];
+      usedPixabayPhotoIds.add(top.id);
+      return {
+        thumb: top.largeImageURL || top.webformatURL,
+        width: top.imageWidth || 0,
+        height: top.imageHeight || 0,
+        title: `pixabay-${top.id}`,
+        credit: {
+          author: "Pixabay",
+          licenseShort: "Pixabay License",
+          licenseUrl: "",
+          sourceUrl: top.pageURL || "",
+          title: `pixabay-${top.id}`,
+          creditLine: "Foto: Pixabay",
+          shareAlike: false,
+        },
+      };
+    } catch (e) {
+      console.log(`  Pixabay-Foto-Fehler (${q}): ${e.message}`);
+    }
+  }
+  return null;
 }
 
 // ---------- Download ----------
@@ -394,6 +469,7 @@ async function main() {
       if (!hit && sceneQuery) {
         const cand = await commonsSearchBest(sceneQuery, null);
         if (cand && !usedHashes.has(sha1(cand.title || cand.thumb))) hit = cand;
+        if (!hit) hit = await pixabayPhoto(sceneQuery);
       }
     } else {
       // 2) Szenen-Beats: ggf. ein B-Roll-Clip, sonst Commons-Volltextsuche.
@@ -423,9 +499,14 @@ async function main() {
         }
       }
       if (sceneQuery) {
-        // Bei Szenen-Beats ist Dedupe best-effort: lieber ein (evtl. schon
-        // genutztes) passendes Motiv als gar keins.
+        // Commons zuerst (echte Pressefotos), sonst Pixabay-Foto (riesiger
+        // generischer Bestand) — so bekommt JEDER Beat ein eigenes Motiv statt
+        // 7× dasselbe Notnagel-Bild.
         hit = await commonsSearchBest(sceneQuery, null);
+        if (!hit) {
+          hit = await pixabayPhoto(sceneQuery);
+          if (hit) console.log(`  ↪ Beat ${i}: Commons leer → Pixabay-Foto`);
+        }
       }
     }
 

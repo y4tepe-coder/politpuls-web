@@ -312,41 +312,60 @@ function pickBest(data, nameHint) {
 
 // ---------- PIXABAY VIDEO (optionale B-Roll-Clips) ----------
 // Pixabay Content License: kommerzielle Nutzung ohne Attribution erlaubt.
-async function pixabayClip(query) {
+// WICHTIG: Pixabay ist ENGLISCH indexiert. Deutsche Suchbegriffe ohne
+// lang-Parameter lieferten komplett irrelevante Clips (Genfer Flusslandschaft
+// fuer "Ueberwachungskamera" — Lauf vom 11.06.). Darum: englischer Begriff
+// (scene_en aus dem Storyboard) zuerst, deutscher mit lang=de als Fallback.
+async function pixabayClip(query, queryEn) {
   if (!PIXABAY_KEY) return null;
-  try {
-    const url =
-      "https://pixabay.com/api/videos/?" +
-      new URLSearchParams({
-        key: PIXABAY_KEY,
-        q: query,
-        safesearch: "true",
-        per_page: "10",
+  const tries = [];
+  if (queryEn) tries.push({ q: queryEn, lang: "en" });
+  if (query) tries.push({ q: query, lang: "de" });
+  for (const t of tries) {
+    try {
+      const url =
+        "https://pixabay.com/api/videos/?" +
+        new URLSearchParams({
+          key: PIXABAY_KEY,
+          q: t.q,
+          lang: t.lang,
+          safesearch: "true",
+          per_page: "15",
+        });
+      const data = await getJson(url);
+      // Qualitaets-Floor: Landscape, mind. 1280 px breit, 5–60 s lang —
+      // kuerzere Clips loopen sichtbar, Mini-Aufloesungen wirken matschig.
+      const hits = (data?.hits || []).filter((h) => {
+        const v = h.videos?.large || h.videos?.medium;
+        const dur = Number(h.duration) || 0;
+        return (
+          v &&
+          (v.width || 0) >= (v.height || 0) &&
+          (v.width || 0) >= 1280 &&
+          dur >= 5 &&
+          dur <= 60
+        );
       });
-    const data = await getJson(url);
-    const hits = (data?.hits || []).filter((h) => {
-      const v = h.videos?.large || h.videos?.medium;
-      return v && (v.width || 0) >= (v.height || 0); // Landscape bevorzugen
-    });
-    if (!hits.length) return null;
-    // Größte verfügbare Landscape-Variante wählen.
-    hits.sort((a, b) => {
-      const va = a.videos?.large || a.videos?.medium || {};
-      const vb = b.videos?.large || b.videos?.medium || {};
-      return (vb.width || 0) - (va.width || 0);
-    });
-    const top = hits[0];
-    const v = top.videos?.large || top.videos?.medium;
-    return {
-      url: v.url,
-      pageUrl: top.pageURL || "",
-      // Pixabay verlangt keine Attribution; wir zeigen trotzdem die Quelle.
-      credit: { author: "Pixabay", licenseShort: "Pixabay License", sourceUrl: top.pageURL || "", creditLine: "Clip: Pixabay", shareAlike: false },
-    };
-  } catch (e) {
-    console.log(`  Pixabay-Fehler: ${e.message} → Bild-Fallback`);
-    return null;
+      if (!hits.length) continue;
+      // Größte verfügbare Landscape-Variante wählen.
+      hits.sort((a, b) => {
+        const va = a.videos?.large || a.videos?.medium || {};
+        const vb = b.videos?.large || b.videos?.medium || {};
+        return (vb.width || 0) - (va.width || 0);
+      });
+      const top = hits[0];
+      const v = top.videos?.large || top.videos?.medium;
+      return {
+        url: v.url,
+        pageUrl: top.pageURL || "",
+        // Pixabay verlangt keine Attribution; wir zeigen trotzdem die Quelle.
+        credit: { author: "Pixabay", licenseShort: "Pixabay License", sourceUrl: top.pageURL || "", creditLine: "Clip: Pixabay", shareAlike: false },
+      };
+    } catch (e) {
+      console.log(`  Pixabay-Clip-Fehler (${t.lang}: ${t.q}): ${e.message}`);
+    }
   }
+  return null;
 }
 
 // Pixabay-FOTO als Szenen-Fallback, wenn Commons nichts Passendes liefert.
@@ -354,15 +373,20 @@ async function pixabayClip(query) {
 // generischen, themenpassenden Motiven (Wärmepumpe, Heizung, Demo, Häuser …).
 // Gibt dasselbe Shape wie pickBest zurück ({thumb, width, height, title, credit}).
 const usedPixabayPhotoIds = new Set();
-async function pixabayPhoto(query) {
+async function pixabayPhoto(query, queryEn) {
   if (!PIXABAY_KEY) return null;
-  for (const q of queryVariants(query)) {
+  // Deutsche Varianten mit lang=de (sonst sucht Pixabay deutsch im englischen
+  // Index), danach der englische Storyboard-Begriff als starker Fallback.
+  const tries = queryVariants(query).map((q) => ({ q, lang: "de" }));
+  if (queryEn) tries.push({ q: queryEn, lang: "en" });
+  for (const { q, lang } of tries) {
     try {
       const url =
         "https://pixabay.com/api/?" +
         new URLSearchParams({
           key: PIXABAY_KEY,
           q,
+          lang,
           image_type: "photo",
           safesearch: "true",
           orientation: "horizontal",
@@ -447,6 +471,7 @@ async function main() {
     const b = beats[i];
     const people = Array.isArray(b.people) ? b.people.filter(Boolean) : [];
     const sceneQuery = (b.scene || b.imageQuery || "").trim(); // imageQuery: Abwärtskompat
+    const sceneQueryEn = (b.scene_en || "").trim(); // englischer Stock-Begriff (Pixabay)
     const isPersonBeat = people.length > 0;
 
     let hit = null; // {thumb, credit, title}
@@ -470,12 +495,12 @@ async function main() {
       if (!hit && sceneQuery) {
         const cand = await commonsSearchBest(sceneQuery, null);
         if (cand && !usedHashes.has(sha1(cand.title || cand.thumb))) hit = cand;
-        if (!hit) hit = await pixabayPhoto(sceneQuery);
+        if (!hit) hit = await pixabayPhoto(sceneQuery, sceneQueryEn);
       }
     } else {
       // 2) Szenen-Beats: ggf. ein B-Roll-Clip, sonst Commons-Volltextsuche.
       if (PIXABAY_KEY && clipsUsed < MAX_CLIPS && sceneQuery) {
-        const clip = await pixabayClip(sceneQuery);
+        const clip = await pixabayClip(sceneQuery, sceneQueryEn);
         if (clip) {
           const file = `${slug(sceneQuery)}-${i}.mp4`;
           try {
@@ -488,6 +513,10 @@ async function main() {
                 type: "video",
                 src: `clips/${file}`,
                 muted: true,
+                // Original-Suchbegriffe fuer das QA-Gate: bei Ersatz kann es
+                // damit einen NEUEN Clip suchen statt stumpf auf Foto zu wechseln.
+                query: sceneQuery,
+                ...(sceneQueryEn ? { query_en: sceneQueryEn } : {}),
                 ...(b.kicker ? { kicker: b.kicker } : {}),
                 credit: clip.credit.creditLine,
               },
@@ -505,7 +534,7 @@ async function main() {
         // 7× dasselbe Notnagel-Bild.
         hit = await commonsSearchBest(sceneQuery, null);
         if (!hit) {
-          hit = await pixabayPhoto(sceneQuery);
+          hit = await pixabayPhoto(sceneQuery, sceneQueryEn);
           if (hit) console.log(`  ↪ Beat ${i}: Commons leer → Pixabay-Foto`);
         }
       }
@@ -551,6 +580,8 @@ async function main() {
         type: "image",
         src,
         motion: MOTIONS[i % MOTIONS.length],
+        ...(sceneQuery ? { query: sceneQuery } : {}),
+        ...(sceneQueryEn ? { query_en: sceneQueryEn } : {}),
         ...(b.kicker ? { kicker: b.kicker } : {}),
         ...(creditLine ? { credit: creditLine } : {}),
       },

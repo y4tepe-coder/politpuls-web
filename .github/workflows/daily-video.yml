@@ -22,7 +22,7 @@ permissions:
 jobs:
   video:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     defaults:
       run:
         working-directory: video
@@ -67,6 +67,9 @@ jobs:
       - name: Bilder (Wikimedia) + Clips (Pixabay) suchen
         env:
           PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+          # 3 B-Roll-Clips pro Video (statt 2) — echte Bewegtbilder sind der
+          # groesste Qualitaets-Hebel im Feed-Format.
+          MAX_VIDEO_CLIPS: "3"
         run: node auto-source.mjs out/video-storyboard.json out/storyboard-auto.json
 
       - name: QA-Gate (Vision) — schlechte/irrelevante Medien ersetzen

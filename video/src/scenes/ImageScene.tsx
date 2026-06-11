@@ -5,13 +5,18 @@ import { MediaOverlay } from "./_shared";
 
 // Variierte Kamerafahrten (statt nur rein/raus): Zoom + Schwenk je nach `motion`.
 // s = Scale-Verlauf, x/y = Schwenk in % (nutzt die Zoom-Überfläche).
+// Bewusst SANFT (max. 1.12): die Bilder sind durch object-fit:cover im
+// 9:16-Hochformat ohnehin schon stark beschnitten — ein 20%-Zoom obendrauf
+// grub sich frueher tief in Makro-Details (Muenzen-Naufnahme etc.).
+// Schwenks muessen IMMER innerhalb der Zoom-Ueberflaeche bleiben:
+// |translate| * s <= (s-1)/2 * 100, sonst blitzt der Hintergrund auf.
 const MOTIONS: Record<string, { s: [number, number]; x: [number, number]; y: [number, number] }> = {
-  zoomIn:        { s: [1.06, 1.2], x: [0, 0], y: [0, 0] },
-  zoomOut:       { s: [1.2, 1.06], x: [0, 0], y: [0, 0] },
-  panLeft:       { s: [1.14, 1.14], x: [3.5, -3.5], y: [0, 0] },
-  panRight:      { s: [1.14, 1.14], x: [-3.5, 3.5], y: [0, 0] },
-  zoomInPanUp:   { s: [1.08, 1.2], x: [0, 0], y: [3, -3] },
-  zoomInPanLeft: { s: [1.08, 1.2], x: [2.5, -2.5], y: [0, 0] },
+  zoomIn:        { s: [1.0, 1.1], x: [0, 0], y: [0, 0] },
+  zoomOut:       { s: [1.1, 1.0], x: [0, 0], y: [0, 0] },
+  panLeft:       { s: [1.08, 1.08], x: [3, -3], y: [0, 0] },
+  panRight:      { s: [1.08, 1.08], x: [-3, 3], y: [0, 0] },
+  zoomInPanUp:   { s: [1.04, 1.12], x: [0, 0], y: [1.5, -1.5] },
+  zoomInPanLeft: { s: [1.04, 1.12], x: [1.5, -1.5], y: [0, 0] },
 };
 
 export const ImageScene: React.FC<{

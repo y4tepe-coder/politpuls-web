@@ -22,6 +22,7 @@ erklären — neutral, ohne Belehrung, ohne Werbung.
       "people": ["Lars Klingbeil", "Friedrich Merz"],
       "orgs": ["SPD", "CDU"],
       "scene": "Konkreter deutscher Szenen-Suchbegriff für Beats OHNE Person (reale Orte/Objekte/Situationen), z.B. 'Bundestag Plenarsaal Abstimmung', 'Euro Banknoten Stapel', 'Windkraftanlage Feld'. Bei Personen-Beats trotzdem als Fallback-Motiv setzen.",
+      "scene_en": "DIESELBE Szene als englischer Stock-Footage-Suchbegriff: EINFACH und GENERISCH, 2-4 Wörter, nur Motive die es in Stock-Archiven wirklich massenhaft gibt (z.B. 'cctv security camera', 'euro banknotes', 'wind turbine', 'city crowd aerial'). KEINE zusammengesetzten Spezialszenen wie 'camera scanning faces on street' — dann kommt irrelevanter Müll. Pflicht.",
       "kicker": "NUR beim ERSTEN Beat setzen (das Politikfeld, z.B. 'Bundeshaushalt 2027'). Sonst weglassen."
     }
   ]
@@ -40,6 +41,13 @@ erklären — neutral, ohne Belehrung, ohne Werbung.
   Objekte, Situationen — KEINE Person im String). Dient als Motiv für
   Szenen-Beats UND als Fallback, falls zu einer Person kein Foto gefunden wird.
   Hänge bei datierten Ereignissen das Jahr an (z.B. "Bundestag Haushaltsdebatte 2027").
+- `scene_en` (Pflicht): dieselbe Szene als ENGLISCHER Suchbegriff für
+  Stock-Archive (Pixabay & Co. sind englisch indexiert — deutsche Begriffe
+  liefern dort irrelevante Treffer). WICHTIG: einfach + generisch halten
+  (2–4 Wörter), nur Motive die als Stock-Material wirklich existieren —
+  "cctv security camera" findet hunderte echte Kamera-Clips,
+  "surveillance camera scanning pedestrian faces" findet New-York-Verkehr
+  und Basketball. Lieber das simple Kern-Motiv als die perfekte Spezialszene.
 - `kicker` (optional): NUR beim ERSTEN Beat (das Politikfeld). Sonst weglassen.
 
 Die Medien-Beschaffung (Personen-Porträts via Wikidata→Commons, Szenen-Bilder,

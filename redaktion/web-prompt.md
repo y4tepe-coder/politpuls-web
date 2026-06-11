@@ -55,7 +55,7 @@ Erzeuge das Dossier für HEUTE: **{{TODAY}}** (Berliner Zeit).
     "Fachbegriff": "Erklärung in EINEM einfachen Satz für 14-Jährige"
   },  // 1–5 Einträge, alle wirklich vorkommenden Fachbegriffe
 
-  "streitfrage": "Die zentrale politische Streitfrage in einem Satz, Du-Form. Z.B. 'Du sitzt im Kabinett. Wie entscheidest Du?'",
+  "streitfrage": "Die zentrale politische Streitfrage in einem Satz. ROLLEN-NEUTRAL (KEIN 'Du bist Minister/Kanzler/Finanzminister', KEIN Aufruf 'jetzt entscheiden'), einfach die offene Sachfrage. Z.B. 'Mehr Schulden für Investitionen — oder konsequent sparen?'",
 
   "choices": [
     {
@@ -102,13 +102,34 @@ Erzeuge das Dossier für HEUTE: **{{TODAY}}** (Berliner Zeit).
   },
 
   "faktencheck": {
-    "behauptung": "Eine echt klingende Aussage/Schlagzeile zum heutigen Thema",
+    "behauptung": "Eine echt klingende Aussage/Schlagzeile ZUM HEUTIGEN THEMA (gleiches Thema wie headline/kicker/topic_tags, aus deinen sources ableitbar)",
     "praesentation": "Wie sie kursiert, z.B. 'Sharepic auf Instagram' oder 'Kettennachricht auf WhatsApp'",
     "ist_echt": false,
     "aufloesung": "1-2 Sätze: was tatsächlich korrekt ist (deckungsgleich mit den Quellen)",
     "warum": "1-2 Sätze: warum es irreführend ist (bzw. warum es echt ist, obwohl es überraschend klingt)",
     "tipp": "Ein übertragbarer Erkennungs-Tipp für solche Inhalte"
   },
+
+  "role_variants": {
+    // V3 — rollenabhängige Tagesaufgabe: pro Rolle EINE eigene Aufgabe (Format
+    // "meinung": offene Frage + 2–3 Optionen + Einordnung), die zur ROLLE passt
+    // — das, was diese Rolle in der echten Politik mit dem HEUTIGEN Thema täte.
+    // IMMER zum heutigen Thema. Rollen: opposition, minister, kanzler.
+    // ("kandidat" weglassen — die App nutzt dafür die opposition-Variante.)
+    // Pro Rolle eine ANDERE, rollentypische Handlung (siehe Regeln unten).
+    "opposition": {
+      "format": "meinung",
+      "meinung": {
+        "frage": "Du bist heute Opposition. <rollentypische Handlung als kurze Du-Frage zum Thema?>",
+        "optionen": [
+          { "id": "kurz-id", "label": "Option in wenigen Worten", "begruendung": "EIN Satz: was diese Wahl bewirkt" }
+        ],  // 2–3 Optionen, je eine vertretbare Haltung
+        "einordnung": "1–2 Sätze Lerneffekt: welches echte Werkzeug/Verfahren das ist"
+      }
+    },
+    "minister": { "format": "meinung", "meinung": { "frage": "Du bist Fachminister(in). …?", "optionen": [], "einordnung": "" } },
+    "kanzler":  { "format": "meinung", "meinung": { "frage": "Du bist Kanzler(in). …?", "optionen": [], "einordnung": "" } }
+  },  // ODER  "role_variants": null  (dann nur die Basis-Aufgabe oben)
 
   "sources": [
     { "title": "Echter Artikel-Titel", "url": "https://echte-url-aus-websearch", "outlet": "z.B. ZDFheute, Tagesschau, Bundestag" }
@@ -155,7 +176,7 @@ Erzeuge das Dossier für HEUTE: **{{TODAY}}** (Berliner Zeit).
   "topic_tags": ["thema1", "thema2"],  // 1–4 Tags, lower-kebab-case
   "phase": "daily",                      // fix
   "model_version": "claude-opus-4-7",   // fix
-  "prompt_version": "web-v5-formate-media"       // fix
+  "prompt_version": "web-v6-rollen-media"        // fix
 }
 ```
 
@@ -205,6 +226,10 @@ Erzeuge das Dossier für HEUTE: **{{TODAY}}** (Berliner Zeit).
 
 - **`faktencheck` (Fake-News-Training):** Erfinde eine Aussage, die echt
   aussieht, aber überprüfbar ist. STRIKTE REGELN:
+  - THEMENBEZUG (Pflicht): Die Behauptung MUSS DASSELBE Thema wie
+    headline/kicker/topic_tags betreffen und sich aus deinen `sources`
+    ableiten. NIE ein themenfremdes Thema (kein "Zuckersteuer", wenn das
+    Dossier vom Bundeshaushalt handelt).
   - Lege NIEMALS einer real existierenden Person ein wörtliches Zitat in den
     Mund, das sie so nicht gesagt hat. Keine Rufschädigung, keine erfundenen
     Skandale über echte Menschen.
@@ -215,6 +240,24 @@ Erzeuge das Dossier für HEUTE: **{{TODAY}}** (Berliner Zeit).
     (`true`) — sonst lernen Nutzer "alles ist Fake". Mal echt, mal falsch.
   - `aufloesung` und `warum` müssen zur Faktenlage deiner Quellen passen —
     nichts dazuerfinden.
+
+- **`role_variants` (rollenabhängige Aufgabe):** Erzeuge für **opposition**,
+  **minister** und **kanzler** je EINE eigene "meinung"-Aufgabe zum HEUTIGEN
+  Thema — das, was diese Rolle in der echten Politik tut. Keine Strohmänner,
+  2–3 vertretbare Optionen, neutrale `einordnung` mit dem echten Verfahren als
+  Lerneffekt. `id` kurz, ohne Sonderzeichen. Orientierung an realen Mechanismen:
+  - **opposition** — Regierung kontrollieren: Kleine/Große Anfrage,
+    Untersuchungsausschuss, Antrag/Gegenantrag, Haushalts-Gegenentwurf,
+    konstruktives Misstrauensvotum. (`frage` beginnt mit „Du bist heute
+    Opposition …".)
+  - **minister** — Ressort führen: Ressortbudget gegen den Finanzminister
+    verteidigen, Gesetzentwurf vs. Rechtsverordnung, EU-Ministerrat. (`frage`
+    beginnt mit „Du bist Fachminister(in) …".)
+  - **kanzler** — regieren: Richtlinienkompetenz/Leitlinie setzen, Koalition
+    zusammenhalten, Vertrauensfrage, EU-Gipfel. (`frage` beginnt mit „Du bist
+    Kanzler(in) …".)
+  Jede Rolle bekommt eine ANDERE Handlung. Lässt sich für das Thema keine
+  sinnvolle Rollen-Aufgabe bilden, setze `role_variants: null`.
 
 ## Output
 

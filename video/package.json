@@ -1,0 +1,24 @@
+{
+  "name": "politpuls-video",
+  "version": "0.1.0",
+  "private": true,
+  "description": "KI-Erklärvideos für Politpuls-Dossiers (Remotion-Folien + OpenAI-TTS-Erzähler).",
+  "scripts": {
+    "dev": "remotion studio",
+    "render": "remotion render DossierVideo out/dossier-video.mp4",
+    "build": "remotion bundle",
+    "make": "node make-video.mjs",
+    "upgrade": "remotion upgrade"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.451",
+    "@remotion/transitions": "^4.0.451",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.451"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.7",
+    "typescript": "5.9.3"
+  }
+}

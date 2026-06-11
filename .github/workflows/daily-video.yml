@@ -1,0 +1,99 @@
+name: Tages-Video
+
+# Läuft täglich in GitHubs Cloud (kein Mac nötig) NACH der 10-Uhr-Dossier-
+# Freischaltung: holt das heutige Dossier, lässt Claude ein lockeres Storyboard
+# schreiben, sucht echte Wikimedia-Bilder, rendert mit Remotion + ElevenLabs und
+# lädt das Video hoch + setzt es ins Dossier. Schlägt der Video-Teil fehl, bleibt
+# das (separat erzeugte) Text-Dossier unangetastet live.
+on:
+  schedule:
+    - cron: "30 9 * * *" # 09:30 UTC → 11:30 Berlin (Sommer) / 10:30 (Winter):
+      # ganzjährig SICHER nach der 10:00-Berlin-Dossier-Freischaltung (keine Race-
+      # Condition im Winter, wenn 09:00 UTC = 10:00 Berlin wäre).
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Optional: YYYY-MM-DD (Berliner Datum) statt heute"
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  video:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: video
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: ffmpeg installieren
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Claude CLI installieren
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Video-Abhängigkeiten installieren
+        run: npm ci || npm install
+
+      - name: Heutiges Dossier holen
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          TODAY="${{ inputs.date }}"
+          [ -z "$TODAY" ] && TODAY=$(TZ=Europe/Berlin date +%Y-%m-%d)
+          echo "TODAY=$TODAY" >> "$GITHUB_ENV"
+          mkdir -p out
+          curl -s "$SUPABASE_URL/rest/v1/dossiers?select=kicker,headline,deck,facts,streitfrage,topic_tags&publish_date=eq.$TODAY&limit=1" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); open('out/dossier.json','w').write(json.dumps(d[0],ensure_ascii=False,indent=2)) if d else sys.exit('Kein Dossier fuer heute')"
+          echo "Dossier: $(python3 -c "import json;print(json.load(open('out/dossier.json'))['headline'])")"
+
+      - name: Storyboard von Claude schreiben lassen
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          cat redaktion/video-prompt.md | claude -p --dangerously-skip-permissions \
+            || echo "Claude exit != 0 — pruefe out/video-storyboard.json"
+          test -s out/video-storyboard.json
+
+      - name: Bilder (Wikimedia) + Clips (Pixabay) suchen
+        env:
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+        run: node auto-source.mjs out/video-storyboard.json out/storyboard-auto.json
+
+      - name: QA-Gate (Vision) — schlechte/irrelevante Medien ersetzen
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+        # Schaut sich jedes Bild/jeden Clip-Frame mit einem Vision-Modell an und
+        # ersetzt dunkle/unscharfe/themenfremde Medien (z.B. Weihnachtsmarkt fürs
+        # Heizungsgesetz). Fail-open: schlägt die QA fehl, bleibt das Original.
+        run: node qa-media.mjs out/storyboard-auto.json || echo "QA übersprungen (fail-open)"
+
+      - name: Video rendern (Remotion + ElevenLabs)
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID }}
+        run: node make-from-storyboard.mjs --file out/storyboard-auto.json
+
+      - name: Video hochladen + ins Dossier setzen
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node publish-video.mjs --date "$TODAY"
+
+      - name: Debug-Artefakt bei Fehler
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: video-debug-${{ env.TODAY }}
+          path: video/out/
+          retention-days: 7

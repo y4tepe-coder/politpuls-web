@@ -43,9 +43,8 @@ dossier.published_at = new Date().toISOString();
 
 // PostgREST-Upsert: ?on_conflict=publish_date + Prefer: resolution=merge-duplicates
 // entspricht genau supabase-js' .upsert(dossier, { onConflict: "publish_date" }).
-let res;
-try {
-  res = await fetch(`${SUPABASE_URL}/rest/v1/dossiers?on_conflict=publish_date`, {
+async function upsert(payload) {
+  return fetch(`${SUPABASE_URL}/rest/v1/dossiers?on_conflict=publish_date`, {
     method: "POST",
     headers: {
       apikey: SERVICE_ROLE,
@@ -53,8 +52,13 @@ try {
       "Content-Type": "application/json",
       Prefer: "resolution=merge-duplicates,return=representation",
     },
-    body: JSON.stringify(dossier),
+    body: JSON.stringify(payload),
   });
+}
+
+let res;
+try {
+  res = await upsert(dossier);
 } catch (e) {
   console.error("Supabase nicht erreichbar (Netzwerkfehler):", e.message);
   process.exit(1);
@@ -62,8 +66,30 @@ try {
 
 if (!res.ok) {
   const text = await res.text();
-  console.error(`Supabase upsert failed (HTTP ${res.status}):`, text);
-  process.exit(1);
+  // Safeguard: ist die role_variants-Migration noch nicht angewandt, NICHT das
+  // ganze Tages-Dossier verlieren — Feld droppen und einmal erneut versuchen.
+  if (/role_variants/.test(text) && dossier.role_variants != null) {
+    console.warn(
+      "upload: Spalte role_variants fehlt (Migration nicht angewandt?) — sende ohne role_variants erneut.",
+    );
+    delete dossier.role_variants;
+    try {
+      res = await upsert(dossier);
+    } catch (e) {
+      console.error("Supabase nicht erreichbar (Netzwerkfehler):", e.message);
+      process.exit(1);
+    }
+    if (!res.ok) {
+      console.error(
+        `Supabase upsert failed (HTTP ${res.status}):`,
+        await res.text(),
+      );
+      process.exit(1);
+    }
+  } else {
+    console.error(`Supabase upsert failed (HTTP ${res.status}):`, text);
+    process.exit(1);
+  }
 }
 
 const rows = await res.json();

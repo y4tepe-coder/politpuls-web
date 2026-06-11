@@ -48,6 +48,10 @@ export type LocalState = {
   last_briefing_date: string | null;
   streak_saves_left: number;
   decisions: LocalDecision[];
+  // Faktencheck-Antworten pro Dossier (dossierId → "echt"|"fake"). Einmal
+  // gesetzt = endgültig; beim Wieder-Öffnen wird die Auflösung read-only
+  // gezeigt (analog zur gesperrten Entscheidung).
+  faktenchecks: Record<string, "echt" | "fake">;
   role: LocalRole;
   party_id: string | null;
   custom_party: CustomPartyDef | null;
@@ -66,6 +70,7 @@ const DEFAULT_STATE: LocalState = {
   last_briefing_date: null,
   streak_saves_left: 1,
   decisions: [],
+  faktenchecks: {},
   role: "kandidat",
   party_id: null,
   custom_party: null,
@@ -113,6 +118,26 @@ export function appendLocalDecision(decision: LocalDecision): LocalState {
   return updateLocalState({
     spektrum: decision.spektrumAfter,
     decisions: [...others, decision],
+  });
+}
+
+// Faktencheck-Antwort eines Dossiers (oder null). Wird beim Öffnen der
+// Faktencheck-Karte gelesen, um eine bereits getroffene Wahl gesperrt + mit
+// Auflösung anzuzeigen.
+export function getLocalFaktencheck(dossierId: string): "echt" | "fake" | null {
+  return getLocalState().faktenchecks?.[dossierId] ?? null;
+}
+
+// Speichert die Faktencheck-Antwort idempotent: einmal gesetzt wird sie NIE
+// überschrieben (die Wahl ist endgültig).
+export function appendLocalFaktencheck(
+  dossierId: string,
+  guess: "echt" | "fake",
+): LocalState {
+  const existing = getLocalState();
+  if (existing.faktenchecks?.[dossierId]) return existing;
+  return updateLocalState({
+    faktenchecks: { ...(existing.faktenchecks ?? {}), [dossierId]: guess },
   });
 }
 

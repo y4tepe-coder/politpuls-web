@@ -8,9 +8,11 @@ import type {
   Dossier,
   DossierChoice,
   DossierImage,
+  DossierRole,
 } from "@/lib/supabase/types";
 import { useDecision } from "@/lib/briefing/useDecision";
 import { resolveFormat } from "@/lib/dossier/format";
+import { getLocalState } from "@/lib/local/state";
 import { MeinungSection } from "@/components/briefing/MeinungSection";
 import { FaktencheckSection } from "@/components/briefing/FaktencheckSection";
 import { buttonVariants } from "@/components/ui/button";
@@ -41,7 +43,6 @@ type StepKind =
   | "lesen"
   | "image"
   | "short"
-  | "facts"
   | "decision"
   | "meinung"
   | "faktencheck"
@@ -66,13 +67,41 @@ function runtimeSeconds(runtime?: string | null): number | null {
 }
 
 export function BriefingDeck({ dossier }: { dossier: Dossier }) {
-  const { chosen, consequence, choose, submitting } = useDecision(dossier);
+  // Politische Rolle des Nutzers (lokal, aus der Wahl). Erst nach Mount aus
+  // localStorage lesbar → Default beim ersten Render, danach echte Rolle. Ein
+  // "kandidat" (vor der ersten Wahl) zählt als Opposition — so bekommt er die
+  // Oppositions-Aufgabe, passend zur Profil-Anzeige ("Opposition").
+  const [role, setRole] = useState<DossierRole>("kandidat");
+  useEffect(() => {
+    setRole(getLocalState().role);
+  }, []);
+  const taskRole: DossierRole = role === "kandidat" ? "opposition" : role;
 
-  const format = resolveFormat(dossier);
+  // Rollenabhängige Tagesaufgabe (V3): gibt es für die Rolle eine Variante,
+  // ersetzt sie Format + Interaktions-Nutzdaten (meinung/faktencheck/choices).
+  // Sonst bleibt alles wie gehabt (abwärtskompatibel — alte Dossiers haben
+  // kein role_variants, dann ist `effective` === `dossier`).
+  const effective = useMemo<Dossier>(() => {
+    const v = dossier.role_variants?.[taskRole];
+    if (!v) return dossier;
+    return {
+      ...dossier,
+      format: v.format ?? dossier.format,
+      streitfrage: v.streitfrage ?? dossier.streitfrage,
+      meinung: v.meinung ?? dossier.meinung,
+      faktencheck: v.faktencheck ?? dossier.faktencheck,
+      choices: v.choices ?? dossier.choices,
+      consequences: v.consequences ?? dossier.consequences,
+    };
+  }, [dossier, taskRole]);
+
+  const { chosen, consequence, choose, submitting } = useDecision(effective);
+
+  const format = resolveFormat(effective, taskRole);
   const isMeinung =
-    format === "meinung" && (dossier.meinung?.optionen?.length ?? 0) >= 2;
+    format === "meinung" && (effective.meinung?.optionen?.length ?? 0) >= 2;
   const isFaktencheck =
-    format === "faktencheck" && !!dossier.faktencheck?.behauptung;
+    format === "faktencheck" && !!effective.faktencheck?.behauptung;
   // Welche Interaktion ersetzt heute die Entscheidung? (Fallback: decision.)
   const interaction: StepKind = isFaktencheck
     ? "faktencheck"
@@ -122,17 +151,15 @@ export function BriefingDeck({ dossier }: { dossier: Dossier }) {
       // kein eigener "lesen"-Schritt mehr.
       s.push("short");
       if (gallery.length > 0) s.push("image");
-      if (dossier.facts.length > 0) s.push("facts");
     } else {
       // Klassisch: Lesen zuerst, optionaler YouTube-Short dazwischen.
       s.push("lesen");
       if (gallery.length > 0) s.push("image");
       if (videoOk) s.push("short");
-      if (dossier.facts.length > 0) s.push("facts");
     }
     s.push(interaction);
     return s;
-  }, [isExplainer, gallery, videoOk, dossier.facts.length, interaction]);
+  }, [isExplainer, gallery, videoOk, interaction]);
 
   // Outcome wird erst nach der Wahl Teil des Decks.
   const steps: StepKind[] =
@@ -226,10 +253,9 @@ export function BriefingDeck({ dossier }: { dossier: Dossier }) {
               ) : (
                 <ShortCard video={dossier.video} />
               ))}
-            {current === "facts" && <FactsCard facts={dossier.facts} />}
             {current === "decision" && (
               <DecisionCard
-                dossier={dossier}
+                dossier={effective}
                 chosen={chosen}
                 submitting={submitting}
                 onChoose={onChoose}
@@ -238,7 +264,7 @@ export function BriefingDeck({ dossier }: { dossier: Dossier }) {
             {current === "meinung" && (
               <CardShell>
                 <MeinungSection
-                  dossier={dossier}
+                  dossier={effective}
                   onComplete={() => setFormatDone(true)}
                 />
               </CardShell>
@@ -246,7 +272,7 @@ export function BriefingDeck({ dossier }: { dossier: Dossier }) {
             {current === "faktencheck" && (
               <CardShell>
                 <FaktencheckSection
-                  dossier={dossier}
+                  dossier={effective}
                   onComplete={() => setFormatDone(true)}
                 />
               </CardShell>
@@ -551,13 +577,19 @@ function GalleryCard({ images }: { images: DossierImage[] }) {
               key={image.url}
               className="w-full shrink-0 snap-center flex flex-col gap-2"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={image.url}
-                alt={image.alt ?? image.caption ?? "Bild zum Thema"}
-                onError={() => setBroken((prev) => new Set(prev).add(image.url))}
-                className="w-full rounded-2xl border border-foreground/10 object-cover max-h-[52vh]"
-              />
+              {/* Festes 4:3-Fenster + object-cover object-center: einheitliche,
+                  sauber gerahmte Karten statt seitlich/oben abgeschnittener
+                  Bilder. Gut beschnitten zusammen mit der themenspezifischen
+                  Bildquelle (Personen statt Logos). */}
+              <div className="w-full overflow-hidden rounded-2xl border border-foreground/10 bg-foreground/[0.04] aspect-[4/3]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={image.url}
+                  alt={image.alt ?? image.caption ?? "Bild zum Thema"}
+                  onError={() => setBroken((prev) => new Set(prev).add(image.url))}
+                  className="h-full w-full object-cover object-center"
+                />
+              </div>
               {(image.caption || image.source) && (
                 <figcaption className="text-xs text-muted-foreground leading-snug px-1">
                   {image.caption}
@@ -800,33 +832,6 @@ function ExplainerCard({
         )}
       </AnimatePresence>
     </div>
-  );
-}
-
-function FactsCard({ facts }: { facts: Dossier["facts"] }) {
-  return (
-    <CardShell>
-      <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.18em]">
-        Drei Zahlen, die alles erklären
-      </span>
-      <ul className="flex flex-col gap-3">
-        {facts.slice(0, 3).map((fact, i) => (
-          <li
-            key={`${fact.label}-${i}`}
-            className="rounded-2xl border border-foreground/10 bg-foreground/[0.03] px-4 py-3"
-          >
-            {/* Wert über Label gestapelt + umbruchfähig: lange Text-Werte
-                ("rund ein Drittel") laufen nicht mehr seitlich aus dem Bild. */}
-            <p className="font-serif text-2xl sm:text-[1.75rem] font-semibold leading-tight text-balance text-foreground">
-              {fact.value}
-            </p>
-            <p className="text-sm text-foreground/70 leading-snug mt-1">
-              {fact.label}
-            </p>
-          </li>
-        ))}
-      </ul>
-    </CardShell>
   );
 }
 

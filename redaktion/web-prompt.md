@@ -15,6 +15,16 @@ Erzeuge das Dossier für HEUTE: **{{TODAY}}** (Berliner Zeit).
    Streit, EU-Vorlage, Bundesrat-Sitzung — etwas, wo wirklich Spielraum für
    Pro/Contra besteht).
 
+   **Themen-Wiederholung vermeiden:** Die zuletzt veröffentlichten Dossiers
+   waren (JSON, neueste zuerst):
+
+   {{RECENT_TOPICS}}
+
+   - Wähle ein Thema, das sich KLAR von allen obigen unterscheidet — nicht
+     dasselbe Gesetz oder dieselbe Streitfrage in neuem Gewand. Lieber das
+     zweitwichtigste Thema des Tages als eine Wiederholung.
+   - Dein `slug` darf mit KEINEM der obigen slugs identisch sein.
+
 2. **Schreibe** das Dossier exakt im JSON-Schema unten in die Datei
    `out/dossier.json` (per Write-Tool).
 

@@ -43,12 +43,40 @@ jobs:
             echo "today=$(TZ=Europe/Berlin date +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Letzte Themen abrufen (Wiederholungs-Schutz)
+        # Holt die letzten 10 Dossiers, damit Claude weiss, welche Themen schon
+        # dran waren. Sonst kommt z.B. dreimal "Rente mit 70" in einer Woche —
+        # und beim dritten Mal crasht der Upload an der slug-unique-Constraint
+        # (so geschehen am 2026-06-10). Soft-Fail: ohne Liste laeuft es weiter.
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          mkdir -p out
+          curl -sf "$SUPABASE_URL/rest/v1/dossiers?select=publish_date,slug,headline,topic_tags&order=publish_date.desc&limit=10" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -o out/recent-topics.json \
+            || echo "[]" > out/recent-topics.json
+          echo "Letzte Themen: $(python3 -c "import json;print(', '.join(d['slug'] for d in json.load(open('out/recent-topics.json'))))" 2>/dev/null || echo 'keine')"
+
       - name: Generate dossier with Claude
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TODAY: ${{ steps.date.outputs.today }}
         run: |
           mkdir -p out
-          PROMPT="$(sed "s|{{TODAY}}|${{ steps.date.outputs.today }}|g" redaktion/web-prompt.md)"
+          PROMPT="$(python3 - <<'PY'
+          from pathlib import Path
+          import os
+          tpl = Path("redaktion/web-prompt.md").read_text()
+          recent = "[]"
+          p = Path("out/recent-topics.json")
+          if p.exists():
+              recent = p.read_text().strip() or "[]"
+          print(tpl.replace("{{TODAY}}", os.environ["TODAY"]).replace("{{RECENT_TOPICS}}", recent))
+          PY
+          )"
           # Claude beendet sich gelegentlich mit Exit != 0, obwohl es ein gueltiges
           # out/dossier.json geschrieben hat. Deshalb hier nicht hart failen — der
           # naechste Schritt prueft das Artefakt und entscheidet ueber Erfolg.
@@ -72,6 +100,10 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # Erwartetes Datum an den Upload durchreichen — damit funktioniert
+          # auch die Nachgenerierung verpasster Tage via override_date (vorher
+          # prueften wir stur gegen "heute" und ein Backfill konnte nie klappen).
+          TARGET_DATE: ${{ steps.date.outputs.today }}
         run: node redaktion/upload.mjs
 
       - name: Archive generated dossier on failure

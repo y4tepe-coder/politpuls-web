@@ -6,10 +6,14 @@ name: Tages-Video
 # lädt das Video hoch + setzt es ins Dossier. Schlägt der Video-Teil fehl, bleibt
 # das (separat erzeugte) Text-Dossier unangetastet live.
 on:
-  schedule:
-    - cron: "30 9 * * *" # 09:30 UTC → 11:30 Berlin (Sommer) / 10:30 (Winter):
-      # ganzjährig SICHER nach der 10:00-Berlin-Dossier-Freischaltung (keine Race-
-      # Condition im Winter, wenn 09:00 UTC = 10:00 Berlin wäre).
+  # Direkt NACH der Web-Redaktion (Dossier, 05:00 UTC) statt per eigenem Cron.
+  # Vorteil: Das Video ist fertig, lange BEVOR die App das Tagesdossier um
+  # 10:00 Berlin (08:00 UTC) freischaltet — keine Video-Lücke mehr. Und es hängt
+  # nicht mehr am unzuverlässigen GitHub-`schedule` (der 09:30-Cron feuerte oft
+  # gar nicht oder Stunden zu spät). Läuft nur, wenn das Dossier erfolgreich war.
+  workflow_run:
+    workflows: ["Web-Redaktion"]
+    types: [completed]
   workflow_dispatch:
     inputs:
       date:
@@ -22,6 +26,9 @@ permissions:
 jobs:
   video:
     runs-on: ubuntu-latest
+    # Bei workflow_run nur weiter, wenn die Redaktion erfolgreich war; manuelle
+    # Dispatches (Tests / verpasste Tage nachholen) laufen immer.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     timeout-minutes: 35
     defaults:
       run:

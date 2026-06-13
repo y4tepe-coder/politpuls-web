@@ -27,13 +27,18 @@ try {
   process.exit(1);
 }
 
-const today = new Intl.DateTimeFormat("sv-SE", {
-  timeZone: "Europe/Berlin",
-}).format(new Date());
+// TARGET_DATE kommt aus dem Workflow (= override_date bei Nachgenerierung
+// verpasster Tage, sonst Berliner Heute). Vorher prueften wir stur gegen
+// "heute" — damit konnte ein Backfill per override_date nie durchkommen.
+const expected =
+  process.env.TARGET_DATE ||
+  new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(
+    new Date(),
+  );
 
-if (dossier.publish_date !== today) {
+if (dossier.publish_date !== expected) {
   console.error(
-    `publish_date stimmt nicht: erwartet ${today}, bekommen ${dossier.publish_date}`,
+    `publish_date stimmt nicht: erwartet ${expected}, bekommen ${dossier.publish_date}`,
   );
   process.exit(1);
 }
@@ -73,6 +78,28 @@ if (!res.ok) {
       "upload: Spalte role_variants fehlt (Migration nicht angewandt?) — sende ohne role_variants erneut.",
     );
     delete dossier.role_variants;
+    try {
+      res = await upsert(dossier);
+    } catch (e) {
+      console.error("Supabase nicht erreichbar (Netzwerkfehler):", e.message);
+      process.exit(1);
+    }
+    if (!res.ok) {
+      console.error(
+        `Supabase upsert failed (HTTP ${res.status}):`,
+        await res.text(),
+      );
+      process.exit(1);
+    }
+  } else if (res.status === 409 && /dossiers_slug_key/.test(text)) {
+    // Slug-Kollision: Claude hat ein Thema wiederholt und denselben Slug
+    // gebildet wie ein aelteres Dossier (so am 2026-06-10, "rente-mit-70-
+    // rentenkommission" existierte schon vom 08.06.). Der Konflikt-Key des
+    // Upserts ist publish_date, NICHT slug — also knallt die unique-Constraint.
+    // Statt den Tag zu verlieren: einmal mit Datums-Suffix neu versuchen.
+    const fallback = `${dossier.slug}-${dossier.publish_date}`.slice(0, 80);
+    console.warn(`upload: Slug-Kollision — neuer Versuch mit slug=${fallback}`);
+    dossier.slug = fallback;
     try {
       res = await upsert(dossier);
     } catch (e) {

@@ -91,11 +91,11 @@ export default function WahlPage() {
           initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", stiffness: 200, damping: 15 }}
-          className="inline-flex items-center justify-center size-20 rounded-full bg-foreground/5"
+          className="inline-flex items-center justify-center size-20 rounded-full glass-card"
         >
           <Trophy className="size-10 text-foreground" />
         </motion.div>
-        <header className="flex flex-col gap-2">
+        <header className="flex flex-col gap-2 text-on-bg">
           <span className="text-foreground text-xs font-semibold uppercase tracking-[0.18em]">
             Wahlsonntag
           </span>
@@ -123,7 +123,7 @@ export default function WahlPage() {
     const mine = results.find((r) => r.mine);
     return (
       <main className="flex flex-1 flex-col max-w-2xl mx-auto w-full px-5 py-6 gap-5">
-        <header className="flex flex-col gap-2">
+        <header className="flex flex-col gap-2 text-on-bg">
           <span className="text-foreground text-xs font-semibold uppercase tracking-[0.18em]">
             Hochrechnung 18:00
           </span>
@@ -210,7 +210,7 @@ export default function WahlPage() {
     const allCoalitions = coalitionsWithMine.length > 0 ? coalitionsWithMine : coalitions;
     return (
       <main className="flex flex-1 flex-col max-w-2xl mx-auto w-full px-5 py-6 gap-5">
-        <header className="flex flex-col gap-2">
+        <header className="flex flex-col gap-2 text-on-bg">
           <span className="text-foreground text-xs font-semibold uppercase tracking-[0.18em]">
             Koalition
           </span>
@@ -308,7 +308,7 @@ export default function WahlPage() {
       >
         {roleData.icon}
       </motion.div>
-      <header className="flex flex-col gap-2">
+      <header className="flex flex-col gap-2 text-on-bg">
         <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
           Deine neue Rolle
         </span>

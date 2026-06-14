@@ -87,7 +87,7 @@ export default function PlakatPage() {
         <div className="w-11" />
       </header>
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 text-on-bg">
         <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.18em]">
           Wahlplakat
         </span>
@@ -114,7 +114,7 @@ export default function PlakatPage() {
 
       {/* Slogan */}
       <div className="flex flex-col gap-2">
-        <Label htmlFor="slogan" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <Label htmlFor="slogan" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-on-bg">
           Slogan (max. 40 Zeichen)
         </Label>
         <Input
@@ -130,7 +130,7 @@ export default function PlakatPage() {
 
       {/* Subline */}
       <div className="flex flex-col gap-2">
-        <Label htmlFor="subline" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <Label htmlFor="subline" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-on-bg">
           Subline (max. 60 Zeichen)
         </Label>
         <Input
@@ -146,7 +146,7 @@ export default function PlakatPage() {
 
       {/* Farbe */}
       <div className="flex flex-col gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-on-bg">
           Farbe
         </span>
         <div className="grid grid-cols-3 gap-2.5">
@@ -179,7 +179,7 @@ export default function PlakatPage() {
 
       {/* Layout */}
       <div className="flex flex-col gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-on-bg">
           Layout
         </span>
         <div className="grid grid-cols-3 gap-2.5">

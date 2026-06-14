@@ -59,6 +59,11 @@ export type LocalState = {
   campaign_themen: string[]; // bis zu 3 ids aus WAHLKAMPF_THEMEN
   campaign_plakat: WahlkampfPlakat | null;
   campaign_triell_answers: Record<string, string>; // questionId → answerId
+  // V3 Wahlkampf-Pfad (Duolingo-Style): Berlin-Datum, an dem die Kampagne begann
+  // — daraus wird "ein Schritt pro Tag freigeschaltet" berechnet. null = noch
+  // nicht gestartet.
+  campaign_started_date: string | null;
+  campaign_faktspin_done: boolean; // Tagesaufgabe "Fakt oder Spin?" erledigt
 };
 
 const KEY = "politpuls.state.v1";
@@ -77,6 +82,8 @@ const DEFAULT_STATE: LocalState = {
   campaign_themen: [],
   campaign_plakat: null,
   campaign_triell_answers: {},
+  campaign_started_date: null,
+  campaign_faktspin_done: false,
 };
 
 function safeStorage(): Storage | null {

@@ -13,6 +13,7 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { createHash } from "node:crypto";
+import { fetchRetry } from "./lib/retry.mjs";
 
 function loadEnv(p) {
   if (!existsSync(p)) return;
@@ -50,7 +51,10 @@ if (!existsSync(file)) fail(`Datei fehlt: ${file} — vorher rendern (make-from-
 const h = { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` };
 
 async function ensureBucket() {
-  const res = await fetch(`${SUPABASE_URL}/storage/v1/bucket`, {
+  // fetchRetry überall in diesem Skript: Der Publish-Schritt ist der LETZTE
+  // der Pipeline — hier wegen eines transienten Supabase-Schluckaufs zu
+  // scheitern hiesse, den kompletten (teuren) Render wegzuwerfen.
+  const res = await fetchRetry(`${SUPABASE_URL}/storage/v1/bucket`, {
     method: "POST",
     headers: { ...h, "Content-Type": "application/json" },
     body: JSON.stringify({ id: BUCKET, name: BUCKET, public: true }),
@@ -79,7 +83,7 @@ function runtimeOf(f) {
 }
 
 async function main() {
-  const dres = await fetch(
+  const dres = await fetchRetry(
     `${SUPABASE_URL}/rest/v1/dossiers?select=id,headline,publish_date&publish_date=eq.${date}&limit=1`,
     { headers: h },
   );
@@ -105,21 +109,32 @@ async function main() {
   // Name (idempotent).
   const hash = createHash("sha256").update(bytes).digest("hex").slice(0, 8);
   const objectPath = `${BUCKET}/${date}-${hash}.mp4`;
-  const up = await fetch(`${SUPABASE_URL}/storage/v1/object/${objectPath}`, {
-    method: "POST",
-    headers: { ...h, "Content-Type": "video/mp4", "x-upsert": "true" },
-    body: bytes,
-  });
+  // Retry ist hier gefahrlos: x-upsert + inhaltsbasierter Dateiname machen den
+  // Upload idempotent — ein wiederholter POST überschreibt nur sich selbst.
+  const up = await fetchRetry(
+    `${SUPABASE_URL}/storage/v1/object/${objectPath}`,
+    {
+      method: "POST",
+      headers: { ...h, "Content-Type": "video/mp4", "x-upsert": "true" },
+      body: bytes,
+    },
+    { label: "Storage-Upload" },
+  );
   if (!up.ok) fail(`Upload fehlgeschlagen (HTTP ${up.status}): ${await up.text()}`);
   const url = `${SUPABASE_URL}/storage/v1/object/public/${objectPath}`;
   console.log(`• Hochgeladen (${Math.round(bytes.length / 1e6)} MB) → ${url}`);
 
   const video = { kind: "ai-explainer", url, title: dossier.headline, runtime: runtimeOf(file) };
-  const patch = await fetch(`${SUPABASE_URL}/rest/v1/dossiers?publish_date=eq.${date}`, {
-    method: "PATCH",
-    headers: { ...h, "Content-Type": "application/json", Prefer: "return=minimal" },
-    body: JSON.stringify({ video }),
-  });
+  // PATCH ist idempotent (setzt immer denselben Wert) → Retry unbedenklich.
+  const patch = await fetchRetry(
+    `${SUPABASE_URL}/rest/v1/dossiers?publish_date=eq.${date}`,
+    {
+      method: "PATCH",
+      headers: { ...h, "Content-Type": "application/json", Prefer: "return=minimal" },
+      body: JSON.stringify({ video }),
+    },
+    { label: "Dossier-Patch" },
+  );
   if (!patch.ok) fail(`Dossier-Patch fehlgeschlagen (HTTP ${patch.status}): ${await patch.text()}`);
   console.log(`✅ Fertig! Das Video ist im Dossier ${date} gesetzt.`);
   console.log("   In der App sichtbar, sobald der ISR-Cache dreht (~10 Min) oder nach Reload.");

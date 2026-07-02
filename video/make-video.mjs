@@ -15,6 +15,7 @@
 //
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
+import { fetchRetry } from "./lib/retry.mjs";
 
 const FPS = 30;
 const WORDS_PER_SEC = 2.6; // grobe Sprechrate (Fallback-Dauer ohne TTS)
@@ -44,7 +45,7 @@ async function loadDossier() {
       fail("--date braucht SUPABASE_URL (zum Holen aus der DB).");
     const key = SERVICE_ROLE || process.env.SUPABASE_ANON_KEY;
     if (!key) fail("--date braucht SUPABASE_SERVICE_ROLE_KEY oder ANON_KEY.");
-    const res = await fetch(
+    const res = await fetchRetry(
       `${SUPABASE_URL}/rest/v1/dossiers?select=*&publish_date=eq.${dateArg}&limit=1`,
       { headers: { apikey: key, Authorization: `Bearer ${key}` } },
     );
@@ -101,19 +102,23 @@ function framesForWords(text) {
 // ---------- OpenAI TTS ----------
 async function tts(text, outPath) {
   if (!OPENAI_API_KEY) return null; // stille Vorschau
-  const res = await fetch("https://api.openai.com/v1/audio/speech", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
-      "Content-Type": "application/json",
+  const res = await fetchRetry(
+    "https://api.openai.com/v1/audio/speech",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: TTS_MODEL,
+        voice: VOICE,
+        input: text,
+        response_format: "mp3",
+      }),
     },
-    body: JSON.stringify({
-      model: TTS_MODEL,
-      voice: VOICE,
-      input: text,
-      response_format: "mp3",
-    }),
-  });
+    { label: "OpenAI-TTS" },
+  );
   if (!res.ok) {
     console.warn(
       `make-video: TTS fehlgeschlagen (HTTP ${res.status}) — Szene wird still.`,
@@ -168,7 +173,7 @@ async function downloadFirstImage(d) {
   if (imgs.length === 0) return null;
   const { url, caption, source } = imgs[0];
   try {
-    const res = await fetch(url, { redirect: "follow" });
+    const res = await fetchRetry(url, { redirect: "follow" });
     if (!res.ok) return null;
     const buf = Buffer.from(await res.arrayBuffer());
     const ext = url.split("?")[0].match(/\.(jpe?g|png|webp)$/i)?.[1] || "jpg";
@@ -260,16 +265,21 @@ async function uploadAndPatch(d, mp4Path, totalSec, posterUrl) {
   const bytes = readFileSync(mp4Path);
   const objectPath = `dossier-videos/${date}.mp4`;
 
-  const up = await fetch(`${SUPABASE_URL}/storage/v1/object/${objectPath}`, {
-    method: "POST",
-    headers: {
-      apikey: SERVICE_ROLE,
-      Authorization: `Bearer ${SERVICE_ROLE}`,
-      "Content-Type": "video/mp4",
-      "x-upsert": "true",
+  // x-upsert macht den Upload idempotent → Retry gefahrlos.
+  const up = await fetchRetry(
+    `${SUPABASE_URL}/storage/v1/object/${objectPath}`,
+    {
+      method: "POST",
+      headers: {
+        apikey: SERVICE_ROLE,
+        Authorization: `Bearer ${SERVICE_ROLE}`,
+        "Content-Type": "video/mp4",
+        "x-upsert": "true",
+      },
+      body: bytes,
     },
-    body: bytes,
-  });
+    { label: "Storage-Upload" },
+  );
   if (!up.ok) {
     console.error(
       `make-video: Upload fehlgeschlagen (HTTP ${up.status}):`,
@@ -290,7 +300,7 @@ async function uploadAndPatch(d, mp4Path, totalSec, posterUrl) {
     ...(posterUrl ? { poster: posterUrl } : {}),
   };
 
-  const patch = await fetch(
+  const patch = await fetchRetry(
     `${SUPABASE_URL}/rest/v1/dossiers?publish_date=eq.${date}`,
     {
       method: "PATCH",
@@ -302,6 +312,7 @@ async function uploadAndPatch(d, mp4Path, totalSec, posterUrl) {
       },
       body: JSON.stringify({ video }),
     },
+    { label: "Dossier-Patch" },
   );
   if (!patch.ok) {
     console.error(

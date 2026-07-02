@@ -12,6 +12,7 @@
 
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { fetchRetry } from "./lib/retry.mjs";
 
 // Lädt Keys aus einer lokalen, gitignorierten .env — so muss NIE ein Key im
 // Chat oder in einem Befehl stehen. Reihenfolge: video/.env(.local), dann web.
@@ -52,14 +53,18 @@ async function tts(text, outMp3) {
     if (provider === "openai") return { ok: await ttsOpenAI(text, outMp3), alignment: null };
     return { ok: ttsSay(text, outMp3), alignment: null };
   } catch (e) {
-    console.warn(`  TTS-Fehler (${provider}): ${e.message} → Beat wird still.`);
+    // ok:false signalisiert dem Aufrufer den endgültigen Fehlschlag (nach
+    // allen Retries) — die Entscheidung Abbruch vs. stiller Beat fällt in main().
+    console.warn(`  TTS-Fehler (${provider}): ${e.message}`);
     return { ok: false, alignment: null };
   }
 }
 
 async function ttsEleven(text, out) {
   // with-timestamps: liefert Audio (base64) + Zeichen-Zeitstempel in EINEM Call.
-  const res = await fetch(
+  // fetchRetry: 429/5xx/Netzfehler werden bis zu 3× mit Backoff wiederholt —
+  // ElevenLabs drosselt gelegentlich kurz, das soll den Lauf nicht kippen.
+  const res = await fetchRetry(
     `https://api.elevenlabs.io/v1/text-to-speech/${EL_VOICE}/with-timestamps?output_format=mp3_44100_128`,
     {
       method: "POST",
@@ -76,6 +81,7 @@ async function ttsEleven(text, out) {
         },
       }),
     },
+    { label: "ElevenLabs-TTS" },
   );
   if (!res.ok) {
     console.warn(`  ElevenLabs HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
@@ -87,16 +93,20 @@ async function ttsEleven(text, out) {
 }
 
 async function ttsOpenAI(text, out) {
-  const res = await fetch("https://api.openai.com/v1/audio/speech", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${OA_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: process.env.OPENAI_TTS_MODEL || "gpt-4o-mini-tts",
-      voice: process.env.OPENAI_TTS_VOICE || "alloy",
-      input: text,
-      response_format: "mp3",
-    }),
-  });
+  const res = await fetchRetry(
+    "https://api.openai.com/v1/audio/speech",
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${OA_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: process.env.OPENAI_TTS_MODEL || "gpt-4o-mini-tts",
+        voice: process.env.OPENAI_TTS_VOICE || "alloy",
+        input: text,
+        response_format: "mp3",
+      }),
+    },
+    { label: "OpenAI-TTS" },
+  );
   if (!res.ok) {
     console.warn(`  OpenAI HTTP ${res.status}`);
     return false;
@@ -231,6 +241,15 @@ async function main() {
     }
 
     const r = await tts(narration, mp3);
+    // KEIN stummes Video veröffentlichen: Scheitert TTS für einen Beat MIT
+    // Erzähltext trotz Retries endgültig, bricht der Lauf hart ab. Ein halb
+    // vertontes Video live zu schalten wäre schlimmer als gar keins — der
+    // Sweep-Lauf (12:30 UTC) bzw. ein manueller Re-Run holt es später nach.
+    // (Beats OHNE narration bleiben wie gehabt bewusst still: GAP_DEFAULT.)
+    if (narration && narration.trim() && !r.ok) {
+      console.error(`Abbruch: TTS für Beat ${i} endgültig fehlgeschlagen (Stimme: ${provider}).`);
+      process.exit(1);
+    }
     const frames = r.ok ? audioFrames(mp3) ?? GAP_DEFAULT : GAP_DEFAULT;
     const captions = narration
       ? r.alignment

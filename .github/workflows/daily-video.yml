@@ -10,14 +10,24 @@ on:
     - cron: "30 9 * * *" # 09:30 UTC → 11:30 Berlin (Sommer) / 10:30 (Winter):
       # ganzjährig SICHER nach der 10:00-Berlin-Dossier-Freischaltung (keine Race-
       # Condition im Winter, wenn 09:00 UTC = 10:00 Berlin wäre).
+    - cron: "30 12 * * *" # Nachzügler-Lauf (Sweep): rendert dank Idempotenz-Guard
+      # NUR, wenn der 09:30-Lauf kein Video veröffentlicht hat (API-Ausfall,
+      # GitHub-Verzögerung o.ä.). Hat der erste Lauf geklappt, endet dieser Lauf
+      # direkt nach dem Guard erfolgreich — kostet dann nur ~1 Runner-Minute.
   workflow_dispatch:
     inputs:
       date:
         description: "Optional: YYYY-MM-DD (Berliner Datum) statt heute"
         required: false
+      force:
+        description: "Video neu rendern, auch wenn schon eins existiert (umgeht den Idempotenz-Guard)"
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
+  issues: write # für die Fehler-Issues (Benachrichtigung bei rotem Lauf)
 
 jobs:
   video:
@@ -29,19 +39,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: ffmpeg installieren
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
-
-      - name: Claude CLI installieren
-        run: npm install -g @anthropic-ai/claude-code
-
-      - name: Video-Abhängigkeiten installieren
-        run: npm ci || npm install
-
+      # Dossier-Fetch + Idempotenz-Guard bewusst VOR den Installationen:
+      # Der Sweep-Lauf (12:30 UTC) soll im Normalfall — Video existiert schon —
+      # nach Sekunden enden, ohne erst ffmpeg/Claude-CLI/npm zu installieren.
       - name: Heutiges Dossier holen
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -56,7 +56,52 @@ jobs:
             | python3 -c "import sys,json; d=json.load(sys.stdin); open('out/dossier.json','w').write(json.dumps(d[0],ensure_ascii=False,indent=2)) if d else sys.exit('Kein Dossier fuer heute')"
           echo "Dossier: $(python3 -c "import json;print(json.load(open('out/dossier.json'))['headline'])")"
 
+      - name: Idempotenz-Guard — hat das Dossier schon ein Video?
+        id: guard
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          FORCE: ${{ inputs.force }}
+        # Macht Wiederholungsläufe (Sweep 12:30, manuelle Re-Runs) gefahrlos:
+        # Steht im heutigen Dossier bereits ein Video mit URL, gibt es nichts zu
+        # tun — der Lauf endet sauber erfolgreich, statt teuer neu zu rendern und
+        # das live stehende Video zu überschreiben. Der Video-Status wird separat
+        # abgefragt (nicht im Fetch oben), damit out/dossier.json — die Eingabe
+        # fürs Storyboard — exakt so bleibt wie bisher. Fail-open: lässt sich der
+        # Status nicht ermitteln, wird normal gerendert (Publish benennt Dateien
+        # ohnehin inhaltsbasiert, doppelt schadet also nicht).
+        run: |
+          VIDEO_URL=$(curl -s "$SUPABASE_URL/rest/v1/dossiers?select=video&publish_date=eq.$TODAY&limit=1" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); v=(d[0].get('video') or {}) if d else {}; print(v.get('url') or '')" \
+            || echo "")
+          if [ "$FORCE" != "true" ] && [ -n "$VIDEO_URL" ]; then
+            echo "Video für $TODAY existiert bereits: $VIDEO_URL"
+            echo "→ Nichts zu tun, Lauf endet erfolgreich (Wiederholungslauf/Sweep)."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.guard.outputs.skip != 'true'
+        with:
+          node-version: 22
+
+      - name: ffmpeg installieren
+        if: steps.guard.outputs.skip != 'true'
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Claude CLI installieren
+        if: steps.guard.outputs.skip != 'true'
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Video-Abhängigkeiten installieren
+        if: steps.guard.outputs.skip != 'true'
+        run: npm ci || npm install
+
       - name: Storyboard von Claude schreiben lassen
+        if: steps.guard.outputs.skip != 'true'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
@@ -65,6 +110,7 @@ jobs:
           test -s out/video-storyboard.json
 
       - name: Bilder (Wikimedia) + Clips (Pixabay) suchen
+        if: steps.guard.outputs.skip != 'true'
         env:
           PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
           # 3 B-Roll-Clips pro Video (statt 2) — echte Bewegtbilder sind der
@@ -73,6 +119,7 @@ jobs:
         run: node auto-source.mjs out/video-storyboard.json out/storyboard-auto.json
 
       - name: QA-Gate (Vision) — schlechte/irrelevante Medien ersetzen
+        if: steps.guard.outputs.skip != 'true'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
@@ -82,12 +129,14 @@ jobs:
         run: node qa-media.mjs out/storyboard-auto.json || echo "QA übersprungen (fail-open)"
 
       - name: Video rendern (Remotion + ElevenLabs)
+        if: steps.guard.outputs.skip != 'true'
         env:
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
           ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID }}
         run: node make-from-storyboard.mjs --file out/storyboard-auto.json
 
       - name: Video hochladen + ins Dossier setzen
+        if: steps.guard.outputs.skip != 'true'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -100,3 +149,52 @@ jobs:
           name: video-debug-${{ env.TODAY }}
           path: video/out/
           retention-days: 7
+
+      - name: Fehler-Issue anlegen oder kommentieren
+        if: failure()
+        # Ein roter Lauf soll nicht unbemerkt in der Actions-Liste versauern:
+        # GitHub-Issue mit Link zum Run. Existiert schon ein offenes Issue mit
+        # gleichem Titel-Präfix, wird dort kommentiert — ein Thread pro Störung
+        # statt Issue-Flut (Sweep-Lauf + Re-Runs würden sonst Duplikate erzeugen).
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Berliner Datum als Fallback, falls der Lauf vor dem Setzen von TODAY starb.
+            const berlin = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(new Date());
+            const today = process.env.TODAY || berlin;
+            const prefix = "Pipeline-Fehler: Tages-Video";
+            const title = `${prefix} ${today}`;
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [
+              `Der Workflow **${context.workflow}** ist für **${today}** fehlgeschlagen.`,
+              "",
+              `Run: ${runUrl}`,
+              "",
+              "Debug-Artefakt (video/out) hängt am Run. Der Sweep-Lauf (12:30 UTC) versucht es",
+              "automatisch erneut; alternativ den Workflow manuell starten — der Idempotenz-Guard",
+              "verhindert Doppel-Videos.",
+            ].join("\n");
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              per_page: 100,
+            });
+            const existing = issues.find((i) => i.title.startsWith(prefix) && !i.pull_request);
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body,
+              });
+              core.info(`Kommentar an bestehendes Issue #${existing.number} angehängt.`);
+            } else {
+              const { data: issue } = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+              });
+              core.info(`Issue #${issue.number} angelegt.`);
+            }

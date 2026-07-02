@@ -18,6 +18,7 @@
 
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { fetchRetry } from "./lib/retry.mjs";
 
 function loadEnv(path) {
   if (!existsSync(path)) return;
@@ -167,7 +168,9 @@ async function pixabayBest(query, lang = "de") {
         min_width: "1920",
         per_page: "20",
       });
-    const res = await fetch(url, { headers: { "User-Agent": UA } });
+    // Retry gegen transiente Pixabay-Fehler (429/5xx/Netz) — sonst verliert
+    // das QA-Gate seinen Ersatzkandidaten wegen eines einzelnen Hängers.
+    const res = await fetchRetry(url, { headers: { "User-Agent": UA } });
     if (!res.ok) return null;
     const data = await res.json();
     const hits = (data.hits || []).filter(
@@ -183,7 +186,7 @@ async function pixabayBest(query, lang = "de") {
 }
 
 async function download(u, path) {
-  const res = await fetch(u, { headers: { "User-Agent": UA } });
+  const res = await fetchRetry(u, { headers: { "User-Agent": UA } });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   writeFileSync(path, Buffer.from(await res.arrayBuffer()));
 }
@@ -204,7 +207,7 @@ async function pixabayClipBest(query, lang = "en") {
         safesearch: "true",
         per_page: "15",
       });
-    const res = await fetch(url, { headers: { "User-Agent": UA } });
+    const res = await fetchRetry(url, { headers: { "User-Agent": UA } });
     if (!res.ok) return null;
     const data = await res.json();
     const hits = (data.hits || []).filter((h) => {

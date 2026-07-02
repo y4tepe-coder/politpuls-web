@@ -11,6 +11,7 @@
 // File-Namespace (6), imageinfo liefert eine skalierte thumburl (Breite 1280).
 
 import { mkdirSync, writeFileSync } from "node:fs";
+import { fetchRetry } from "./lib/retry.mjs";
 
 const UA = "PolitpulsVideoBot/1.0 (https://politpuls.de; kontakt@politpuls.de)";
 const WIDTH = 2560; // hoch genug, dass der 9:16-Ausschnitt nicht hochskaliert
@@ -52,7 +53,7 @@ async function commonsBest(term) {
       iiprop: "url|extmetadata|mime|size",
       iiurlwidth: String(WIDTH),
     });
-  const res = await fetch(url, { headers: { "User-Agent": UA } });
+  const res = await fetchRetry(url, { headers: { "User-Agent": UA } });
   if (!res.ok) return null;
   const data = await res.json();
   const pages = Object.values(data?.query?.pages ?? {});
@@ -86,7 +87,7 @@ async function commonsBest(term) {
 }
 
 async function download(u, path) {
-  const res = await fetch(u, { headers: { "User-Agent": UA } });
+  const res = await fetchRetry(u, { headers: { "User-Agent": UA } });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const buf = Buffer.from(await res.arrayBuffer());
   writeFileSync(path, buf);

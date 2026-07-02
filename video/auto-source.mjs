@@ -17,6 +17,7 @@
 
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { createHash } from "node:crypto";
+import { fetchRetry } from "./lib/retry.mjs";
 
 // Keys aus lokaler, gitignorierter .env nachladen (PIXABAY_API_KEY etc.) —
 // NIE ein Secret hart im committeten Code. Reihenfolge: video/.env(.local).
@@ -71,8 +72,10 @@ function stripHtml(s) {
   return String(s || "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
 }
 
+// Alle API-Reads (Wikidata/Commons/Pixabay) mit Retry — transiente Netz-
+// fehler auf dem Runner sollen nicht die ganze Fallback-Kette leerlaufen lassen.
 async function getJson(url) {
-  const res = await fetch(url, { headers: { "User-Agent": UA } });
+  const res = await fetchRetry(url, { headers: { "User-Agent": UA } });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
@@ -421,9 +424,9 @@ async function pixabayPhoto(query, queryEn) {
   return null;
 }
 
-// ---------- Download ----------
+// ---------- Download (mit Retry — große Bilder/Clips reissen gern mal ab) ----------
 async function download(u, path) {
-  const res = await fetch(u, { headers: { "User-Agent": UA } });
+  const res = await fetchRetry(u, { headers: { "User-Agent": UA } });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   writeFileSync(path, Buffer.from(await res.arrayBuffer()));
 }
